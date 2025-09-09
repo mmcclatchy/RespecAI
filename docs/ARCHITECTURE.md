@@ -71,7 +71,7 @@ The Spec-Driven Workflow system is a sophisticated AI-powered development platfo
 
 **Purpose**: Project-specific workflow customization
 
-**Target Project Directory Structure**:
+#### Target Project Directory Structure
 ```text
 project/
 ├── .claude/
@@ -90,7 +90,7 @@ project/
 │       ├── build-planner.md           # Generated (implementation planning)
 │       ├── build-critic.md            # Generated (implementation quality)
 │       ├── build-coder.md             # Generated (execution)
-│       └── build-verifier.md          # Generated (validation)
+│       └── build-reviewer.md          # Generated (validation)
 └── .fsdd/
     ├── config/
     │   ├── platform.json              # Platform choice and settings
@@ -147,7 +147,7 @@ Generate specialized AI agents with platform-specific capabilities:
 - **`build_planner_template`**: Implementation planning (with iterative refinement)
 - **`build_critic_template`**: Implementation plan quality assessment
 - **`build_coder_template`**: Code execution and development (with iterative refinement)
-- **`build_verifier_template`**: Code implementation quality validation
+- **`build_reviewer_template`**: Code implementation quality validation
 
 ### Platform Tool Resolution
 
@@ -195,7 +195,9 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 
 #### Implementation Planning Tools
 - **`execute_build_workflow`**: Specification-to-implementation conversion
-- **`execute_refinement_loop`**: Quality-driven iterative improvement
+- **`decide_loop_next_action`**: Quality-driven loop decision engine
+
+*For complete MCP tool specifications, see [MCP Loop Tools Implementation](MCP_LOOP_TOOLS_IMPLEMENTATION.md#phase-3-mcp-tool-implementation)*
 
 #### System Management Tools
 - **`get_project_config`**: Project state inspection
@@ -221,11 +223,16 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 12. **Integration** - System compatibility
 
 **Quality Thresholds**:
-- **Minimum Score**: 0.70 (85%) - Basic acceptance
-- **Production Ready**: 0.85 (85%) - Release quality
-- **Excellence**: 0.95 (95%) - Best practice standard
+- **Plan Phase**: 85% - Basic acceptance for strategic planning
+- **Spec Phase**: 85% - Production ready technical specifications
+- **Build Plan Phase**: Configurable via environment variables
+- **Build Code Phase**: 95% - Excellence standard for implementation
+
+*For detailed threshold configuration, see [MCP Loop Tools Implementation](MCP_LOOP_TOOLS_IMPLEMENTATION.md#phase-1-core-models-and-configuration)*
 
 #### Refinement Loop Architecture
+
+*Detailed loop implementation architecture and decision logic documented in [MCP Loop Tools Implementation](MCP_LOOP_TOOLS_IMPLEMENTATION.md)*
 
 ```text
 ┌─────────────┐    ┌─────────────────────────────────┐
@@ -251,11 +258,13 @@ The MCP server provides high-level orchestration tools that coordinate complex w
        │  • "complete"           │
        │  • "user-input"         │
 ┌─────────────┐                  │
-│ Planner     │              ✓ Quality ≥ 0.85:     "complete"
-│ Refines     │              ✗ Quality < 0.85:     "refine"
-│ Content     │              ✗ Quality Stagnation: "user-input"
-└─────────────┘                (or max loop iterations)
+│ Producer    │              ✓ Quality ≥ threshold:  "complete"
+│ Refines     │              ✗ Quality < threshold:  "refine"
+│ Content     │              ✗ Quality Stagnation:   "user-input"
+└─────────────┘                (2 consecutive low improvements)
 ```
+
+**Loop State Management**: Session-scoped with simple stagnation detection (2 consecutive iterations below improvement threshold)
 
 ## Platform Integration Patterns
 
@@ -344,10 +353,10 @@ The MCP server provides high-level orchestration tools that coordinate complex w
   - Agents:
     - `build-planner` agent (creates + refines based on feedback)
     - `build-critic` agent (evaluates quality + provides feedback)
-- **Implementation/Verification Loop** (refine-build-code): Generate verified code with coder/verifier loop
+- **Implementation/Verification Loop** (refine-build-code): Generate verified code with coder/reviewer loop
   - Agents:
     - `build-coder` agent (creates + refines based on feedback)
-    - `build-verifier` agent (evaluates implementation + provides feedback)
+    - `build-reviewer` agent (evaluates implementation + provides feedback)
 - **Platform Integration & Completion**: Document results and update tickets
 **Output**: Complete implementation with comprehensive validation and platform integration
 

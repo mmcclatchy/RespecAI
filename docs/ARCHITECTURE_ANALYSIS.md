@@ -87,7 +87,7 @@ Critic Score → MCP Server State Management → Next Action Decision:
 3. **Iterative Refinement**: Loop continues until quality thresholds met
 4. **Fallback Mechanism**: Stagnation detection → user consultation
 
-**Quality Gate**: 85%+ minimum (basic acceptance threshold)
+**Quality Gate**: 85% minimum (basic acceptance threshold)
 **Output**: Strategic plan document with clear business objectives
 
 ### Loop 2: Technical Specification (`/spec`)
@@ -140,7 +140,7 @@ Conversational Loop: plan-generator ↔ plan-critic
 ├── Natural progression from broad vision to detailed requirements
 ├── FSDD quality assessment without disrupting conversation flow
 ├── Understanding validation at progressive checkpoints
-└── Quality Gate: 85%+ (basic acceptance)
+└── Quality Gate: 85% (basic acceptance)
     ↓
 Output: Strategic plan document with business context and objectives
 ```
@@ -158,7 +158,7 @@ Architecture Design Loop: spec-architect ↔ spec-critic
 ├── Technical system design using selected technology stack
 ├── Research integration from both archive and external sources
 ├── Platform-specific specification creation
-└── Quality Gate: 85%+ (production ready)
+└── Quality Gate: 85% (production ready)
     ↓
 Output: Detailed technical specification in chosen platform
 ```
@@ -182,7 +182,7 @@ Build Implementation Loop: build-coder ↔ build-reviewer
 ├── TDD-based code implementation
 ├── Comprehensive quality validation (tests, types, compliance)
 ├── Plan synchronization assessment
-└── Quality Gate: 95%+ (excellence standard)
+└── Quality Gate: 95% (excellence standard)
     ↓
 Output: Production-ready implementation with platform integration
 ```
@@ -196,6 +196,8 @@ Output: Production-ready implementation with platform integration
 
 ### 2. Quality-Driven Progression  
 - **Progressive Standards**: Increasing quality thresholds (85% → 85% → configurable → 95%)
+
+*For detailed quality threshold configuration, see [MCP Loop Tools Implementation](MCP_LOOP_TOOLS_IMPLEMENTATION.md#phase-1-core-models-and-configuration)*
 - **Automated Assessment**: LLM-based scoring with structured evaluation criteria
 - **Human Fallback**: Intelligent escalation when automated refinement stagnates
 - **FSDD Framework**: 12-point quality framework ensuring comprehensive evaluation
@@ -237,26 +239,23 @@ Output: Production-ready implementation with platform integration
 
 ## Technical Implementation Notes
 
-### Environment Configuration
-- Quality thresholds managed via Pydantic-Settings for easy tuning
-- Archive directory configurable via settings.json or environment variables
-- Research synthesizer integration through global agent at `~/.claude/agents/research-synthesizer.md`
+*Comprehensive technical implementation details are documented in [MCP Loop Tools Implementation](MCP_LOOP_TOOLS_IMPLEMENTATION.md)*
 
-### File Organization
-```text
-project/.claude/
-├── commands/           # Generated platform-specific commands
-├── agents/            # Generated specialized agents
-└── .fsdd/
-    ├── config/        # Platform and quality gate configuration
-    ├── plans/         # Markdown specifications (Markdown platform only)
-    └── specs/         # Technical specifications (Markdown platform only)
-```
+### Key Implementation Aspects
+- **Environment Configuration**: Quality thresholds managed via Pydantic-Settings
+- **Session-Scoped State**: No cross-session persistence required for MVP
+- **Simple Stagnation Detection**: 2 consecutive iterations below improvement threshold
+- **Research Integration**: Archive scanning + external synthesis via Exa MCP Server
+
+### File Organization Structure
+- See [ARCHITECTURE.md - #### Target Project Directory Structure](ARCHITECTURE.md#target-project-directory-structure)
 
 ### Research Archive Structure
 - Location: `~/.claude/best-practices/*.md`
 - Scanning: Via `scripts/research-advisor-archive-scan.sh`
 - Format: Structured markdown with topic headers and metadata
+
+*For complete system architecture and platform integration details, see [System Architecture](ARCHITECTURE.md)*
 
 ## Conclusion
 
