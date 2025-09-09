@@ -1,0 +1,46 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ['--branch', 'prod']
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.18.1
+    hooks:
+      - id: markdownlint-cli2
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.17.1
+    hooks:
+      - id: mypy
+        args: [
+          --config-file=pyproject.toml,
+          # --ignore-missing-imports
+        ]
+        additional_dependencies: [
+          "pydantic>=2.0.0",
+          "pydantic-settings>=2.0.0",
+          "python-dotenv>=1.1.1",
+          "pyyaml>=6.0.2",
+          "aiofiles>=24.1.0",
+          "fastmcp>=2.12.0",
+          "pytest>=8.4.1",
+          "pytest-asyncio>=1.1.0",
+          "pytest-mock>=3.14.1",
+          "types-pyyaml>=6.0.12.20250809",
+          "types-aiofiles>=24.1.0.20250822",
+          "rich>=14.1.0",
+        ]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.8
+    hooks:
+      - id: ruff
+        args: [
+          --fix,
+          # --select, T201, # print rules
+          # --select, T203  # print rules
+        ]
+      - id: ruff-format

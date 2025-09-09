@@ -1,0 +1,12 @@
+# Enable all rules by default
+default: true
+
+# Disable specific rules
+MD022: false  # heading style
+MD031: false  # heading levels
+MD032: false  # heading style
+MD036: false  # list item spacing
+
+# Customize specific rule options
+MD013: false
+  # line_length: 120

@@ -1,0 +1,113 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+dist/
+build/
+.eggs/
+*.lock
+.venv/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+*.pytest_cache/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# FastAPI / Uvicorn / ASGI related
+uvicorn.log
+__fastapi__/
+instance/
+*.db
+*.sqlite3
+
+# Cursor (if it generates cache, logs, or temp files; adjust if needed)
+.cursor/
+.cursor_cache/
+cursor.log
+
+# HTMX static/assets (common frontend build folders)
+src/static/dist/
+src/static/.cache/
+assets/
+dist/
+node_modules/
+**.css.map
+
+# PyCharm, VSCode, other IDEs
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# macOS / Linux files
+.DS_Store
+*.swp
+*~
+
+# Environment variables files
+.env*
+.env.local*
+.env.docker*
+
+# pytest cache and logs
+.pytest_cache/
+.testmondata/
+
+# ruff
+.ruff_cache/
+
+# mypy
+.mypy_cache/
+
+# Claude Code
+.claude/
+
+# Editor backup files
+*~
+
+# UV package manager temp/cache folders
+# (Note: If you meant "UV" as a package manager or tool that caches files, add those here)
+# Example folders - please customize as needed
+.uv_cache/
+.uv_tmp/
+
+# Logs
+logs/
+*.log
+
+# Temporary debugging files
+temp/
+temp*
+!**/templates/
+!**/TEMPLATE*
+
+# secrets
+secrets/

@@ -1,0 +1,150 @@
+[project]
+name = "spec-driven-development"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic >=2.0.0,<3.0.0",
+    "pydantic-settings >=2.0.0,<3.0.0",
+    "pyyaml >=6.0.2,<7.0.0",
+    "aiofiles >=24.1.0,<25.0.0",
+    "fastmcp >=2.12.2,<3.0.0",
+    "rich >=14.1.0,<15.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy >=1.17.1,<2.0.0",
+    "pytest >=8.4.2,<9.0.0",
+    "pytest-asyncio >=1.1.0,<2.0.0",
+    "pytest-mock >=3.15.0,<4.0.0",
+    "types-pyyaml >=6.0.12.20250809,<7.0.0",
+    "types-aiofiles >=24.1.0.20250822,<25.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["services"]
+
+[project.scripts]
+spec-driven-workflow-server = "services.mcp_server:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
+filterwarnings = [
+    # Suppress coroutine warnings in MCP server tests - these are expected due to async mocking
+    "ignore:coroutine.*was never awaited:RuntimeWarning:.*test_mcp_server.*",
+    # Suppress pytest cleanup warnings for unawaited coroutines during garbage collection
+    "ignore:.*coroutine.*main.*was never awaited.*"
+]
+markers = [
+    "agent_coordination: marks tests for agent coordination and parameter passing",
+    "error_injection: marks tests for error injection and failure scenarios",
+    "golden_dataset: marks tests for golden dataset regression testing",
+    "mcp_orchestration: marks tests for MCP server orchestration and workflow validation",
+    "workflow_state: marks tests for workflow state management and failure recovery",
+]
+pythonpath = ["."]
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "*.lock",
+    "src/models/descriptions.py",
+]
+
+line-length = 120
+indent-width = 4
+
+# Assume Python 3.8
+# target-version = "py312"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = [
+    "D", # Disable all Docstring rules
+    "E741", # Disable errors on single letter variable names. Allowing them for list comprehensions.
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.13"
+show_error_codes = true
+show_column_numbers = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_untyped_decorators = false
+warn_incomplete_stub = false
+warn_no_return = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+show_error_context = true
+disallow_subclassing_any = true
+implicit_optional = false
+incremental = false
+strict_optional = true
+strict = false
+warn_unreachable = false
+explicit_package_bases = true
+namespace_packages = true
+
+plugins = [
+    "pydantic.mypy",
+    # "sqlalchemy.ext.mypy.plugin",
+]
+
+[tool.pydantic-mypy]
+init_typed = true
+warn_required_dynamic_aliases = true
