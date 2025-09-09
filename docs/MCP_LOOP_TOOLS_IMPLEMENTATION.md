@@ -256,6 +256,88 @@ Quality Gates:
 - ✅ Validate exception types and handling patterns
 ```
 
+### Step 3.3: FastMCP Server Integration
+
+**Red Phase - Create failing tests**:
+```text
+Test Coverage Required:
+- Create tests/integration/test_fastmcp_server.py
+- Test FastMCP server initialization and tool registration
+- Test MCP tool discovery and metadata
+- Test server startup/shutdown lifecycle
+- Test error handling at server level
+- Test tool parameter validation through FastMCP
+- Verify tests fail without FastMCP implementation
+```
+
+**Green Phase - Minimal implementation**:
+```text
+Implementation Tasks:
+- Create services/mcp/server.py with FastMCP server setup
+- Register existing decide_loop_next_action as @mcp.tool()
+- Add server configuration via Pydantic settings
+- Implement graceful server lifecycle management
+- Add health check endpoints
+- Ensure proper async/await patterns if needed
+- Make all tests pass
+```
+
+**Refactor Phase - Quality compliance**:
+```text
+Quality Gates:
+- ✅ Run mypy - resolve all type errors
+- ✅ Run ruff - fix all linting issues
+- ✅ Run pytest - all tests pass, no warnings
+- ✅ Add comprehensive docstrings for FastMCP tools
+- ✅ Validate production-ready configuration
+- ✅ Ensure proper error handling at server level
+- ✅ Follow FastMCP best practices from documentation
+- ✅ Verify service layer separation maintained
+```
+
+### Step 3.4: Loop Management Tools
+
+**Red Phase - Create failing tests**:
+```text
+Test Coverage Required:
+- Create tests/unit/mcp/test_loop_management.py
+- Test initialize_refinement_loop MCP tool
+- Test reset_loop_state MCP tool
+- Test get_loop_status MCP tool
+- Test list_active_loops MCP tool
+- Test concurrent loop management scenarios
+- Test session-scoped loop state persistence
+- Test loop ID generation and tracking
+- Verify tests fail without loop management implementation
+```
+
+**Green Phase - Minimal implementation**:
+```text
+Implementation Tasks:
+- Extend services/mcp/loop_tools.py with new MCP tools:
+  - initialize_refinement_loop(loop_type, initial_content)
+  - reset_loop_state(loop_id)
+  - get_loop_status(loop_id)
+  - list_active_loops()
+- Implement session-scoped loop state storage
+- Add loop ID generation and tracking mechanisms
+- Register new tools with FastMCP server
+- Ensure all tests pass
+```
+
+**Refactor Phase - Quality compliance**:
+```text
+Quality Gates:
+- ✅ Run mypy - resolve all type errors
+- ✅ Run ruff - fix all linting issues
+- ✅ Run pytest - all tests pass, no warnings
+- ✅ Add proper error handling for loop management
+- ✅ Ensure clean separation between loop management and decision logic
+- ✅ Add comprehensive tool documentation for MCP interfaces
+- ✅ Validate loop state management patterns
+- ✅ Check concurrent access safety (session-scoped)
+```
+
 ## Phase 4: Integration Testing
 
 ### Step 4.1: End-to-End MCP Tool Testing
@@ -330,6 +412,47 @@ Quality Gates:
 - ✅ Ensure optimizations don't sacrifice readability
 - ✅ Remove performance measurement comments
 - ✅ Validate typing remains complete after optimizations
+```
+
+### Step 4.3: Production MCP Server (UPDATED)
+
+**Red Phase - Create failing tests**:
+```text
+Test Coverage Required:
+- Create tests/e2e/test_production_mcp_server.py
+- Test complete workflow: initialize → iterate → complete
+- Test real MCP client integration scenarios
+- Test configuration loading from environment variables
+- Test multi-loop concurrent scenarios
+- Test FastMCP server production deployment patterns
+- Test health check endpoints and monitoring
+- Verify tests fail before production server implementation
+```
+
+**Green Phase - Minimal implementation**:
+```text
+Implementation Tasks:
+- Create main.py or mcp_server.py as production entry point
+- Add proper logging configuration for production
+- Implement production server configuration with FastMCP
+- Add monitoring and health endpoints
+- Create deployment configuration (Docker, environment files)
+- Integrate all MCP tools (decision + loop management) with server
+- Ensure production-ready error handling and graceful shutdown
+- Make all production tests pass
+```
+
+**Refactor Phase - Quality compliance**:
+```text
+Quality Gates:
+- ✅ Run complete test suite - 100% pass rate, zero warnings
+- ✅ Run mypy on entire project - zero errors
+- ✅ Run ruff on entire project - zero linting issues
+- ✅ Final production readiness review
+- ✅ Performance optimization validation
+- ✅ Complete deployment documentation
+- ✅ Validate against FastMCP production best practices
+- ✅ Verify all logging and monitoring works correctly
 ```
 
 ## Phase 5: Documentation and Deployment
@@ -426,6 +549,7 @@ Quality Gates:
 - [ ] **Pydantic v2** - All models use current Pydantic version
 - [ ] **Service layer separation** - Business logic separate from MCP interfaces
 - [ ] **pytest + pytest-mock only** - No additional testing dependencies
+- [ ] **FastMCP framework integration** - Production-ready MCP server implementation
 
 ### Quality Gate Validation
 - [ ] **All endpoints delegate to services** - No business logic in MCP tools
@@ -434,27 +558,86 @@ Quality Gates:
 - [ ] **mypy passes** - Zero type errors
 - [ ] **ruff passes** - Zero linting issues
 - [ ] **pytest passes** - All tests pass with no warnings
+- [ ] **FastMCP tools properly registered** - All tools discoverable and functional
 
-## Implementation Success Criteria
+## Updated Tool Architecture
+
+### Complete MCP Server Structure
+```python
+# Production MCP Server with FastMCP Integration
+from fastmcp import FastMCP
+
+mcp = FastMCP("Loop Management Server")
+
+@mcp.tool()
+def initialize_refinement_loop(loop_type: str, initial_content: str) -> dict:
+    """Start a new refinement loop with initial content.
+    
+    Args:
+        loop_type: Type of loop (plan, spec, build_plan, build_code)
+        initial_content: Initial content to start refining
+        
+    Returns:
+        dict: Loop initialization result with loop_id and status
+    """
+    # Implementation using existing services
+
+@mcp.tool() 
+def decide_loop_next_action(
+    loop_type: str,
+    current_score: int, 
+    previous_scores: list[int],
+    iteration: int,
+    max_iterations: int = 20
+) -> str:
+    """Decide next action for refinement loop progression.
+    
+    This is the core decision tool - already implemented and tested.
+    """
+    # Current implementation - no changes needed
+    
+@mcp.tool()
+def reset_loop_state(loop_id: str) -> dict:
+    """Reset or clear loop state for fresh start."""
+    # New implementation needed
+
+@mcp.tool()
+def get_loop_status(loop_id: str) -> dict:
+    """Get current status and history of a loop."""
+    # New implementation needed
+    
+@mcp.tool()
+def list_active_loops() -> list[dict]:
+    """List all currently active refinement loops."""
+    # New implementation needed
+```
+
+## Implementation Success Criteria (UPDATED)
 
 ### Functional Requirements
-- MCP Loop Tools correctly implement decision logic for all four loop types
-- Stagnation detection accurately identifies improvement plateau scenarios
-- Configuration system supports per-loop threshold customization
-- Error handling provides graceful failure modes without system crashes
-- Integration with Main Agent workflow patterns works seamlessly
+- **MCP Loop Tools**: Correctly implement decision logic for all four loop types
+- **Loop Management**: Complete loop lifecycle management (initialize, iterate, complete)
+- **Stagnation Detection**: Accurately identifies improvement plateau scenarios
+- **Configuration System**: Supports per-loop threshold customization
+- **Error Handling**: Graceful failure modes without system crashes
+- **FastMCP Integration**: Production-ready MCP server with proper tool registration
+- **Multi-Loop Support**: Concurrent loop management with session-scoped state
+- **Main Agent Integration**: Seamless workflow patterns for external agent calls
 
 ### Quality Requirements
 - Complete adherence to project coding standards as defined in CLAUDE.md
 - Full test coverage with TDD methodology followed throughout implementation
 - Zero mypy errors and zero ruff linting issues across entire codebase
 - Self-documenting code through clear naming conventions
-- Minimal but appropriate documentation for MCP tool public interfaces
+- Comprehensive documentation for all MCP tool public interfaces
+- FastMCP best practices compliance for production deployment
 
 ### Performance Requirements
 - Decision engine processes loop data efficiently for typical iteration counts
 - Configuration loading performs adequately for session-scoped usage
 - Memory usage remains reasonable during extended loop sequences
 - Error handling doesn't introduce significant performance overhead
+- FastMCP server handles concurrent requests efficiently
+- Loop state management scales appropriately for multiple active loops
 
 This implementation plan ensures systematic development of robust MCP Loop Tools while maintaining strict quality standards and following Test-Driven Development methodology throughout the entire process.
