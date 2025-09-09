@@ -221,7 +221,7 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 12. **Integration** - System compatibility
 
 **Quality Thresholds**:
-- **Minimum Score**: 0.70 (70%) - Basic acceptance
+- **Minimum Score**: 0.70 (85%) - Basic acceptance
 - **Production Ready**: 0.85 (85%) - Release quality
 - **Excellence**: 0.95 (95%) - Best practice standard
 
