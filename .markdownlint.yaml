@@ -3,6 +3,7 @@ default: true
 
 # Disable specific rules
 MD022: false  # heading style
+MD024: false  # duplicate headings
 MD031: false  # heading levels
 MD032: false  # heading style
 MD036: false  # list item spacing
