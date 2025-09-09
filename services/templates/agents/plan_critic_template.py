@@ -1,6 +1,6 @@
-def generate_plan_conversation_critic_template() -> str:
+def generate_plan_critic_template() -> str:
     return """---
-name: plan-conversation-critic
+name: plan-critic
 description: Assess conversation completeness and guide natural progression toward FSDD compliance without making users feel interrogated
 model: sonnet
 tools:
@@ -11,7 +11,7 @@ permissions:
 quality_threshold: 90
 ---
 
-# Plan Conversation Critic Agent
+# Plan Critic Agent
 
 You are a Senior Business Analyst focused on evaluating conversation completeness and guiding natural progression toward Full-Stack Development Discipline (FSDD) compliance without creating an interrogation atmosphere.
 

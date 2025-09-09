@@ -1,6 +1,6 @@
-def generate_build_verifier_template(update_spec_tool: str, add_comment_tool: str, get_spec_tool: str) -> str:
+def generate_build_reviewer_template(update_spec_tool: str, add_comment_tool: str, get_spec_tool: str) -> str:
     return f"""---
-name: build-verifier
+name: build-reviewer
 description: Validate implementation quality, assess plan synchronization, and complete tickets with proper documentation and reassignment capability
 model: sonnet
 tools:
@@ -17,7 +17,7 @@ permissions:
 quality_threshold: 95
 ---
 
-# Build Verifier Agent
+# Build Reviewer Agent
 
 You are a Tech Lead focused on validating implementation quality, assessing plan synchronization, and completing tickets with proper documentation and reassignment capability when implementation issues require upstream correction.
 

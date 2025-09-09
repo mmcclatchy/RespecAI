@@ -1,10 +1,10 @@
 from .agents import (
     generate_build_coder_template,
     generate_build_planner_template,
-    generate_build_verifier_template,
+    generate_build_reviewer_template,
     generate_plan_analyst_template,
-    generate_plan_conversation_analyst_template,
-    generate_plan_conversation_critic_template,
+    generate_plan_critic_template,
+    generate_plan_generator_template,
     generate_spec_architect_template,
     AGENT_TEMPLATE_FUNCTIONS,
 )
@@ -22,10 +22,10 @@ from .commands import (
 __all__ = [
     'generate_build_coder_template',
     'generate_build_planner_template',
-    'generate_build_verifier_template',
+    'generate_build_reviewer_template',
     'generate_plan_analyst_template',
-    'generate_plan_conversation_analyst_template',
-    'generate_plan_conversation_critic_template',
+    'generate_plan_critic_template',
+    'generate_plan_generator_template',
     'generate_spec_architect_template',
     'AGENT_TEMPLATE_FUNCTIONS',
     'generate_build_command_template',
