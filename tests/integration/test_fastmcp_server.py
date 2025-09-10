@@ -16,10 +16,19 @@ class TestFastMCPServerIntegration:
 
         server = create_mcp_server()
 
-        # Check that decide_loop_next_action is registered
+        # Check that all loop management tools are registered
         tools = await server.get_tools()
-        assert 'decide_loop_next_action' in tools
-        assert tools['decide_loop_next_action'].name == 'decide_loop_next_action'
+        expected_tools = [
+            'decide_loop_next_action',
+            'initialize_refinement_loop',
+            'reset_loop_state',
+            'get_loop_status',
+            'list_active_loops',
+        ]
+
+        for tool_name in expected_tools:
+            assert tool_name in tools
+            assert tools[tool_name].name == tool_name
 
     def test_production_server_creation(self) -> None:
         from services.mcp.server import create_mcp_server, get_server_config, MCPSettings
@@ -88,5 +97,5 @@ class TestFastMCPServerIntegration:
 
         assert isinstance(health_status, HealthStatus)
         assert health_status.status == 'healthy'
-        assert health_status.tools_count > 0
+        assert health_status.tools_count == 5  # All 5 loop management tools
         assert health_status.error is None

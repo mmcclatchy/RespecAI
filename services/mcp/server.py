@@ -2,7 +2,7 @@ from fastmcp import FastMCP
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from typing import Literal
-from services.mcp.loop_tools import decide_loop_next_action as service_decide_loop_next_action
+from services.mcp import loop_tools
 
 
 class MCPSettings(BaseSettings):
@@ -32,7 +32,7 @@ def create_mcp_server() -> FastMCP:
     # Function accessed by FastMCP framework, not directly by our code
     @mcp.tool()
     def decide_loop_next_action(
-        loop_type: str, current_score: int, previous_scores: list[int], iteration: int, max_iterations: int = 20
+        loop_type: str, current_score: int, previous_scores: list[int], iteration: int, max_iterations: int = 5
     ) -> str:
         """Decide next action for refinement loop progression.
 
@@ -51,7 +51,7 @@ def create_mcp_server() -> FastMCP:
         - current_score: Quality score from 0-100 for current iteration
         - previous_scores: List of scores from previous iterations (chronological order)
         - iteration: Current iteration number (must be >= 1)
-        - max_iterations: Maximum iterations before forcing user-input (default: 20)
+        - max_iterations: Maximum iterations before forcing user-input (default: 5)
 
         Returns:
         - "complete": Quality threshold met, proceed to next phase
@@ -76,7 +76,76 @@ def create_mcp_server() -> FastMCP:
         # Returns: "user-input"
         ```
         """
-        return service_decide_loop_next_action(loop_type, current_score, previous_scores, iteration, max_iterations)
+        return loop_tools.decide_loop_next_action(loop_type, current_score, previous_scores, iteration, max_iterations)
+
+    @mcp.tool()
+    def initialize_refinement_loop(loop_type: str, initial_content: str) -> dict:
+        """Initialize a new refinement loop with initial content.
+
+        Creates a new refinement loop session with the provided initial content.
+        Returns loop ID for tracking and managing the loop state throughout
+        the refinement process.
+
+        Parameters:
+        - loop_type: One of 'plan', 'spec', 'build_plan', 'build_code'
+        - initial_content: Initial content to start refining (cannot be empty)
+
+        Returns:
+        - dict: Contains 'loop_id' (unique identifier) and 'status' ('initialized')
+
+        Raises:
+        - ValueError: Invalid loop_type or empty initial_content
+        """
+        return loop_tools.initialize_refinement_loop(loop_type, initial_content)
+
+    @mcp.tool()
+    def reset_loop_state(loop_id: str) -> dict:
+        """Reset loop state for fresh start.
+
+        Clears iteration count and score history while preserving the loop
+        configuration and initial content. Useful for restarting a loop
+        from the beginning.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop to reset
+
+        Returns:
+        - dict: Contains 'loop_id' and 'status' ('reset')
+
+        Raises:
+        - ValueError: Loop ID not found
+        """
+        return loop_tools.reset_loop_state(loop_id)
+
+    @mcp.tool()
+    def get_loop_status(loop_id: str) -> dict:
+        """Get current status and history of a loop.
+
+        Returns complete loop information including current status,
+        iteration count, score history, and metadata.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - dict: Complete loop state with all metadata and history
+
+        Raises:
+        - ValueError: Loop ID not found
+        """
+        return loop_tools.get_loop_status(loop_id)
+
+    @mcp.tool()
+    def list_active_loops() -> list[dict]:
+        """List all currently active refinement loops.
+
+        Returns summary information for all active loops in the current
+        session. Useful for managing multiple concurrent refinement processes.
+
+        Returns:
+        - list[dict]: List of active loops with their current status
+        """
+        return loop_tools.list_active_loops()
 
     return mcp
 

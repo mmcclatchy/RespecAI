@@ -6,10 +6,28 @@ repos:
       - id: no-commit-to-branch
         args: ['--branch', 'prod']
 
+  - repo: local
+    hooks:
+      - id: remove-single-line-docstrings
+        name: Remove single-line docstrings from Python files
+        entry: /Users/markmcclatchy/coding/projects/remove-useless-docstrings.sh
+        language: system
+        types: [python]
+
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.18.1
     hooks:
       - id: markdownlint-cli2
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.12.12
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.17.1
@@ -33,14 +51,3 @@ repos:
           "types-aiofiles>=24.1.0.20250822",
           "rich>=14.1.0",
         ]
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.8
-    hooks:
-      - id: ruff
-        args: [
-          --fix,
-          # --select, T201, # print rules
-          # --select, T203  # print rules
-        ]
-      - id: ruff-format

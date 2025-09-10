@@ -1,6 +1,56 @@
+import uuid
+from datetime import datetime
 from services.models.loop_data import LoopData, LoopType
 from services.models.loop_config import LoopThresholds
 from services.decision_engine import decide_next_action
+
+
+_active_loops: dict[str, dict] = {}
+
+
+def initialize_refinement_loop(loop_type: str, initial_content: str) -> dict:
+    valid_loop_types = {'plan', 'spec', 'build_plan', 'build_code'}
+    if loop_type not in valid_loop_types:
+        raise ValueError(f'Invalid loop_type: {loop_type}. Must be one of {valid_loop_types}')
+
+    if not initial_content.strip():
+        raise ValueError('initial_content cannot be empty')
+
+    loop_id = str(uuid.uuid4())
+
+    _active_loops[loop_id] = {
+        'loop_id': loop_id,
+        'loop_type': loop_type,
+        'status': 'initialized',
+        'iteration_count': 0,
+        'score_history': [],
+        'created_at': datetime.now().isoformat(),
+        'initial_content': initial_content,
+    }
+
+    return {'loop_id': loop_id, 'status': 'initialized'}
+
+
+def reset_loop_state(loop_id: str) -> dict:
+    if loop_id not in _active_loops:
+        raise ValueError(f'Loop not found: {loop_id}')
+
+    _active_loops[loop_id]['status'] = 'reset'
+    _active_loops[loop_id]['iteration_count'] = 0
+    _active_loops[loop_id]['score_history'] = []
+
+    return {'loop_id': loop_id, 'status': 'reset'}
+
+
+def get_loop_status(loop_id: str) -> dict:
+    if loop_id not in _active_loops:
+        raise ValueError(f'Loop not found: {loop_id}')
+
+    return _active_loops[loop_id].copy()
+
+
+def list_active_loops() -> list[dict]:
+    return list(_active_loops.values())
 
 
 def decide_loop_next_action(
