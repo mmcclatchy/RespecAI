@@ -193,6 +193,7 @@ Output: Production-ready implementation with platform integration
 - **Focused Responsibilities**: Each agent handles specific aspects without overlap
 - **Clear Handoffs**: File-based communication between phases reduces coupling
 - **Specialized Expertise**: Agents designed for specific roles (conversation, architecture, implementation, validation)
+- **Service Boundary Pattern**: Domain logic separated from MCP protocol concerns with proper exception mapping
 
 ### 2. Quality-Driven Progression  
 - **Progressive Standards**: Increasing quality thresholds (85% → 85% → configurable → 95%)
@@ -219,6 +220,9 @@ Output: Production-ready implementation with platform integration
 - **Template-Driven Generation**: Dynamic command and agent creation based on platform
 - **Quality Gate Enforcement**: Systematic progression control through scoring thresholds
 - **Scalable Extension**: Architecture supports new platforms and quality frameworks
+
+### 6. FastMCP Error Handling Architecture
+- see [ARCHITECTURE.md - Error Handling and Tracking](ARCHITECTURE.md#error-handling-and-tracking)
 
 ## MVP Scope Boundaries
 

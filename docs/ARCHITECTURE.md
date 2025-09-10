@@ -411,9 +411,12 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 - **Quality Scores**: Monitor FSDD quality gate performance over time
 - **Platform Health**: Track platform integration reliability
 
-### Error Tracking
-- **Detailed Logging**: Comprehensive error logging with context preservation
-- **User Feedback**: Clear error messages with actionable resolution steps
+### Error Handling and Tracking
+- **FastMCP Integration**: Built-in ErrorHandlingMiddleware for consistent error processing
+- **Service Boundary Mapping**: Domain exceptions mapped to FastMCP ToolError at service layer
+- **Context-Based Communication**: Real-time error logging to MCP clients via Context parameter
+- **Middleware-Driven Processing**: Centralized error handling through FastMCP middleware pipeline
+- **User Feedback**: Clear, actionable error messages with validation feedback
 - **Diagnostic Tools**: Built-in tools for troubleshooting common issues
 
 ## Development and Maintenance

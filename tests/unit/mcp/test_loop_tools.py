@@ -1,125 +1,111 @@
 import pytest
 
+from services.mcp.loop_tools import loop_tools
+from services.utils.enums import LoopStatus
+from services.utils.errors import LoopStateError, LoopValidationError
+from services.utils.models import MCPResponse
+
 
 class TestLoopToolsMCP:
     def test_decide_loop_next_action_complete_decision(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
+        # Initialize a build_code loop (threshold 95%)
+        init_result = loop_tools.initialize_refinement_loop('build_code')
+        loop_id = init_result.id
 
-        result = decide_loop_next_action(loop_type='plan', current_score=90, previous_scores=[85, 87], iteration=3)
+        # High score should complete
+        result = loop_tools.decide_loop_next_action(loop_id, 96)
 
-        assert result == 'complete'
+        assert isinstance(result, MCPResponse)
+        assert result.status == LoopStatus.COMPLETED
 
     def test_decide_loop_next_action_refine_decision(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
+        # Initialize a spec loop (threshold 85%)
+        init_result = loop_tools.initialize_refinement_loop('spec')
+        loop_id = init_result.id
 
-        result = decide_loop_next_action(
-            loop_type='spec',
-            current_score=70,
-            previous_scores=[60],  # Good improvement, not stagnating
-            iteration=2,
-        )
+        # Score below threshold should refine
+        result = loop_tools.decide_loop_next_action(loop_id, 70)
 
-        assert result == 'refine'
+        assert isinstance(result, MCPResponse)
+        assert result.status == LoopStatus.REFINE
 
     def test_decide_loop_next_action_user_input_decision(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
+        # Initialize a plan loop
+        init_result = loop_tools.initialize_refinement_loop('plan')
+        loop_id = init_result.id
 
-        result = decide_loop_next_action(
-            loop_type='build_code', current_score=80, previous_scores=[78, 79], iteration=15
-        )
+        # Add multiple low improvement scores to trigger stagnation
+        loop_tools.decide_loop_next_action(loop_id, 60)
+        loop_tools.decide_loop_next_action(loop_id, 61)
+        loop_tools.decide_loop_next_action(loop_id, 62)
 
-        assert result == 'user-input'
+        # Should detect stagnation and request user input
+        result = loop_tools.decide_loop_next_action(loop_id, 63)
 
-    def test_decide_loop_next_action_parameter_validation(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
+        assert isinstance(result, MCPResponse)
+        assert result.status == LoopStatus.USER_INPUT
 
-        # Test invalid loop type
-        with pytest.raises(ValueError, match='Invalid loop_type'):
-            decide_loop_next_action(loop_type='invalid_type', current_score=80, previous_scores=[], iteration=1)
+    def test_decide_loop_next_action_invalid_loop_id(self) -> None:
+        with pytest.raises(LoopStateError):
+            loop_tools.decide_loop_next_action('nonexistent-loop-id', 80)
 
     def test_decide_loop_next_action_score_validation(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
+        init_result = loop_tools.initialize_refinement_loop('plan')
+        loop_id = init_result.id
 
-        # Test score below 0
-        with pytest.raises(ValueError, match='current_score must be between 0 and 100'):
-            decide_loop_next_action(loop_type='plan', current_score=-5, previous_scores=[], iteration=1)
+        # Test valid score ranges
+        result = loop_tools.decide_loop_next_action(loop_id, 0)
+        assert isinstance(result, MCPResponse)
 
-        # Test score above 100
-        with pytest.raises(ValueError, match='current_score must be between 0 and 100'):
-            decide_loop_next_action(loop_type='plan', current_score=105, previous_scores=[], iteration=1)
+        result = loop_tools.decide_loop_next_action(loop_id, 100)
+        assert isinstance(result, MCPResponse)
 
-    def test_decide_loop_next_action_iteration_validation(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
+        # Test invalid score ranges
+        with pytest.raises(LoopValidationError):
+            loop_tools.decide_loop_next_action(loop_id, -1)
 
-        # Test iteration below 1
-        with pytest.raises(ValueError, match='iteration must be >= 1'):
-            decide_loop_next_action(loop_type='plan', current_score=80, previous_scores=[], iteration=0)
+        with pytest.raises(LoopValidationError):
+            loop_tools.decide_loop_next_action(loop_id, 101)
 
-    def test_decide_loop_next_action_with_max_iterations(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
+    def test_decide_loop_next_action_max_iterations(self) -> None:
+        # Initialize a plan loop with low max_iterations for testing
+        init_result = loop_tools.initialize_refinement_loop('plan')
+        loop_id = init_result.id
 
-        result = decide_loop_next_action(
-            loop_type='plan', current_score=70, previous_scores=[], iteration=5, max_iterations=5
-        )
+        # Add scores until we hit max iterations (5 for plan loops)
+        for score in [60, 61, 62, 63, 64]:
+            result = loop_tools.decide_loop_next_action(loop_id, score)
 
-        assert result == 'user-input'
+        # Should request user input due to max iterations
+        assert result.status == LoopStatus.USER_INPUT
 
-    def test_decide_loop_next_action_configuration_loading(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
+    def test_initialize_refinement_loop_integration(self) -> None:
+        result = loop_tools.initialize_refinement_loop('build_plan')
 
-        # Test that configuration is loaded and used correctly
-        result = decide_loop_next_action(
-            loop_type='build_plan',
-            current_score=80,  # Should be >= default threshold (80)
-            previous_scores=[],
-            iteration=1,
-        )
+        assert isinstance(result, MCPResponse)
+        assert result.status == LoopStatus.INITIALIZED
+        assert len(result.id) > 0
 
-        assert result == 'complete'
+    def test_get_loop_status_integration(self) -> None:
+        init_result = loop_tools.initialize_refinement_loop('spec')
+        loop_id = init_result.id
 
-    def test_decide_loop_next_action_integration_with_decision_engine(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
+        status = loop_tools.get_loop_status(loop_id)
 
-        # Test stagnation detection integration
-        result = decide_loop_next_action(
-            loop_type='spec',
-            current_score=75,
-            previous_scores=[73, 74],  # Small improvements indicating stagnation
-            iteration=5,
-        )
+        assert isinstance(status, MCPResponse)
+        assert status.id == loop_id
+        assert status.status == LoopStatus.INITIALIZED
 
-        # Should trigger stagnation detection and return user-input
-        assert result == 'user-input'
+    def test_list_active_loops_integration(self) -> None:
+        # Create multiple loops
+        loop1 = loop_tools.initialize_refinement_loop('plan')
+        loop2 = loop_tools.initialize_refinement_loop('spec')
 
-    def test_decide_loop_next_action_error_handling_missing_parameters(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
+        active_loops = loop_tools.list_active_loops()
 
-        # Test missing required parameters
-        with pytest.raises(TypeError):
-            decide_loop_next_action()  # type: ignore[call-arg]
+        assert isinstance(active_loops, list)
+        assert len(active_loops) >= 2
 
-    def test_decide_loop_next_action_return_value_format(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
-
-        result = decide_loop_next_action(loop_type='plan', current_score=85, previous_scores=[], iteration=1)
-
-        # Ensure return value is a string
-        assert isinstance(result, str)
-        # Ensure return value is one of expected actions
-        assert result in ['complete', 'refine', 'user-input']
-
-    def test_decide_loop_next_action_previous_scores_validation(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
-
-        # Test with invalid previous scores
-        with pytest.raises(ValueError, match='All previous_scores must be between 0 and 100'):
-            decide_loop_next_action(loop_type='plan', current_score=80, previous_scores=[70, -5, 85], iteration=4)
-
-    def test_decide_loop_next_action_empty_previous_scores(self) -> None:
-        from services.mcp.loop_tools import decide_loop_next_action
-
-        # Test with empty previous scores (first iteration)
-        result = decide_loop_next_action(loop_type='plan', current_score=70, previous_scores=[], iteration=1)
-
-        # Should return refine since score is below threshold
-        assert result == 'refine'
+        loop_ids = [loop.id for loop in active_loops]
+        assert loop1.id in loop_ids
+        assert loop2.id in loop_ids

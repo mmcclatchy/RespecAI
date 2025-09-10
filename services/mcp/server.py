@@ -1,4 +1,8 @@
-from fastmcp import FastMCP
+from fastmcp import FastMCP, Context
+from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
+from fastmcp.server.middleware.logging import LoggingMiddleware
+from fastmcp.server.middleware import MiddlewareContext
+import logging
 
 from services.mcp.loop_tools import loop_tools
 from services.utils.models import HealthStatus, MCPResponse
@@ -9,8 +13,22 @@ from services.utils.enums import HealthState
 def create_mcp_server() -> FastMCP:
     mcp = FastMCP(mcp_settings.server_name)
 
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger('mcp_errors')
+
+    def handle_error(error: Exception, context: MiddlewareContext) -> None:
+        logger.error(f'MCP Error: {type(error).__name__} in {context.method}: {error}')
+
+    mcp.add_middleware(
+        ErrorHandlingMiddleware(
+            include_traceback=mcp_settings.debug, transform_errors=True, error_callback=handle_error
+        )
+    )
+
+    mcp.add_middleware(LoggingMiddleware(include_payloads=mcp_settings.debug, max_payload_length=200))
+
     @mcp.tool()
-    def decide_loop_next_action(loop_type: str, current_score: int) -> MCPResponse:
+    async def decide_loop_next_action(loop_id: str, current_score: int, ctx: Context) -> MCPResponse:
         """Decide next action for refinement loop progression.
 
         This MCP tool implements the core decision logic for quality-driven
@@ -18,44 +36,20 @@ def create_mcp_server() -> FastMCP:
         and iteration counts to determine whether to continue refining content,
         complete the loop, or escalate to human input.
 
-        Decision Logic:
-        - "complete": Score meets or exceeds threshold for the loop type
-        - "refine": Score below threshold but showing improvement or early iterations
-        - "user-input": Stagnation detected (2 consecutive low improvements) or max iterations reached
-
         Parameters:
-        - loop_type: One of 'plan', 'spec', 'build_plan', 'build_code'
+        - loop_id: Unique identifier of the loop to process
         - current_score: Quality score from 0-100 for current iteration
-        - previous_scores: List of scores from previous iterations (chronological order)
-        - iteration: Current iteration number (must be >= 1)
 
         Returns:
-        - "complete": Quality threshold met, proceed to next phase
-        - "refine": Continue refinement loop with critic feedback
-        - "user-input": Request human intervention due to stagnation or limits
-
-        Raises:
-        - ValueError: Invalid parameters (scores outside 0-100, invalid loop_type, etc.)
-
-        Example Usage:
-        ```
-        # High quality score - should complete
-        action = decide_loop_next_action("plan", 90, [85, 87], 3)
-        # Returns: "complete"
-
-        # Improving score below threshold - should refine
-        action = decide_loop_next_action("spec", 70, [60], 2)
-        # Returns: "refine"
-
-        # Stagnating scores - should request user input
-        action = decide_loop_next_action("build_code", 75, [73, 74], 5)
-        # Returns: "user-input"
-        ```
+        - MCPResponse: Contains loop_id and status ('completed', 'refine', 'user_input')
         """
-        return loop_tools.decide_loop_next_action(loop_type, current_score)
+        await ctx.info(f'Processing decision for loop {loop_id} with score {current_score}')
+        result = loop_tools.decide_loop_next_action(loop_id, current_score)
+        await ctx.info(f'Decision result for loop {loop_id}: {result.status}')
+        return result
 
     @mcp.tool()
-    def initialize_refinement_loop(loop_type: str) -> MCPResponse:
+    async def initialize_refinement_loop(loop_type: str, ctx: Context) -> MCPResponse:
         """Initialize a new refinement loop.
 
         Creates a new refinement loop session.
@@ -66,15 +60,15 @@ def create_mcp_server() -> FastMCP:
         - loop_type: One of 'plan', 'spec', 'build_plan', 'build_code'
 
         Returns:
-        - dict: Contains 'loop_id' (unique identifier) and 'status' ('initialized')
-
-        Raises:
-        - ValueError: Invalid loop_type
+        - MCPResponse: Contains loop_id and status ('initialized')
         """
-        return loop_tools.initialize_refinement_loop(loop_type)
+        await ctx.info(f'Initializing new {loop_type} loop')
+        result = loop_tools.initialize_refinement_loop(loop_type)
+        await ctx.info(f'Created {loop_type} loop with ID: {result.id}')
+        return result
 
     @mcp.tool()
-    def get_loop_status(loop_id: str) -> MCPResponse:
+    async def get_loop_status(loop_id: str, ctx: Context) -> MCPResponse:
         """Get current status and history of a loop.
 
         Returns complete loop information including current status,
@@ -84,24 +78,27 @@ def create_mcp_server() -> FastMCP:
         - loop_id: Unique identifier of the loop
 
         Returns:
-        - dict: Complete loop state with all metadata and history
-
-        Raises:
-        - ValueError: Loop ID not found
+        - MCPResponse: Complete loop state with all metadata and history
         """
-        return loop_tools.get_loop_status(loop_id)
+        await ctx.info(f'Retrieving status for loop {loop_id}')
+        result = loop_tools.get_loop_status(loop_id)
+        await ctx.info(f'Retrieved status for loop {loop_id}: {result.status}')
+        return result
 
     @mcp.tool()
-    def list_active_loops() -> list[MCPResponse]:
+    async def list_active_loops(ctx: Context) -> list[MCPResponse]:
         """List all currently active refinement loops.
 
         Returns summary information for all active loops in the current
         session. Useful for managing multiple concurrent refinement processes.
 
         Returns:
-        - list[dict]: List of active loops with their current status
+        - list[MCPResponse]: List of active loops with their current status
         """
-        return loop_tools.list_active_loops()
+        await ctx.info('Retrieving list of active loops')
+        result = loop_tools.list_active_loops()
+        await ctx.info(f'Found {len(result)} active loops')
+        return result
 
     return mcp
 

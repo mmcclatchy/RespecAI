@@ -5,12 +5,23 @@ Comprehensive step-by-step implementation plan for MCP Loop Tools using Test-Dri
 ## Implementation Overview
 
 ### Architecture Summary
-- **Session-scoped state management** - No cross-session persistence
-- **Simple stagnation detection** - 2 consecutive iterations below improvement threshold
-- **Per-loop configuration** - Individual thresholds via Pydantic Settings
-- **Main Agent feedback handling** - MCP Server focused on decision logic only
-- **Sequential loop coordination** - Ordered progression through phases
-- **Graceful error handling** - Simple but robust error management
+- **Session-scoped state management** - No cross-session persistence ✅ **IMPLEMENTED**
+- **FastMCP-native error handling** - Built-in middleware with domain exception mapping ✅ **IMPLEMENTED**
+- **Context-based client communication** - Real-time logging to MCP clients ✅ **IMPLEMENTED**
+- **Service boundary exception mapping** - Domain exceptions mapped to FastMCP at service layer ✅ **IMPLEMENTED**
+- **Per-loop configuration** - Individual thresholds via Pydantic Settings ✅ **IMPLEMENTED**
+- **Main Agent feedback handling** - MCP Server focused on decision logic only ✅ **IMPLEMENTED**
+- **Sequential loop coordination** - Ordered progression through phases ✅ **IMPLEMENTED**
+
+### Current Implementation Status
+**Phase 1-3: COMPLETED** - Core models, decision logic, and MCP tools fully implemented with FastMCP integration.
+
+**Key Architectural Decisions Made:**
+- **FastMCP Framework Adoption**: Using FastMCP's built-in error handling instead of custom solutions
+- **Service Boundary Pattern**: Domain exceptions (LoopNotFoundError) mapped to FastMCP exceptions (LoopStateError) at service layer
+- **Class-Based Service Architecture**: LoopTools class with dependency injection for clean separation of concerns
+- **Middleware-Driven Error Handling**: ErrorHandlingMiddleware and LoggingMiddleware handle all error processing
+- **Context-Based Communication**: All MCP tools use Context parameter for real-time client logging
 
 ### TDD Implementation Phases
 
@@ -218,42 +229,44 @@ Quality Gates:
 - ✅ Verify service layer separation from MCP interface
 ```
 
-### Step 3.2: Error Handling and Validation
+### Step 3.2: FastMCP Error Handling and Validation
+
+**Architecture Decision**: Use FastMCP's built-in error handling capabilities rather than custom solutions.
 
 **Red Phase - Create failing tests**:
 ```text
 Test Coverage Required:
-- Create tests/unit/services/test_error_handling.py
-- Test invalid score handling (outside 0-100)
-- Test missing parameter scenarios
-- Test invalid loop type values
-- Test configuration loading failures
-- Test graceful degradation scenarios
-- Verify error conditions trigger expected behaviors
+- Update tests to expect FastMCP ToolError exceptions
+- Test invalid score handling (outside 0-100) → LoopValidationError
+- Test missing loop scenarios → LoopStateError
+- Test invalid loop type values → LoopValidationError
+- Test service boundary exception mapping
+- Test Context-based client communication
+- Verify error conditions trigger expected FastMCP behaviors
 ```
 
 **Green Phase - Minimal implementation**:
 ```text
 Implementation Tasks:
-- Create services/error_handling.py
-- Implement score validation and clamping
-- Add parameter existence checking
-- Implement configuration fallback mechanisms
-- Add logging for error conditions
-- Ensure graceful failure modes
-- Make all tests pass
+- Create FastMCP exception hierarchy (LoopValidationError, LoopStateError)
+- Add ErrorHandlingMiddleware and LoggingMiddleware to MCP server
+- Implement service boundary exception mapping in LoopTools
+- Add Context parameter to all MCP tools for client communication
+- Map domain exceptions to FastMCP exceptions at service layer
+- Add validation with clear, actionable error messages
+- Make all tests pass with FastMCP patterns
 ```
 
 **Refactor Phase - Quality compliance**:
 ```text
 Quality Gates:
-- ✅ Run mypy - resolve all type errors
+- ✅ Run mypy - resolve all type errors (including Context types)
 - ✅ Run ruff - fix all linting issues
 - ✅ Run pytest - all tests pass, no warnings
-- ✅ Evaluate if error handling is too complex (simplify)
-- ✅ Ensure error messages are clear for debugging
-- ✅ Remove obvious error handling comments
-- ✅ Validate exception types and handling patterns
+- ✅ Validate FastMCP best practices compliance
+- ✅ Ensure service layer properly maps domain exceptions
+- ✅ Verify client communication through Context works correctly
+- ✅ Test middleware error handling integration
 ```
 
 ### Step 3.3: FastMCP Server Integration
@@ -262,11 +275,13 @@ Quality Gates:
 ```text
 Test Coverage Required:
 - Create tests/integration/test_fastmcp_server.py
-- Test FastMCP server initialization and tool registration
-- Test MCP tool discovery and metadata
+- Test FastMCP server initialization with middleware
+- Test MCP tool registration and discovery
 - Test server startup/shutdown lifecycle
-- Test error handling at server level
+- Test ErrorHandlingMiddleware integration
+- Test LoggingMiddleware with client communication
 - Test tool parameter validation through FastMCP
+- Test Context-based logging in MCP tools
 - Verify tests fail without FastMCP implementation
 ```
 
@@ -274,11 +289,12 @@ Test Coverage Required:
 ```text
 Implementation Tasks:
 - Create services/mcp/server.py with FastMCP server setup
-- Register existing decide_loop_next_action as @mcp.tool()
+- Add ErrorHandlingMiddleware and LoggingMiddleware configuration
+- Register all MCP tools as async @mcp.tool() with Context parameter
 - Add server configuration via Pydantic settings
-- Implement graceful server lifecycle management
+- Implement error callback for middleware
 - Add health check endpoints
-- Ensure proper async/await patterns if needed
+- Ensure proper async/await patterns throughout
 - Make all tests pass
 ```
 
@@ -565,51 +581,96 @@ Quality Gates:
 ### Complete MCP Server Structure
 ```python
 # Production MCP Server with FastMCP Integration
-from fastmcp import FastMCP
+from fastmcp import FastMCP, Context
+from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
+from fastmcp.server.middleware.logging import LoggingMiddleware
+from services.utils.models import MCPResponse
 
 mcp = FastMCP("Loop Management Server")
 
+# Configure error handling middleware
+mcp.add_middleware(ErrorHandlingMiddleware(
+    include_traceback=settings.debug,
+    transform_errors=True,
+    error_callback=handle_error
+))
+
+# Configure logging middleware  
+mcp.add_middleware(LoggingMiddleware(
+    include_payloads=settings.debug,
+    max_payload_length=200
+))
+
 @mcp.tool()
-def initialize_refinement_loop(loop_type: str, initial_content: str) -> dict:
-    """Start a new refinement loop with initial content.
+async def initialize_refinement_loop(loop_type: str, ctx: Context) -> MCPResponse:
+    """Initialize a new refinement loop.
     
-    Args:
-        loop_type: Type of loop (plan, spec, build_plan, build_code)
-        initial_content: Initial content to start refining
-        
+    Creates a new refinement loop session and returns loop ID for tracking
+    and managing the loop state throughout the refinement process.
+    
+    Parameters:
+    - loop_type: One of 'plan', 'spec', 'build_plan', 'build_code'
+    
     Returns:
-        dict: Loop initialization result with loop_id and status
+    - MCPResponse: Contains loop_id and status ('initialized')
     """
-    # Implementation using existing services
+    await ctx.info(f"Initializing new {loop_type} loop")
+    result = loop_tools.initialize_refinement_loop(loop_type)
+    await ctx.info(f"Created {loop_type} loop with ID: {result.id}")
+    return result
 
 @mcp.tool() 
-def decide_loop_next_action(
-    loop_type: str,
-    current_score: int, 
-    previous_scores: list[int],
-    iteration: int,
-    max_iterations: int = 20
-) -> str:
+async def decide_loop_next_action(loop_id: str, current_score: int, ctx: Context) -> MCPResponse:
     """Decide next action for refinement loop progression.
     
-    This is the core decision tool - already implemented and tested.
+    Analyzes current quality scores, improvement trends, and iteration counts
+    to determine whether to continue refining content, complete the loop, or
+    escalate to human input.
+    
+    Parameters:
+    - loop_id: Unique identifier of the loop to process
+    - current_score: Quality score from 0-100 for current iteration
+    
+    Returns:
+    - MCPResponse: Contains loop_id and status ('completed', 'refine', 'user_input')
     """
-    # Current implementation - no changes needed
+    await ctx.info(f"Processing decision for loop {loop_id} with score {current_score}")
+    result = loop_tools.decide_loop_next_action(loop_id, current_score)
+    await ctx.info(f"Decision result for loop {loop_id}: {result.status}")
+    return result
     
 @mcp.tool()
-def reset_loop_state(loop_id: str) -> dict:
-    """Reset or clear loop state for fresh start."""
-    # New implementation needed
-
-@mcp.tool()
-def get_loop_status(loop_id: str) -> dict:
-    """Get current status and history of a loop."""
-    # New implementation needed
+async def get_loop_status(loop_id: str, ctx: Context) -> MCPResponse:
+    """Get current status and history of a loop.
+    
+    Returns complete loop information including current status,
+    iteration count, score history, and metadata.
+    
+    Parameters:
+    - loop_id: Unique identifier of the loop
+    
+    Returns:
+    - MCPResponse: Complete loop state with all metadata and history
+    """
+    await ctx.info(f"Retrieving status for loop {loop_id}")
+    result = loop_tools.get_loop_status(loop_id)
+    await ctx.info(f"Retrieved status for loop {loop_id}: {result.status}")
+    return result
     
 @mcp.tool()
-def list_active_loops() -> list[dict]:
-    """List all currently active refinement loops."""
-    # New implementation needed
+async def list_active_loops(ctx: Context) -> list[MCPResponse]:
+    """List all currently active refinement loops.
+    
+    Returns summary information for all active loops in the current
+    session. Useful for managing multiple concurrent refinement processes.
+    
+    Returns:
+    - list[MCPResponse]: List of active loops with their current status
+    """
+    await ctx.info("Retrieving list of active loops")
+    result = loop_tools.list_active_loops()
+    await ctx.info(f"Found {len(result)} active loops")
+    return result
 ```
 
 ## Implementation Success Criteria (UPDATED)
