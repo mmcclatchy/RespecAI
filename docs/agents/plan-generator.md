@@ -78,21 +78,11 @@ Task(
    - Avoid disrupting conversation flow
    - Improve quality iteratively
 
-## Tool Permissions
+## Tool Parameters
 
-### Allowed Tools by Platform
-- Markdown:
-  - Create: **Write**
-  - Read:   **Read**
-  - Update: **Write**
-- Linear:
-  - Create: **create_project**
-  - Read:   **get_project**
-  - Update: **update_project**
-- GitHub:
-  - Create: **create_project**
-  - Read:   **get_project**
-  - Update: **update_project**
+- **create_project**: Create a new project
+- **get_project**: Get a project
+- **update_project**: Update a project
 
 ### Restrictions
 - Operates purely through dialogue

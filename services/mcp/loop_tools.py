@@ -53,5 +53,21 @@ class LoopTools:
         except Exception as e:
             raise LoopStateError(loop_id, 'decision', f'Unexpected error: {str(e)}')
 
+    def get_previous_objective_feedback(self, loop_id: str) -> MCPResponse:
+        try:
+            return self.state.get_objective_feedback(loop_id)
+        except LoopNotFoundError:
+            raise LoopStateError(loop_id, 'feedback_retrieval', 'Loop does not exist')
+        except Exception as e:
+            raise LoopStateError(loop_id, 'feedback_retrieval', f'Unexpected error: {str(e)}')
+
+    def store_current_objective_feedback(self, loop_id: str, feedback: str) -> MCPResponse:
+        try:
+            return self.state.store_objective_feedback(loop_id, feedback)
+        except LoopNotFoundError:
+            raise LoopStateError(loop_id, 'feedback_storage', 'Loop does not exist')
+        except Exception as e:
+            raise LoopStateError(loop_id, 'feedback_storage', f'Unexpected error: {str(e)}')
+
 
 loop_tools = LoopTools(InMemoryStateManager())

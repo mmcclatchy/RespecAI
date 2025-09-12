@@ -8,6 +8,7 @@ class LoopType(Enum):
     SPEC = 'spec'
     BUILD_PLAN = 'build_plan'
     BUILD_CODE = 'build_code'
+    ANALYST = 'analyst'
 
     @property
     def threshold(self) -> int:

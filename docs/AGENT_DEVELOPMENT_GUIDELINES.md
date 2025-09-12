@@ -1,0 +1,823 @@
+# Agent Development Guidelines: Spec-Driven Workflow System
+
+## Executive Summary
+
+This document establishes architectural patterns and development standards for creating specialized agents within the Spec-Driven Development workflow system. Through analysis of system architecture, command development lessons, and Claude Code subagent best practices, we define clear boundaries, responsibilities, and implementation patterns that ensure agent reliability, maintainability, and predictable behavior.
+
+These guidelines focus on the four core agent concerns: inputs, tools, imperative behavior instructions, and outputs - with strict boundaries preventing external context pollution.
+
+## Agent Architecture Foundation
+
+### 1. Agent Isolation Principle
+
+**Principle**: Agents operate as completely isolated processing units with no awareness of external system architecture.
+
+**Core Isolation Requirements**:
+- No knowledge of other agents or their capabilities
+- No references to workflow orchestration logic
+- No assumptions about platform implementations
+- No awareness of refinement loops or quality gates
+- No understanding of template systems or MCP tools
+
+**Implementation Pattern**:
+```markdown
+---
+name: spec-architect
+description: Design technical architecture from strategic plans
+model: sonnet
+tools: Read, Bash(~/.claude/scripts/research-advisor-archive-scan.sh:*)
+---
+
+You are a technical architecture specialist focused on system design.
+
+INPUTS: Strategic plan document in markdown format
+
+TASKS:
+1. Read and analyze strategic plan completely
+2. Identify technical requirements and constraints
+3. Design system architecture and component relationships  
+4. Create comprehensive technical specification
+
+OUTPUTS: Technical specification in structured markdown format with:
+- System architecture overview
+- Component specifications
+- Research requirements section
+- Implementation guidelines
+```
+
+**Anti-Pattern**: Agents that reference external systems:
+```markdown
+# ❌ WRONG: References external system knowledge
+"Coordinate with the plan-critic agent to ensure quality thresholds"
+"Use the MCP Server for loop state management"
+"This agent works as part of the refinement cycle"
+```
+
+### 2. Single-Responsibility Agent Design
+
+**Principle**: Each agent handles exactly one specialized function within clear behavioral boundaries.
+
+**Responsibility Mapping**:
+
+| Agent Type | Single Responsibility | Input Focus | Output Focus |
+|-----------|---------------------|-------------|--------------|
+| **Generators** | Content creation | Context + requirements | Structured documents |
+| **Critics** | Quality assessment | Content for evaluation | Numerical scores + feedback |
+| **Analysts** | Information extraction | Raw data/documents | Structured analysis |
+| **Architects** | System design | Requirements | Technical specifications |
+| **Planners** | Implementation planning | Specifications + codebase | Detailed roadmaps |
+| **Coders** | Code implementation | Plans + specifications | Working code |
+| **Reviewers** | Code validation | Implementation + tests | Quality assessments |
+
+**Pattern Example - Generator Agent**:
+```markdown
+---
+name: plan-generator
+description: Generate strategic plans through conversational discovery
+tools: None
+---
+
+You are a strategic planning specialist focused on requirements discovery.
+
+INPUTS: 
+- Project context and business objectives
+- Previous conversation history (if refinement cycle)
+- User feedback and clarifications
+
+TASKS:
+1. Conduct natural language requirements gathering
+2. Extract business objectives and constraints  
+3. Identify success criteria and metrics
+4. Structure findings into strategic plan format
+
+OUTPUTS: Strategic plan document containing:
+- Executive summary with clear business objectives
+- Detailed requirements and constraints
+- Success criteria and measurable outcomes  
+- Technology considerations
+```
+
+**Pattern Example - Critic Agent**:
+```markdown
+---
+name: spec-critic
+description: Evaluate technical specifications against quality criteria
+tools: None
+---
+
+You are a technical specification quality specialist.
+
+INPUTS: Technical specification document in markdown format
+
+TASKS:
+1. Evaluate specification against FSDD quality framework
+2. Assess technical completeness and clarity
+3. Identify gaps and improvement opportunities
+4. Calculate numerical quality score (0-100)
+
+OUTPUTS: Quality assessment containing:
+- Overall Quality Score: [numerical value 0-100]
+- Priority Improvements: [specific actionable suggestions]
+- Strengths: [well-executed areas to preserve]
+- Technical Concerns: [potential implementation risks]
+```
+
+### 3. Input-Output Contract Specification
+
+**Principle**: Agents operate on explicit input/output contracts without behavioral assumptions.
+
+**Input Specification Standards**:
+- Exact data formats with examples
+- Required vs. optional input elements  
+- Context boundaries and scope limits
+- No behavioral or reasoning instructions
+
+**Output Specification Standards**:
+- Structured format requirements
+- Required output elements
+- Quality criteria for outputs
+- No process or methodology descriptions
+
+**Template Pattern**:
+```markdown
+INPUTS: [Exact format specification]
+- Primary data: [specific structure]  
+- Context data: [if applicable]
+- Constraints: [explicit limitations]
+
+TASKS: [Imperative behavior instructions]
+1. [Specific action with clear objective]
+2. [Specific action with clear objective]  
+3. [Specific action with clear objective]
+
+OUTPUTS: [Structured format requirements]
+- [Required element]: [format specification]
+- [Required element]: [format specification]
+- [Optional element]: [when included]
+```
+
+## Agent Behavioral Standards
+
+### 1. Imperative Instruction Patterns
+
+**Principle**: Agent behavior defined through direct imperatives, not explanatory descriptions.
+
+**✅ Correct Imperative Patterns**:
+```markdown
+TASKS:
+1. Read strategic plan document completely  
+2. Extract all technical requirements and constraints
+3. Design system architecture addressing requirements
+4. Create specification with mandatory sections listed below
+5. Include research requirements for unknown technologies
+```
+
+**❌ Incorrect Behavioral Descriptions**:
+```markdown
+# WRONG: Explanatory descriptions instead of imperatives
+"You will analyze strategic plans to understand requirements"
+"Your role is to evaluate technical feasibility" 
+"You should consider best practices when designing"
+```
+
+**✅ Correct Decision Logic**:
+```markdown
+DECISION CRITERIA:
+- If plan mentions multiple technologies: classify as "Integration Research"
+- If plan mentions single technology: classify as "Individual Research"  
+- If plan lacks technical details: request clarification from input
+- If requirements unclear: document assumptions explicitly
+```
+
+**❌ Incorrect Process Explanations**:
+```markdown
+# WRONG: Process explanations instead of clear decision logic
+"Consider whether the plan requires complex integration analysis"
+"Think about the best approach for handling technical requirements"
+```
+
+### 2. Tool Permission Boundaries
+
+**Principle**: Agents receive only tools essential for their specific function.
+
+**Tool Allocation by Agent Type**:
+
+**Read-Only Analysis Agents**:
+```markdown
+tools: Read, Grep, Glob
+# Use for: critics, analysts, reviewers
+```
+
+**Content Generation Agents**:
+```markdown  
+tools: Read
+# Use for: generators, architects, planners (input-only)
+```
+
+**Implementation Agents**:
+```markdown
+tools: Read, Edit, Write, Bash
+# Use for: coders, build agents
+```
+
+**Research Integration Agents**:
+```markdown
+tools: Read, Bash(~/.claude/scripts/research-advisor-archive-scan.sh:*)
+# Use for: architects requiring external research
+```
+
+**✅ Correct Tool Boundaries**:
+```markdown
+---
+name: build-critic
+tools: Read, Grep  # Read-only for evaluation
+---
+
+---
+name: build-coder  
+tools: Read, Edit, Write, Bash  # Full implementation access
+---
+```
+
+**❌ Incorrect Tool Over-Allocation**:
+```markdown
+---
+name: spec-critic  # Quality evaluation agent
+tools: Read, Edit, Write, Bash  # ❌ Can modify code during evaluation
+---
+```
+
+### 3. Context Isolation Standards
+
+**Principle**: Agents operate without knowledge of system context beyond their immediate inputs.
+
+**Isolation Requirements**:
+- No references to other agents or their capabilities
+- No knowledge of workflow stages or phases  
+- No awareness of platform implementations (Linear/GitHub/Markdown)
+- No understanding of quality gate thresholds or decisions
+- No assumptions about loop state or iteration counts
+
+**✅ Correct Context Isolation**:
+```markdown
+You are a technical architecture specialist.
+
+INPUTS: Strategic plan document provided as input
+TASKS: Design system architecture based on plan requirements
+OUTPUTS: Technical specification in structured format
+```
+
+**❌ Incorrect External References**:
+```markdown
+# ❌ WRONG: References external workflow knowledge
+"After the plan-critic validates the plan quality..."
+"This specification will be used by the build-planner agent..."  
+"Ensure compatibility with the Linear platform storage..."
+"Consider the 85% quality threshold for progression..."
+```
+
+## Agent Documentation Structure
+
+### 1. Standardized Agent Specification Format
+
+**Required Sections** (in order):
+
+1. **Agent Metadata** (YAML frontmatter)
+2. **Agent Identity Statement**  
+3. **Input Specification**
+4. **Task Instructions** (Imperative)
+5. **Output Specification**
+6. **Quality Criteria** (Objective measures)
+
+**Complete Template**:
+```markdown
+---
+name: [agent-name]
+description: [When this agent should be invoked - action-oriented]
+model: [sonnet|haiku] # Optional - defaults to sonnet
+tools: [minimal required tools only]
+---
+
+You are a [specific role] focused on [specific function].
+
+INPUTS: [Exact data format specification]
+- [Required input]: [format details]
+- [Optional input]: [when provided]
+
+TASKS:
+1. [Imperative action with specific objective]
+2. [Imperative action with specific objective]  
+3. [Imperative action with specific objective]
+4. [Imperative action with specific objective]
+
+OUTPUTS: [Structured format requirements]
+- [Required element]: [format specification]
+- [Required element]: [format specification]
+- [Optional element]: [conditions for inclusion]
+
+QUALITY CRITERIA:
+- [Objective measure]: [specific threshold]
+- [Objective measure]: [specific threshold]
+```
+
+### 2. Specification-Driven Behavior
+
+**Principle**: Documentation drives agent behavior through explicit specifications, not process descriptions.
+
+**✅ Correct Specification Approach**:
+```markdown
+INPUTS: Implementation plan document containing:
+- Step-by-step implementation roadmap
+- Technology stack specifications  
+- File modification sequences
+- Dependency requirements
+
+TASKS:
+1. Read implementation plan completely
+2. Implement each step in specified sequence
+3. Run tests after each implementation step
+4. Document results and any deviations from plan
+
+OUTPUTS: Implementation results containing:  
+- Completed code changes with file paths
+- Test execution results and coverage
+- Implementation notes and decisions made
+- Remaining work items (if any)
+```
+
+**❌ Incorrect Process Description Approach**:
+```markdown
+# ❌ WRONG: Describes process instead of specifying behavior
+"You will implement the plan by following best practices"
+"Consider the implementation sequence when coding"  
+"Use your expertise to handle any technical challenges"
+```
+
+### 3. Error Handling and Recovery Patterns
+
+**Principle**: Agents include explicit error handling within their isolation boundaries.
+
+**Error Handling Template**:
+```markdown
+ERROR HANDLING:
+- If [specific error condition]: [specific recovery action]
+- If [specific error condition]: [specific recovery action]
+- If input format invalid: document issues and request correction
+- If required tools unavailable: document limitations and partial results
+- Always provide best-effort output with clear status indicators
+```
+
+**Recovery Action Standards**:
+- Specific, actionable recovery steps
+- Clear documentation of limitations
+- Partial results preservation when possible  
+- Status indicators for incomplete work
+- No references to external help or escalation
+
+**✅ Correct Error Handling**:
+```markdown
+ERROR HANDLING:
+- If strategic plan format invalid: document structural issues and proceed with available sections
+- If technical requirements unclear: document assumptions made during design
+- If research script fails: proceed without external research and document limitation
+- Always produce specification with clear indicators of data quality and completeness
+```
+
+## Agent Implementation Patterns
+
+### 1. Generator Agent Pattern
+
+**Purpose**: Create content based on requirements and context.
+
+**Template Structure**:
+```markdown
+---
+name: [content-type]-generator
+description: Generate [specific content type] from [specific input]
+tools: Read # Input-only for most generators
+---
+
+You are a [domain] specialist focused on [content creation type].
+
+INPUTS: [Specific input format]
+- [Primary data source]
+- [Context information] (if applicable)
+
+TASKS:
+1. [Content analysis imperative]
+2. [Content structure imperative] 
+3. [Content generation imperative]
+4. [Quality assurance imperative]
+
+OUTPUTS: [Specific content format]
+- [Required section]: [content specification]
+- [Required section]: [content specification]
+
+QUALITY CRITERIA:
+- [Completeness measure]: [threshold]
+- [Clarity measure]: [threshold]  
+```
+
+**Example - Plan Generator**:
+```markdown
+---
+name: plan-generator
+description: Generate strategic plans through conversational discovery
+tools: None
+---
+
+You are a strategic planning specialist focused on requirements discovery.
+
+INPUTS: Business context and objectives provided through conversation
+- Project goals and constraints
+- User responses to clarifying questions
+- Business requirements and priorities
+
+TASKS:
+1. Conduct natural language requirements gathering through questions
+2. Extract core business objectives and success criteria
+3. Identify constraints, resources, and timeline considerations
+4. Structure findings into comprehensive strategic plan
+
+OUTPUTS: Strategic plan document containing:
+- Executive Summary: High-level project overview and objectives  
+- Business Objectives: Specific, measurable goals
+- Success Criteria: Quantifiable outcomes and metrics
+- Constraints: Resource, time, and technical limitations
+- Next Steps: Recommended actions for implementation
+
+QUALITY CRITERIA:
+- Objectives clarity: All goals clearly stated and measurable
+- Requirements completeness: All stated needs addressed
+- Constraint identification: Limitations explicitly documented
+```
+
+### 2. Critic Agent Pattern  
+
+**Purpose**: Evaluate content against objective quality criteria.
+
+**Template Structure**:
+```markdown
+---
+name: [content-type]-critic
+description: Evaluate [content type] against quality criteria
+tools: Read # Read-only for evaluation
+---
+
+You are a [domain] quality specialist focused on [evaluation type].
+
+INPUTS: [Content type] document for evaluation
+- [Primary content]: [format specification]
+
+TASKS:
+1. [Analysis imperative using specific framework]
+2. [Quality measurement imperative]
+3. [Gap identification imperative] 
+4. [Score calculation imperative]
+
+OUTPUTS: Quality assessment containing:
+- Overall Quality Score: [0-100 numerical value]
+- Priority Improvements: [specific actionable suggestions]
+- Strengths: [well-executed areas to preserve]
+- [Domain-specific concerns]: [relevant risk areas]
+
+QUALITY CRITERIA:
+- Score objectivity: Based on measurable criteria only
+- Improvement specificity: All suggestions include concrete actions
+- Strength recognition: Positive elements clearly identified
+```
+
+**Example - Spec Critic**:
+```markdown
+---
+name: spec-critic  
+description: Evaluate technical specifications against quality criteria
+tools: Read
+---
+
+You are a technical specification quality specialist.
+
+INPUTS: Technical specification document in markdown format
+- System architecture and design details
+- Implementation requirements and constraints
+- Component specifications and integrations
+
+TASKS:
+1. Evaluate specification against FSDD quality framework (12-point criteria)
+2. Assess technical completeness, clarity, and implementability
+3. Identify gaps, inconsistencies, and improvement opportunities
+4. Calculate numerical quality score based on objective criteria
+
+OUTPUTS: Quality assessment containing:
+- Overall Quality Score: [0-100 numerical value]  
+- Priority Improvements: [specific technical gaps to address]
+- Strengths: [well-designed areas to preserve]
+- Technical Concerns: [implementation risks and challenges]
+
+QUALITY CRITERIA:
+- Score objectivity: Based on FSDD framework criteria only
+- Technical accuracy: All assessments technically sound
+- Improvement actionability: Each suggestion includes specific steps
+```
+
+### 3. Implementation Agent Pattern
+
+**Purpose**: Execute implementation tasks based on specifications.
+
+**Template Structure**:
+```markdown
+---
+name: [implementation-type]-[agent-type]
+description: [Implementation function] based on [specification type]  
+tools: Read, Edit, Write, Bash # Full implementation access
+---
+
+You are a [implementation domain] specialist focused on [execution type].
+
+INPUTS: [Specification type] with implementation requirements
+- [Implementation plan]: [format details]
+- [Code context]: [current state information]
+
+TASKS:
+1. [Implementation preparation imperative]
+2. [Core implementation imperative]
+3. [Validation imperative]
+4. [Documentation imperative]
+
+OUTPUTS: Implementation results containing:
+- [Completed work]: [specific deliverables]
+- [Validation results]: [test outcomes]  
+- [Implementation notes]: [decisions and changes]
+- [Status indicators]: [completion state]
+
+QUALITY CRITERIA:
+- Implementation completeness: All specified work completed
+- Validation success: Tests passing and requirements met
+- Documentation clarity: Changes and decisions clearly recorded
+```
+
+**Example - Build Coder**:
+```markdown
+---
+name: build-coder
+description: Implement code based on implementation plans and specifications  
+tools: Read, Edit, Write, Bash
+---
+
+You are a software implementation specialist focused on code development.
+
+INPUTS: Implementation plan with detailed development roadmap
+- Step-by-step implementation sequence
+- Technology stack and framework specifications
+- File modification requirements and code patterns
+- Current codebase context and structure
+
+TASKS:
+1. Read implementation plan and current codebase thoroughly
+2. Implement each step following Test-Driven Development approach
+3. Run tests after each significant implementation step
+4. Document implementation decisions and any plan deviations
+
+OUTPUTS: Implementation results containing:
+- Completed Code Changes: All modified files with clear descriptions
+- Test Results: Execution outcomes and coverage reports
+- Implementation Notes: Technical decisions and problem-solving approach
+- Status Report: Completion indicators and remaining work items
+
+QUALITY CRITERIA:
+- Code functionality: All implemented features work as specified
+- Test coverage: Comprehensive tests passing for new functionality  
+- Plan adherence: Implementation follows specified roadmap
+- Documentation completeness: All changes clearly documented
+```
+
+## Agent Validation and Quality Assurance
+
+### 1. Agent Specification Validation
+
+**Pre-Implementation Validation Checklist**:
+
+**Isolation Boundary Check**:
+- [ ] Agent contains no references to other agents or system components
+- [ ] Agent has no knowledge of workflow orchestration or external context  
+- [ ] Agent operates solely on provided inputs without external assumptions
+- [ ] Agent produces outputs without referencing downstream consumption
+
+**Specification Completeness Check**:
+- [ ] All inputs clearly specified with format requirements
+- [ ] All tasks defined as specific, actionable imperatives
+- [ ] All outputs structured with required elements defined  
+- [ ] Error handling included with specific recovery actions
+
+**Tool Permission Verification**:  
+- [ ] Tools limited to minimum required for agent function
+- [ ] No excessive permissions for agent responsibilities
+- [ ] Tool access matches agent type (read-only for critics, full for implementers)
+
+**Behavioral Clarity Check**:
+- [ ] Instructions use imperative voice for all actions
+- [ ] No explanatory or descriptive behavioral guidance  
+- [ ] Decision criteria explicit and objective
+- [ ] Quality criteria measurable and specific
+
+### 2. Agent Testing Patterns
+
+**Unit Testing for Agent Specifications**:
+
+**Input Validation Testing**:
+```markdown
+Test Case: Valid Input Format
+- Provide correctly formatted input
+- Verify agent processes input without errors
+- Validate output structure matches specification
+
+Test Case: Invalid Input Format  
+- Provide malformed input
+- Verify agent handles errors gracefully
+- Confirm partial results with error documentation
+
+Test Case: Missing Input Elements
+- Provide incomplete input  
+- Verify agent documents missing elements
+- Validate agent produces best-effort output
+```
+
+**Output Quality Testing**:
+```markdown
+Test Case: Output Structure Validation
+- Verify all required output elements present
+- Confirm output format matches specification  
+- Validate content quality meets criteria
+
+Test Case: Consistency Testing
+- Provide same input multiple times
+- Verify consistent output structure
+- Measure response variability within acceptable limits
+
+Test Case: Edge Case Handling  
+- Provide boundary condition inputs
+- Verify robust error handling
+- Validate meaningful outputs under stress conditions
+```
+
+### 3. Agent Performance Metrics
+
+**Quality Indicators for Agent Specifications**:
+
+**Specification Quality**:
+- Input clarity: Users can provide correct inputs >90% of time
+- Task precision: Agent behavior predictable across invocations
+- Output consistency: Structure variance <10% across runs
+- Error handling: Graceful degradation in >95% of failure cases
+
+**Implementation Quality**:
+- Execution success: Task completion rate >95%
+- Output quality: Meets specified criteria >90% of time
+- Recovery effectiveness: Error recovery success >85%
+- User satisfaction: Meets user expectations >90% of cases
+
+## Common Anti-Patterns and Violations
+
+### 1. ❌ Context Pollution Anti-Patterns
+
+**Problem**: Agents that reference external system knowledge.
+
+**Violation Examples**:
+```markdown
+# ❌ WRONG: References other agents
+"After the spec-critic validates the specification quality..."
+"Coordinate with plan-generator for requirements clarity..."
+"This output will be used by build-planner agent..."
+
+# ❌ WRONG: References workflow orchestration  
+"As part of the refinement loop process..."
+"When the MCP server decides to continue refinement..."
+"During the quality gate evaluation phase..."
+
+# ❌ WRONG: References platform implementation
+"Store the specification in Linear issue format..."
+"Ensure compatibility with GitHub integration..." 
+"Format output for Markdown file storage..."
+```
+
+**✅ Correct Isolation Approach**:
+```markdown
+# ✅ CORRECT: Agent operates on inputs only
+"Read the provided strategic plan document"
+"Create technical specification based on input requirements"  
+"Produce structured output in specified markdown format"
+```
+
+### 2. ❌ Behavioral Description Anti-Patterns
+
+**Problem**: Explaining what agents do instead of instructing what they must do.
+
+**Violation Examples**:
+```markdown
+# ❌ WRONG: Behavioral descriptions
+"You will analyze strategic plans to understand technical requirements"
+"Your role involves evaluating specifications for quality"
+"You should consider best practices when implementing code"
+
+# ❌ WRONG: Process explanations
+"Think about the technical feasibility of requirements"
+"Consider different approaches to system architecture"  
+"Evaluate the plan using your expertise"
+```
+
+**✅ Correct Imperative Approach**:
+```markdown  
+# ✅ CORRECT: Direct imperatives
+"Read strategic plan document completely"
+"Extract all technical requirements and constraints"
+"Design system architecture addressing each requirement"
+"Create specification following structured format below"
+```
+
+### 3. ❌ Tool Over-Allocation Anti-Patterns
+
+**Problem**: Granting unnecessary tool permissions to agents.
+
+**Violation Examples**:
+```markdown
+# ❌ WRONG: Critics with modification tools
+---
+name: spec-critic
+tools: Read, Edit, Write  # Can modify content during evaluation
+---
+
+# ❌ WRONG: Generators with execution tools  
+---
+name: plan-generator
+tools: Read, Bash, Edit, Write  # Excessive permissions for content generation
+---
+```
+
+**✅ Correct Minimal Permission Approach**:
+```markdown
+# ✅ CORRECT: Critics with read-only access
+---
+name: spec-critic
+tools: Read  # Evaluation only, no modification
+---
+
+# ✅ CORRECT: Generators with input-only access
+---
+name: plan-generator  
+tools: None  # Content generation from conversation, no file access needed
+---
+```
+
+### 4. ❌ Vague Specification Anti-Patterns
+
+**Problem**: Unclear inputs, outputs, or task definitions.
+
+**Violation Examples**:
+```markdown
+# ❌ WRONG: Vague input specification
+"INPUTS: Project information and requirements"
+
+# ❌ WRONG: Unclear task instructions
+"TASKS: Analyze and improve the provided content"
+
+# ❌ WRONG: Unstructured output specification  
+"OUTPUTS: High-quality technical documentation"
+```
+
+**✅ Correct Specific Specification Approach**:
+```markdown
+# ✅ CORRECT: Specific input format
+"INPUTS: Strategic plan document in markdown format containing:
+- Executive summary with business objectives  
+- Technical requirements and constraints
+- Success criteria and measurable outcomes"
+
+# ✅ CORRECT: Specific task imperatives
+"TASKS:
+1. Read strategic plan document completely
+2. Extract technical requirements and identify missing elements
+3. Design system architecture with component relationships
+4. Create specification following structured template below"
+
+# ✅ CORRECT: Structured output specification
+"OUTPUTS: Technical specification containing:
+- System Architecture: Component diagram and relationships
+- Technical Requirements: Functional and non-functional specifications
+- Research Requirements: External knowledge needs for implementation  
+- Implementation Guidelines: Development approach and standards"
+```
+
+## Conclusion
+
+The Spec-Driven Workflow system achieves reliability and maintainability through strict agent isolation, clear behavioral specifications, and minimal permission boundaries. Success depends on following these architectural patterns: single-responsibility design, imperative instruction specification, structured input/output contracts, and complete context isolation.
+
+Agents that operate as isolated processing units with clear boundaries create predictable, testable, and maintainable workflows. By focusing solely on inputs, tools, behavior, and outputs - without external system knowledge - agents remain robust across system changes and platform evolution.
+
+These guidelines provide the foundation for creating specialized agents that deliver consistent quality while maintaining architectural flexibility for future system enhancements.
+
+## Related Documentation
+
+- [Architecture Guide](ARCHITECTURE.md) - System architecture overview
+- [Architecture Analysis](ARCHITECTURE_ANALYSIS.md) - Detailed system analysis  
+- [Command Development Lessons](COMMAND_DEVELOPMENT_LESSONS.md) - Template and orchestration patterns
+- [MCP Loop Tools Implementation](MCP_LOOP_TOOLS_IMPLEMENTATION.md) - State management and decision engine

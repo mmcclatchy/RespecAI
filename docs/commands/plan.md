@@ -32,6 +32,8 @@ The `/plan` command initiates the strategic planning phase of the Spec-Driven Wo
                            ↓
                     [plan-analyst extraction]
                            ↓
+                    [analyst-critic ↔ plan-analyst validation loop]
+                           ↓
                     Ready for /spec command
 ```
 
@@ -59,13 +61,14 @@ The `/plan` command initiates the strategic planning phase of the Spec-Driven Wo
    - Route feedback to `plan-generator` for improvements
    - Monitor iteration count and quality scores
 
-4. **Extract Business Objectives**
-   - Invoke `plan-analyst` agent after loop completion
+4. **Extract and Validate Business Objectives**
+   - Invoke `plan-analyst` agent after plan loop completion
    - Transform conversational plan into structured objectives
-   - Prepare output for technical specification phase
+   - Initialize validation loop with `analyst-critic` for quality assessment
+   - Manage refinement cycles between analyst and critic until validated
 
 5. **Handle Loop Termination**
-   - Recognize completion signals from MCP Server
+   - Recognize completion signals from MCP Server for both loops
    - Manage user escalation when stagnation detected
    - Ensure graceful completion regardless of exit reason
 
@@ -75,40 +78,64 @@ The `/plan` command initiates the strategic planning phase of the Spec-Driven Wo
 ```text
 Main Agent (via /plan)
     │
-    ├── 1. Initialize MCP Loop
+    ├── 1. Initialize Plan MCP Loop
     │   └── mcp_tool: initialize_refinement_loop(loop_type='plan')
     │
-    ├── 2. Start Conversation Loop
+    ├── 2. Plan Generation Loop
     │   ├── Task: plan-generator (requirements gathering)
     │   ├── Task: plan-critic (quality assessment → score)
-    │   └── mcp_tool: decide_loop_next_action(loop_id, score)
+    │   └── mcp_tool: decide_loop_next_action(plan_loop_id, score)
     │
-    ├── 3. Handle Loop Decision
+    ├── 3. Handle Plan Loop Decision
     │   ├── IF "refine" → Pass feedback to plan-generator
-    │   ├── IF "complete" → Exit loop successfully
+    │   ├── IF "complete" → Proceed to objective extraction
     │   └── IF "user_input" → Request clarification
     │
-    └── 4. Extract Objectives
-        └── Task: plan-analyst (final structuring)
+    ├── 4. Initialize Analyst MCP Loop
+    │   └── mcp_tool: initialize_refinement_loop(loop_type='analyst')
+    │
+    ├── 5. Objective Extraction and Validation Loop
+    │   ├── Task: plan-analyst (extract objectives from plan)
+    │   ├── Task: analyst-critic (validate extraction → score)
+    │   └── mcp_tool: decide_loop_next_action(analyst_loop_id, score)
+    │
+    └── 6. Handle Validation Loop Decision
+        ├── IF "refine" → Pass feedback to plan-analyst for re-extraction
+        ├── IF "complete" → Ready for /spec command
+        └── IF "user_input" → Request objective clarification
 ```
 
 ### Data Flow Between Agents
+**Plan Generation Phase:**
 - **plan-generator → Main Agent**: Conversational plan document (markdown)
 - **Main Agent → plan-critic**: Plan document for assessment
 - **plan-critic → Main Agent**: Quality score (0-100) and feedback
-- **Main Agent → MCP Server**: Score for decision logic
-- **MCP Server → Main Agent**: Next action decision
-- **Main Agent → plan-analyst**: Completed plan for extraction
+- **Main Agent → MCP Server**: Score for plan loop decision logic
+- **MCP Server → Main Agent**: Next action decision (refine/complete/user_input)
+
+**Objective Validation Phase:**
+- **Main Agent → plan-analyst**: Completed strategic plan for extraction
+- **plan-analyst → Main Agent**: Business objectives analysis (markdown)
+- **Main Agent → analyst-critic**: Objectives analysis for validation
+- **analyst-critic → Main Agent**: Validation score (0-100) and feedback
+- **Main Agent → MCP Server**: Score for analyst loop decision logic
+- **MCP Server → Main Agent**: Next action decision (refine/complete/user_input)
 
 ## Quality Gates
 
 ### Success Criteria
+**Plan Generation Phase:**
 - **Quality Threshold**: 85% (configurable via `FSDD_LOOP_PLAN_THRESHOLD`)
 - **Maximum Iterations**: 5 (configurable via `FSDD_LOOP_PLAN_MAX_ITERATIONS`)
 - **Improvement Threshold**: 5 points minimum between iterations
 
+**Objective Validation Phase:**
+- **Quality Threshold**: 85% (configurable via `FSDD_LOOP_ANALYST_THRESHOLD`)
+- **Maximum Iterations**: 3 (configurable via `FSDD_LOOP_ANALYST_MAX_ITERATIONS`)
+- **Improvement Threshold**: 8 points minimum between iterations
+
 ### FSDD Assessment Points
-The plan-critic evaluates against 12 criteria:
+**Plan-Critic Assessment** (12 criteria):
 1. **Clarity** - Requirements clearly stated
 2. **Completeness** - All aspects covered
 3. **Consistency** - No contradictions
@@ -121,6 +148,20 @@ The plan-critic evaluates against 12 criteria:
 10. **Usability** - User experience quality
 11. **Documentation** - Knowledge preservation plans
 12. **Integration** - System compatibility
+
+**Analyst-Critic Assessment** (12 dimensions):
+1. **Semantic Accuracy** - Extracted objectives match source plan intent
+2. **Completeness** - All stated objectives captured without omissions
+3. **Quantification Quality** - Success metrics properly measured and targeted
+4. **Stakeholder Mapping** - Accurate identification and needs assessment
+5. **Priority Accuracy** - Correct must-have vs nice-to-have classification
+6. **Dependency Mapping** - Accurate relationship identification
+7. **Constraint Documentation** - Complete technical and business limitations
+8. **Risk Assessment** - Appropriate risk identification and mitigation
+9. **Timeline Alignment** - Realistic phasing and milestone definition
+10. **Assumption Clarity** - Explicit documentation of key assumptions
+11. **Success Criteria** - Measurable acceptance criteria definition
+12. **Implementation Readiness** - Sufficient detail for technical specification
 
 ### Stagnation Detection
 - **Trigger**: Less than 5 points improvement over 2 consecutive iterations
@@ -232,7 +273,22 @@ plan-generator: Let me clarify a few more points about system integration...
 
 [Final score: 87% - Main Agent receives "complete" decision]
 
-Main Agent: Strategic plan completed successfully! Quality score: 87%. The plan is now ready for technical specification development. Use /spec to proceed.
+Main Agent: Strategic plan completed successfully! Quality score: 87%. Now extracting business objectives...
+
+[Main Agent invokes plan-analyst for objective extraction]
+
+plan-analyst: Analyzing strategic plan and extracting structured business objectives...
+
+[Main Agent invokes analyst-critic for validation]
+analyst-critic: Validating objective extraction... Score: 79% - needs improved quantification of success metrics
+
+[Main Agent receives "refine" decision from MCP Server for analyst loop]
+
+[Refinement cycle continues...]
+
+[Final validation score: 88% - Main Agent receives "complete" decision]
+
+Main Agent: Business objectives extracted and validated successfully! Validation score: 88%. The objectives are now ready for technical specification development. Use /spec to proceed.
 ```
 
 ## Implementation Notes
@@ -271,15 +327,29 @@ Main Agent: Strategic plan completed successfully! Quality score: 87%. The plan 
 - **plan-generator agent**: Conversational requirements gathering
 - **plan-critic agent**: Quality assessment and feedback
 - **plan-analyst agent**: Business objective extraction
+- **analyst-critic agent**: Objective validation and quality assessment
 
 ### MCP Tools Used
+**Plan Generation Phase:**
 - `initialize_refinement_loop(loop_type='plan')`
-- `decide_loop_next_action(loop_id, current_score)`
-- `get_loop_status(loop_id)` (optional for monitoring)
+- `decide_loop_next_action(plan_loop_id, current_score)`
+- `get_loop_status(plan_loop_id)` (optional for monitoring)
+
+**Objective Validation Phase:**
+- `initialize_refinement_loop(loop_type='analyst')`
+- `decide_loop_next_action(analyst_loop_id, current_score)`
+- `get_previous_objective_feedback(analyst_loop_id)`
+- `store_current_objective_feedback(analyst_loop_id, feedback)`
+- `get_loop_status(analyst_loop_id)` (optional for monitoring)
 
 ### Environment Variables
+**Plan Generation:**
 - `FSDD_LOOP_PLAN_THRESHOLD`: Quality threshold (default: 85)
 - `FSDD_LOOP_PLAN_MAX_ITERATIONS`: Maximum iterations (default: 5)
+
+**Objective Validation:**
+- `FSDD_LOOP_ANALYST_THRESHOLD`: Quality threshold (default: 85)
+- `FSDD_LOOP_ANALYST_MAX_ITERATIONS`: Maximum iterations (default: 3)
 
 ## Success Metrics
 
@@ -299,4 +369,6 @@ Main Agent: Strategic plan completed successfully! Quality score: 87%. The plan 
 - **Next Phase**: [`/spec` Command Specification](spec.md)
 - **Primary Agent**: [`plan-generator` Agent Specification](../agents/plan-generator.md)
 - **Quality Agent**: [`plan-critic` Agent Specification](../agents/plan-critic.md)
+- **Extraction Agent**: [`plan-analyst` Agent Specification](../agents/plan-analyst.md)
+- **Validation Agent**: [`analyst-critic` Agent Specification](../agents/analyst-critic.md)
 - **MCP Tools**: [MCP Tools Specification](../MCP_TOOLS_SPECIFICATION.md)

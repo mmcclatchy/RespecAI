@@ -21,6 +21,12 @@ class StateManager(ABC):
     @abstractmethod
     def list_active_loops(self) -> list[MCPResponse]: ...
 
+    @abstractmethod
+    def get_objective_feedback(self, loop_id: str) -> MCPResponse: ...
+
+    @abstractmethod
+    def store_objective_feedback(self, loop_id: str, feedback: str) -> MCPResponse: ...
+
 
 class Queue[T]:
     def __init__(self, maxlen: int) -> None:
@@ -37,6 +43,7 @@ class InMemoryStateManager(StateManager):
     def __init__(self, max_history_size: int = 10) -> None:
         self._active_loops: dict[str, LoopState] = {}
         self._loop_history: Queue[str] = Queue(maxlen=max_history_size)
+        self._objective_feedback: dict[str, str] = {}
 
     def add_loop(self, loop: LoopState) -> None:
         if loop.id in self._active_loops:
@@ -62,3 +69,17 @@ class InMemoryStateManager(StateManager):
 
     def list_active_loops(self) -> list[MCPResponse]:
         return [loop.mcp_response for loop in self._active_loops.values()]
+
+    def get_objective_feedback(self, loop_id: str) -> MCPResponse:
+        loop_state = self.get_loop(loop_id)
+        feedback = self._objective_feedback.get(loop_id, '')
+        return MCPResponse(
+            id=loop_id, status=loop_state.status, message=feedback or 'No previous objective feedback found'
+        )
+
+    def store_objective_feedback(self, loop_id: str, feedback: str) -> MCPResponse:
+        loop_state = self.get_loop(loop_id)
+        self._objective_feedback[loop_id] = feedback
+        return MCPResponse(
+            id=loop_id, status=loop_state.status, message=f'Objective feedback stored for loop {loop_id}'
+        )

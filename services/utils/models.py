@@ -9,6 +9,7 @@ from services.utils.enums import HealthState, LoopStatus, LoopType
 class MCPResponse(BaseModel):
     id: str
     status: LoopStatus
+    message: str = ''
 
 
 class LoopState(BaseModel):

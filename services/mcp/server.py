@@ -100,6 +100,43 @@ def create_mcp_server() -> FastMCP:
         await ctx.info(f'Found {len(result)} active loops')
         return result
 
+    @mcp.tool()
+    async def get_previous_objective_feedback(loop_id: str, ctx: Context) -> MCPResponse:
+        """Retrieve previous objective validation feedback for analyst-critic.
+
+        Returns stored feedback from previous validation cycles to enable
+        iterative improvement tracking and consistency assessment.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Contains previous feedback data with dimension scores and recommendations
+        """
+        await ctx.info(f'Retrieving previous objective feedback for loop {loop_id}')
+        result = loop_tools.get_previous_objective_feedback(loop_id)
+        await ctx.info(f'Retrieved objective feedback for loop {loop_id}')
+        return result
+
+    @mcp.tool()
+    async def store_current_objective_feedback(loop_id: str, feedback: str, ctx: Context) -> MCPResponse:
+        """Store current objective validation feedback for analyst-critic.
+
+        Persists validation feedback including dimension scores, specific findings,
+        and improvement recommendations for future refinement cycles.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+        - feedback: Complete validation feedback with scores and recommendations
+
+        Returns:
+        - MCPResponse: Confirmation of successful storage
+        """
+        await ctx.info(f'Storing objective feedback for loop {loop_id}')
+        result = loop_tools.store_current_objective_feedback(loop_id, feedback)
+        await ctx.info(f'Stored objective feedback for loop {loop_id}')
+        return result
+
     return mcp
 
 
