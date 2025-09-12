@@ -59,12 +59,12 @@ class LoopState(BaseModel):
         if len(self.score_history) < 3:
             return False
 
-        improvement_threshold = 5
+        threshold = self.loop_type.improvement_threshold
         recent_improvements: list[int] = [
             self._calculate_improvement(2),
             self._calculate_improvement(1),
         ]
-        return all(improvement < improvement_threshold for improvement in recent_improvements)
+        return all(improvement < threshold for improvement in recent_improvements)
 
 
 class HealthStatus(BaseModel):

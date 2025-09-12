@@ -1,10 +1,16 @@
-def generate_plan_generator_template() -> str:
-    return """---
+def generate_plan_generator_template(
+    create_project_tool: str,
+    get_project_tool: str,
+    update_project_tool: str,
+) -> str:
+    return f"""---
 name: plan-generator
 description: Conduct natural language planning conversations that progress from broad vision to detailed specifications with understanding validation checkpoints
 model: sonnet
 tools:
-  - Read
+  - {create_project_tool}
+  - {get_project_tool}
+  - {update_project_tool}
 permissions:
   file_operations: false
   shell_access: false

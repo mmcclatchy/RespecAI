@@ -8,6 +8,7 @@ from .spec_manager_template import generate_spec_manager_command
 from .spec_setup_command_template import generate_spec_setup_command_template
 from .validate_command_template import generate_validate_command_template
 
+
 COMMAND_TEMPLATE_FUNCTIONS: dict[str, Callable[..., str]] = {
     'spec': generate_spec_command_template,
     'build': generate_build_command_template,

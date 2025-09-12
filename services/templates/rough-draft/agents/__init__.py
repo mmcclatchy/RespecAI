@@ -8,6 +8,7 @@ from .plan_analyst_template import generate_plan_analyst_template
 from .plan_critic_template import generate_plan_critic_template
 from .spec_architect_template import generate_spec_architect_template
 
+
 AGENT_TEMPLATE_FUNCTIONS: dict[str, Callable[..., str]] = {
     'spec-architect': generate_spec_architect_template,
     'build-planner': generate_build_planner_template,

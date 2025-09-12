@@ -14,6 +14,10 @@ class LoopType(Enum):
         return getattr(loop_config, f'{self.value}_threshold')
 
     @property
+    def improvement_threshold(self) -> int:
+        return getattr(loop_config, f'{self.value}_improvement_threshold')
+
+    @property
     def max_iterations(self) -> int:
         return getattr(loop_config, f'{self.value}_max_iterations')
 

@@ -13,6 +13,11 @@ class LoopConfig(BaseSettings):
     build_plan_threshold: int = Field(default=80, ge=1, le=100)
     build_code_threshold: int = Field(default=95, ge=1, le=100)
 
+    plan_improvement_threshold: int = Field(default=5, ge=1, le=100)
+    spec_improvement_threshold: int = Field(default=5, ge=1, le=100)
+    build_plan_improvement_threshold: int = Field(default=5, ge=1, le=100)
+    build_code_improvement_threshold: int = Field(default=5, ge=1, le=100)
+
     plan_max_iterations: int = Field(default=5, ge=1, le=20)
     spec_max_iterations: int = Field(default=5, ge=1, le=20)
     build_plan_max_iterations: int = Field(default=5, ge=1, le=20)
