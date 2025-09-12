@@ -101,12 +101,14 @@ ${CURRENT_PLAN}
 
 **Parse the plan-critic response:**
 1. **Extract QUALITY_SCORE:**
-   - Look for line starting with "SCORE: "
-   - Extract the number after "SCORE: " (should be 0-100)
+   - Look for "SCORE:" anywhere in response (case-insensitive)
+   - Extract the number following "SCORE:" (should be 0-100)
+   - Handle variations: "Score: 85", "SCORE: 85", "Quality Score: 85"
    - Store as QUALITY_SCORE variable
 2. **Extract CRITIC_FEEDBACK:**
-   - Look for line starting with "FEEDBACK: "
-   - Extract all text after "FEEDBACK: "
+   - Look for "FEEDBACK:" anywhere in response (case-insensitive)
+   - Extract all text after "FEEDBACK:" until end or next section
+   - Handle variations: "Feedback:", "FEEDBACK:", "Improvement feedback:"
    - Store as CRITIC_FEEDBACK variable
 3. **Validate extraction:**
    - Verify QUALITY_SCORE is an integer between 0-100
@@ -224,29 +226,16 @@ ${STRUCTURED_OBJECTIVES}
 
 ### Agent Invocation Failure
 **If an agent fails to respond or returns an error:**
-- Display error message: "❌ Agent [agent-name] failed: [error details]"
-- Display recovery message: "💡 Attempting recovery..."
-- Retry the agent invocation with a simplified prompt
-- If retry fails, provide manual guidance to the user
-- Continue with any partial output if available
+- Display error: "❌ Agent [agent-name] failed: [error details]"
+- Retry the agent with the same context
+- If retry fails, provide manual guidance and continue with partial output
 
-### Stagnation Without Progress
-**The MCP Server automatically handles stagnation detection:**
-- When quality scores improve less than 5 points over 2 iterations
-- The MCP Server will return "user_input" status
-- Follow the user_input handling process in Step 2.4
-- The user clarification process will break the stagnation
+### Automatic MCP Handling
+**Stagnation Detection:** MCP Server returns "user_input" when quality improves <5 points over 2 iterations
 
-### Maximum Iterations Reached
-**The MCP Server automatically handles iteration limits:**
-- When the maximum iteration count is reached (default: 5)
-- Assess the current quality score for completion decision
-- **If QUALITY_SCORE is 70 or higher:**
-  - Display: "✓ Proceeding with current plan (acceptable quality)"
-  - Continue to Phase 3
-- **If QUALITY_SCORE is below 70:**
-  - Display: "⚠️ Manual refinement recommended before proceeding"
-  - Ask user whether to proceed or restart
+**Iteration Limits:** MCP Server assesses completion at max iterations (default: 5)
+- Score ≥70: Continue to Phase 3 with "acceptable quality" message
+- Score <70: Recommend manual refinement, ask user to proceed or restart
 
 ## Configuration
 
@@ -262,9 +251,7 @@ ${STRUCTURED_OBJECTIVES}
 
 ### Success Criteria
 - Quality score ≥ 85% achieved
-- Clear business objectives extracted
-- All stakeholders identified
-- Measurable success metrics defined
+- Business objectives extracted and structured
 - Ready for technical specification phase
 
 ## Implementation Notes
@@ -276,39 +263,29 @@ ${STRUCTURED_OBJECTIVES}
 - Maintain chronological order of user interactions
 
 **Large Context Management (when CONVERSATION_CONTEXT exceeds 4000 characters):**
-1. **Identify content to summarize:**
-   - Keep the original user context (first interaction) intact
-   - Keep the most recent 2 iterations in full detail
-   - Summarize middle iterations while preserving key requirements
-2. **Summarization approach:**
-   - Extract key business objectives and requirements from older content
-   - Note important stakeholder mentions and constraints
-   - Preserve any specific metrics or success criteria mentioned
-   - Include note: "[Earlier conversation summarized - key requirements preserved]"
-3. **Update CONVERSATION_CONTEXT:**
-   - Start with original user context
-   - Add summarized middle content
-   - Append recent iterations in full
-   - Ensure total length stays under 4000 characters
+1. **Preserve critical content:**
+   - Keep original user context intact
+   - Keep most recent 2 iterations in full
+   - Summarize middle iterations preserving key requirements
+2. **Update CONVERSATION_CONTEXT:**
+   - Original context + "[Middle conversation summarized]" + recent iterations
+   - Ensure total length under 4000 characters
 
 ### Natural Flow Preservation
 - Hide quality scores during conversation
 - Integrate feedback naturally into dialogue
-- Maintain user engagement throughout
-- Only show scores at completion or when requested
+- Show scores only at completion or when requested
 
 ### Performance Optimization
 - Cache agent responses for retry scenarios
-- Batch related clarification requests
 - Limit context size to avoid token overflow
-- Use incremental refinement for efficiency
 
 ## Integration Points
 
 ### Required MCP Tools
 - `initialize_refinement_loop(loop_type='plan')`
 - `decide_loop_next_action(LOOP_ID, current_score)`
-- `get_LOOP_STATUS(LOOP_ID)` [optional for monitoring]
+- `get_loop_status(LOOP_ID)` [optional for monitoring]
 
 ### Agent Dependencies
 - **plan-generator**: Conversational requirements gathering
@@ -320,25 +297,17 @@ ${STRUCTURED_OBJECTIVES}
 - **spec-architect agent**: Consumes business requirements
 - **Documentation systems**: Archives strategic plans
 
-## Detailed Error Recovery Procedures
+## Agent Recovery Strategies
 
-### Agent-Specific Recovery Strategies
+**plan-generator failure:** Retry with same context → Manual guidance (user describes goals directly)
 
-**plan-generator failure recovery:**
-1. **First retry:** Retry the plan-generator with the same context
-2. **If retry fails:** Manual guidance:
-   - Ask user to directly describe their project goals
-   - Provide template questions for user to answer
-   - Accept user responses as CURRENT_PLAN for critic assessment
+**plan-critic failure:** Retry with same context → User self-assessment (1-10 scale, convert to 0-100)
 
-**plan-critic failure recovery:**
-1. **First retry:** Retry the plan-critic with the same context
-2. **If retry fails:** Manual assessment:
-   - Ask user to rate their own plan satisfaction (1-10)
-   - Convert to 0-100 scale (multiply by 10)
-   - Use user feedback as CRITIC_FEEDBACK
+**plan-analyst failure:** Retry with same context → Use CURRENT_PLAN as STRUCTURED_OBJECTIVES
 
-**plan-analyst failure recovery:**
-1. **First retry:** Retry the plan-analyst with the same context
-2. **If retry fails:** Use CURRENT_PLAN as STRUCTURED_OBJECTIVES
+### Optional Monitoring
+**For debugging and monitoring purposes:**
+- Optionally call `get_loop_status(LOOP_ID)` to retrieve loop metadata
+- Use for troubleshooting stagnation or unexpected behavior
+- Display loop status information if requested by user
 """
