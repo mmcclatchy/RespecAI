@@ -18,7 +18,7 @@ The `/spec` command transforms strategic plans into detailed technical specifica
 - **Prerequisites**: Completed strategic plan document
 
 ### Trigger Format
-```
+```text
 /spec [optional: specific technical area focus]
 ```
 
@@ -266,7 +266,7 @@ platform = get_active_platform()  # Returns: 'linear' | 'github' | 'markdown'
 ## Example Usage
 
 ### Typical Invocation
-```
+```text
 User: /spec
 
 Main Agent: I'll transform your strategic plan into a detailed technical specification. Let me retrieve the plan and begin the architecture design process.
@@ -306,7 +306,7 @@ The specification is ready for implementation planning. Use /build to proceed.
 ```
 
 ### With Technical Focus
-```
+```text
 User: /spec focus on API design and integration patterns
 
 Main Agent: I'll create a technical specification with special emphasis on API design and integration patterns.

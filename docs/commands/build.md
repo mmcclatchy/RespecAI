@@ -18,7 +18,7 @@ The `/build` command orchestrates the complete implementation workflow, transfor
 - **Prerequisites**: Completed technical specification with research requirements
 
 ### Trigger Format
-```
+```text
 /build [specification-identifier]
 ```
 
@@ -53,8 +53,13 @@ Technical Spec → /build → Parallel Research → Planning Loop → Coding Loo
 2. **Parallel Research Orchestration**
    - Parse Research Requirements from specification
    - Identify existing documentation paths (Read operations)
+     - Read: [path]
+     - Just collect the path, do not read the content
    - Identify external research needs (Synthesize operations)
+     - Synthesize: [prompt]
    - Execute parallel operations for all research items
+     - Provide the prompt to research-synthesizer
+     - Collect the path provided by the research-synthesizer
    - Collect documentation paths (not content)
 
 3. **Implementation Planning Loop**
@@ -69,7 +74,7 @@ Technical Spec → /build → Parallel Research → Planning Loop → Coding Loo
    - Validate with `build-reviewer` for quality
    - Iterate until code quality threshold met
 
-5. **Platform Integration & Documentation**
+5. **Integration & Documentation**
    - Update specification with implementation status
    - Link code changes to specification
    - Document completion in platform
@@ -82,18 +87,16 @@ Technical Spec → /build → Parallel Research → Planning Loop → Coding Loo
 Main Agent (via /build)
     │
     ├── 1. Retrieve Specification
-    │   └── Platform-specific retrieval or path access
+    │   └── Specification retrieval using configured tools
     │
     ├── 2. Environment Discovery
     │   └── Bash: detect-packages.sh → technology context
     │
     ├── 3. Parallel Research Execution
     │   ├── Parse Research Requirements section
-    │   ├── For each "Read: [path]" item:
-    │   │   └── Read tool (parallel)
     │   ├── For each "Synthesize: [prompt]" item:
     │   │   └── Task: research-synthesizer (parallel)
-    │   └── Collect: All documentation paths
+    │   └── Collect: All documentation paths (The Read: paths and Synthesize: paths)
     │
     ├── 4. Implementation Planning Loop
     │   ├── mcp_tool: initialize_refinement_loop(loop_type='build_plan')
@@ -108,27 +111,24 @@ Main Agent (via /build)
     │   └── mcp_tool: decide_loop_next_action(loop_id, score)
     │
     └── 6. Completion & Documentation
-        └── Platform update with results
+        └── Update specification with results using configured tools
 ```
 
 ### Parallel Research Pattern
-```python
-# Main Agent executes research in parallel
-research_tasks = []
+```text
+# Main Agent coordinates research path collection
+For each item in research_requirements:
 
-for item in research_requirements:
-    if item.startswith("Read:"):
-        path = extract_path(item)
-        research_tasks.append(Read(path))
-    elif item.startswith("Synthesize:"):
-        prompt = extract_prompt(item)
-        research_tasks.append(Task("research-synthesizer", prompt))
+IF item starts with "Read:":
+  → Extract path and add to documentation_paths list
+  
+IF item starts with "Synthesize:":
+  → Invoke research-synthesizer agent with extracted prompt
+  → Add research-synthesizer output path to documentation_paths list
 
-# Execute all tasks in parallel
-results = await parallel_execute(research_tasks)
+Collect all documentation paths (both existing docs and research-synthesizer outputs)
 
-# Collect paths for build-planner
-documentation_paths = [r.path for r in results]
+Pass documentation_paths list to build-planner agent
 ```
 
 ## Quality Gates
@@ -167,16 +167,18 @@ documentation_paths = [r.path for r in results]
 ```text
 Main Agent identifies 4 research items:
     │
-    ├── Read: react-hooks-patterns.md ────┐
-    ├── Read: testing-strategies.md ───────┤ PARALLEL
-    ├── Synthesize: React Server... ───────┤ EXECUTION
-    └── Synthesize: GraphQL TypeScript... ─┘
+    ├── Path: react-hooks-patterns.md ─────────┐
+    ├── Path: testing-strategies.md ───────────┤ PATH
+    ├── Invoke: research-synthesizer (React)───┤ COLLECTION
+    └── Invoke: research-synthesizer (GraphQL)─┘
                     │
                     ↓
     Collect 4 documentation paths
+    (2 existing paths + 2 research-synthesizer output paths)
                     │
                     ↓
-    Pass paths to build-planner
+    Pass all paths to build-planner agent
+    (build-planner will read all documentation)
 ```
 
 ### Research Synthesizer Output
@@ -194,31 +196,11 @@ Main Agent identifies 4 research items:
 [Specific technical guidance]
 ```
 
-## Platform-Specific Behavior
-
-### Linear Platform
-- **Specification Retrieval**: `mcp__linear-server__get_issue`
-- **Progress Updates**: Comments on issue
-- **Completion**: Update issue status and labels
-- **Code Links**: Reference commits in comments
-
-### GitHub Platform
-- **Specification Retrieval**: `mcp__github__get_issue`
-- **Progress Updates**: Issue comments
-- **Completion**: Close issue with implementation PR
-- **Code Links**: Auto-linked via commit messages
-
-### Markdown Platform
-- **Specification Retrieval**: `Read` from file path
-- **Progress Updates**: Append to specification file
-- **Completion**: Create implementation summary document
-- **Code Links**: Document file paths and changes
-
 ## Input/Output Specifications
 
 ### Input Requirements
-- **Specification Identifier**: Platform-specific reference or file path
-- **Format**: Issue ID (Linear/GitHub) or file path (Markdown)
+- **Specification Identifier**: Reference to technical specification
+- **Format**: Identifier format determined by configured platform
 - **Required Sections**: Must contain Research Requirements
 
 ### Output Specifications
@@ -253,7 +235,7 @@ Main Agent identifies 4 research items:
 - **Source Code**: Implemented features with tests
 - **Test Results**: Passing test suites
 - **Documentation**: Code comments and updates
-- **Platform Updates**: Specification marked complete
+- **Specification Updates**: Marked complete with implementation details
 
 ## Error Handling
 
@@ -287,12 +269,12 @@ Main Agent identifies 4 research items:
 ## Example Usage
 
 ### Complete Workflow Example
-```
+```text
 User: /build SPEC-1234
 
-Main Agent: I'll implement the specification SPEC-1234. Let me start by retrieving it and setting up the implementation workflow.
+Main Agent: I'll coordinate the implementation of specification SPEC-1234. Let me start by retrieving it and setting up the workflow.
 
-[Retrieves specification from Linear]
+[Retrieves specification using configured platform tools]
 
 Detecting project technology stack...
 Found: React 18, TypeScript, Jest, GraphQL
@@ -326,7 +308,7 @@ Phase 3: Integration & Testing
 
 [Score: 82% - approved by build-critic]
 
-Main Agent: Plan approved! Starting code implementation...
+Main Agent: Plan approved! Coordinating code implementation...
 
 [Invokes build-coder]
 
@@ -344,7 +326,7 @@ build-coder: Implementing with TDD approach:
 Main Agent: Implementation complete!
 - All tests passing ✓
 - Code quality: 96%
-- Updated specification in Linear
+- Updated specification with implementation details
 - Ready for deployment
 
 Summary:
@@ -397,7 +379,7 @@ Summary:
 - `initialize_refinement_loop(loop_type='build_plan')`
 - `initialize_refinement_loop(loop_type='build_code')`
 - `decide_loop_next_action(loop_id, current_score)`
-- Platform-specific retrieval and update tools
+- Configured retrieval and update tools
 
 ### Shell Scripts
 - `~/.claude/scripts/detect-packages.sh`

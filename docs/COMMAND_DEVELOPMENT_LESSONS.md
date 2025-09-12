@@ -93,20 +93,48 @@ def generate_spec_command_template(
     create_spec_tool: str,
     get_spec_tool: str,
     update_spec_tool: str,
-    spec_implementation: str,
 ) -> str:
     return f"""---
 allowed-tools:
   - Task(plan-analyst)
   - Task(spec-architect) 
+  - Task(spec-critic)
   - {create_spec_tool}
   - {get_spec_tool}
   - {update_spec_tool}
-description: Convert strategic plans using {spec_implementation}
+  - mcp__loop_state__initialize_refinement_loop
+  - mcp__loop_state__decide_loop_next_action
+description: Transform strategic plans into detailed technical specifications
 ---
 
 # Technical Specification Creation
-Use {create_spec_tool} to create specifications on {spec_implementation} platform.
+
+## Step 1: Plan Analysis
+Invoke the plan-analyst agent with this input:
+${{STRATEGIC_PLAN_CONTEXT}}
+
+Expected Output Format:
+- Business objectives summary
+- Technical requirements list
+
+## Step 2: Architecture Development  
+Invoke the spec-architect agent with this input:
+${{STRATEGIC_PLAN_SUMMARY}}
+
+Expected Output Format:
+- Technical specification in markdown format
+- Research requirements section
+
+## Step 3: Quality Assessment
+Invoke the spec-critic agent with this input:
+${{CURRENT_SPECIFICATION}}
+
+Expected Output Format:
+- Overall Quality Score: [0-100 numerical value]
+- Priority Improvements: [List of suggestions]
+
+## Step 4: Storage
+Use {create_spec_tool} to store the technical specification.
 """
 ```
 
@@ -127,6 +155,89 @@ template = generate_spec_command_template(
 - Tools injected based on target platform (Linear/GitHub/Markdown)
 - Consistent command logic with platform-appropriate tool usage
 - Easy platform addition through tool mapping updates
+
+### 4. Template Purity and Architectural Boundaries
+
+**Principle**: Templates must maintain strict separation between orchestration logic and implementation details.
+
+**Template Purity Standards**:
+
+**✅ Templates MUST**:
+- Accept only abstract tool names as parameters
+- Generate platform-agnostic content with tool injection points
+- Contain only Main Agent coordination instructions
+- Specify input formats and expected output formats for agents
+- Focus solely on orchestration workflow and decision logic
+
+**❌ Templates MUST NOT**:
+- Contain platform-specific logic or constants
+- Include agent behavioral instructions or implementation details
+- Specify how agents should think, reason, or evaluate internally
+- Mix coordination responsibilities with business logic execution
+- Include default parameter values or platform assumptions
+
+**Anti-Pattern Examples**:
+
+```python
+# ❌ WRONG: Platform logic in template
+PLATFORM_TOOL_MAPPING = {...}  # Belongs in MCP server
+def generate_spec_command_template(platform: str = 'linear'):  # Default values
+    return f"Use {platform.title()} platform"  # Platform-specific content
+
+# ❌ WRONG: Agent behavioral instructions
+"Primary Tasks:
+1. Design technical architecture based on strategic objectives
+2. Analyze archive scan results for relevant existing documentation
+3. Evaluate against FSDD framework (12-point quality assessment)"
+
+# ❌ WRONG: Mixed coordination with implementation
+"The spec-critic evaluates against 12 technical completeness criteria"
+```
+
+**✅ Correct Pattern**:
+
+```python
+# ✅ CORRECT: Pure template with tool injection
+def generate_spec_command_template(
+    create_spec_tool: str,
+    get_spec_tool: str,
+    update_spec_tool: str,
+) -> str:
+    return f"""---
+allowed-tools:
+  - Task(spec-architect)
+  - Task(spec-critic) 
+  - {create_spec_tool}
+---
+
+# Agent Invocation Pattern
+Invoke the spec-architect agent with this input:
+${{STRATEGIC_PLAN_SUMMARY}}
+
+Expected Output Format:
+- Technical specification in markdown format
+- Research requirements section
+"""
+
+# ✅ CORRECT: Orchestration-only instructions
+"Pass specification to critic agent for evaluation:
+Expected Output Format:
+- Overall Quality Score: [0-100 numerical value]
+- Priority Improvements: [List of specific suggestions]"
+```
+
+**Project Standards Integration**:
+- Reference project-specific coding standards (e.g., CLAUDE.md)
+- Validate against docstring and import restrictions
+- Ensure compliance with architectural separation requirements
+- Verify no business logic creep into coordination templates
+
+**Template Validation Checklist**:
+1. Contains no platform detection or mapping logic
+2. Specifies only input data and expected output formats
+3. Includes no agent reasoning or evaluation instructions  
+4. Focuses solely on Main Agent coordination workflow
+5. Complies with project coding standards and restrictions
 
 ## Documentation Structure for Predictable Behavior
 
@@ -179,10 +290,26 @@ Use the [Agent Input Specification Template](../fsdd-templates/AGENT_INPUT_SPECI
 
 **Example Usage in Command Templates**:
 ```text
+# ❌ WRONG: Includes behavioral instructions
 Invoke the plan-critic agent with this context:
 
 Strategic Plan:
 ${CURRENT_PLAN}
+
+Evaluation Criteria:
+- Business viability assessment  
+- Market analysis completeness
+- Risk identification thoroughness
+Task: Evaluate the plan against FSDD framework and provide detailed feedback
+
+# ✅ CORRECT: Input/Output specification only
+Invoke the plan-critic agent with this input:
+${CURRENT_PLAN}
+
+Expected Output Format:
+- Overall Quality Score: [0-100 numerical value]
+- Priority Improvements: [List of specific actionable suggestions]
+- Strengths: [List of well-executed areas to preserve]
 ```
 
 **Benefits**:
@@ -409,6 +536,136 @@ services/templates/
 - Easy validation of command requirements
 - Self-documenting command capabilities
 
+## Template Development Workflow
+
+### Pre-Template Development Checklist
+
+Before creating a new command template, validate these architectural requirements:
+
+1. **Orchestration Scope Definition**
+   - [ ] Main Agent responsibilities clearly identified  
+   - [ ] Required specialized agents determined
+   - [ ] MCP tool integration points planned
+   - [ ] No business logic assigned to Main Agent
+
+2. **Input/Output Contract Design**
+   - [ ] Agent input formats specified (data only)
+   - [ ] Expected output formats defined (structure only)  
+   - [ ] Context variable population sources identified
+   - [ ] No agent behavioral instructions included
+
+3. **Quality Framework Planning**
+   - [ ] Success criteria measurable and objective
+   - [ ] Quality thresholds established (e.g., 85%)
+   - [ ] Refinement loop termination conditions defined
+   - [ ] Error handling and escalation paths planned
+
+4. **Platform Abstraction Verification**
+   - [ ] Template accepts abstract tool names only
+   - [ ] No platform-specific logic or constants
+   - [ ] Content remains platform-agnostic
+   - [ ] Tool injection points properly marked
+
+### Template Content Structure Standards
+
+**Required Template Sections** (in order):
+
+1. **YAML Frontmatter**
+   ```yaml
+   allowed-tools:
+     - Task(agent-name)
+     - {injected_tool_name}
+     - mcp__service__tool_name
+   argument-hint: [expected parameters]
+   description: [platform-agnostic purpose]
+   ```
+
+2. **Orchestration Steps**
+   - Sequential workflow with clear handoffs
+   - Input specifications for each agent/tool
+   - Expected output formats (no behavioral instructions)
+   - Context variable population instructions
+
+3. **Decision Logic**
+   - MCP tool invocation patterns
+   - Conditional workflow branches  
+   - Error handling and recovery actions
+   - User escalation scenarios
+
+4. **Expected Outputs**
+   - Final deliverable structure
+   - Success criteria and metrics
+   - Integration points for next phase
+
+### Template Validation Process
+
+**Architecture Compliance Verification**:
+
+1. **Orchestration Boundary Check**
+   - Template contains zero agent behavioral instructions
+   - All agent invocations specify input data and expected output only
+   - No specifications of how agents should think or evaluate
+   - Main Agent coordinates but never executes business logic
+
+2. **Platform Purity Validation**
+   - No platform detection or mapping logic
+   - No default parameter values or assumptions  
+   - Tool names properly abstracted through parameters
+   - Content descriptions platform-agnostic
+
+3. **Project Standards Integration**
+   - Compliance with coding standards (e.g., CLAUDE.md)
+   - No inappropriate docstrings or comments
+   - Proper import management (avoid unused imports)
+   - Error handling follows established patterns
+
+**Quality Assurance Checklist**:
+- [ ] Template generates predictable command behavior
+- [ ] All context variables have clear population sources
+- [ ] Error scenarios include specific recovery actions
+- [ ] Agent invocations follow input/output pattern consistently
+- [ ] No mixed coordination and implementation responsibilities
+
+### Common Pitfall Prevention
+
+**Critical Violations to Avoid**:
+
+1. **Agent Behavioral Instructions**
+   ```text
+   # ❌ WRONG
+   "Primary Tasks:
+   1. Analyze the strategic plan for technical feasibility
+   2. Evaluate market conditions and competitive landscape  
+   3. Identify potential risks and mitigation strategies"
+   
+   # ✅ CORRECT  
+   "Expected Output Format:
+   - Technical feasibility assessment
+   - Market analysis summary
+   - Risk identification with mitigation recommendations"
+   ```
+
+2. **Platform Logic in Templates**
+   ```python
+   # ❌ WRONG
+   if platform == 'linear':
+       return "Use Linear issue creation"
+       
+   # ✅ CORRECT
+   return f"Use {create_spec_tool} to store specification"
+   ```
+
+3. **Mixed Orchestration and Implementation**
+   ```text
+   # ❌ WRONG
+   "The spec-critic evaluates against 12 technical completeness criteria, 
+   providing objective scoring for architecture and design decisions"
+   
+   # ✅ CORRECT
+   "Quality evaluation performed by spec-critic agent using established 
+   framework with 85% threshold for completion"
+   ```
+
 ## Implementation Guidelines
 
 ### For Command Development
@@ -417,21 +674,52 @@ services/templates/
    - Define main command as coordinator only
    - Identify required specialized agents
    - Plan MCP tool integration points
+   - **Validate template purity**: No platform logic, behavioral instructions, or business logic
 
 2. **Design Quality Framework First**
    - Define measurable success criteria
    - Create critic agent for assessment
    - Establish quality thresholds and refinement loops
+   - **Ensure input/output focus**: Specify data formats, not agent reasoning processes
 
 3. **Implement Graceful Degradation**
    - Plan for component failures
    - Design fallback behaviors
    - Provide partial value when possible
+   - **Maintain orchestration boundaries**: Error handling stays in Main Agent coordination
 
 4. **Document Before Implementation**
    - Create detailed specifications for all agents
    - Define input/output formats with examples
    - Document error scenarios and responses
+   - **Verify architectural compliance**: Use Template Validation Checklist
+
+### Template-Specific Development Guidelines
+
+1. **Template Content Creation**
+   - Focus on workflow orchestration steps only
+   - Specify agent inputs as data structures
+   - Define expected outputs as format specifications  
+   - Include context variable population instructions
+   - Add MCP tool invocation patterns with parameters
+
+2. **Architectural Boundary Enforcement**
+   - Remove any agent behavioral or reasoning instructions
+   - Eliminate platform-specific logic or references
+   - Extract business logic to specialized agent specifications
+   - Maintain clean separation between coordination and execution
+
+3. **Quality Assurance Integration**
+   - Include objective success criteria (numerical thresholds)
+   - Specify error handling with recovery actions
+   - Define user escalation scenarios and guidance
+   - Establish refinement loop termination conditions
+
+4. **Project Standards Compliance**
+   - Follow project-specific coding standards (CLAUDE.md)
+   - Avoid inappropriate docstrings or comments
+   - Use proper import management (no unused imports)
+   - Implement standardized error response formats
 
 ## Success Metrics and Validation
 
