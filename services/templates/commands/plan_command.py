@@ -68,7 +68,7 @@ Use the MCP tool `initialize_refinement_loop`:
 
 ## Step 2: Conversational Requirements Gathering
 
-**Use the /generate-plan command to conduct conversational discovery.**
+**Use the /plan-conversation command to conduct conversational discovery.**
 
 Collect all responses in structured format:
 ```json
@@ -110,7 +110,7 @@ Store complete conversation as CONVERSATION_CONTEXT.
 
 **Transform conversation context into a strategic plan document:**
 
-Using the structured `CONVERSATION_CONTEXT` from /generate-plan, create a comprehensive strategic plan document with the following sections:
+Using the structured `CONVERSATION_CONTEXT` from /plan-conversation, create a comprehensive strategic plan document with the following sections:
 
 **Strategic Plan Template:**
 ```markdown
@@ -238,7 +238,7 @@ Please provide specific details for the areas that need clarification above.
 
 **strategic plan creation failures:**
 1. **Empty or Invalid Context**: If CONVERSATION_CONTEXT is empty or malformed:
-   - Retry /generate-plan command with same initial context
+   - Retry /plan-conversation command with same initial context
    - If second attempt fails, continue with placeholder: "Plan creation failed - proceeding with basic template"
    - Update CURRENT_PLAN with failure notification for critic evaluation
 

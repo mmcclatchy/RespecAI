@@ -77,12 +77,12 @@ project/
 ├── .claude/
 │   ├── commands/
 │   │   ├── plan.md                    # Static (always present)
+│   │   ├── plan-conversation.md           # Static (conversation command)
 │   │   ├── spec.md                    # Generated (platform-specific)
 │   │   ├── build.md                   # Generated (platform-specific)
 │   │   ├── spec-manager.md            # Generated (management interface)
 │   │   └── [refinement commands]      # Generated (quality tools)
 │   └── agents/
-│       ├── plan-generator.md          # Static (always present)
 │       ├── plan-critic.md             # Static (always present)
 │       ├── plan-analyst.md            # Static (always present)
 │       ├── spec-architect.md          # Generated (technical design)
@@ -223,10 +223,10 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 12. **Integration** - System compatibility
 
 **Quality Thresholds**:
-- **Plan Phase**: 85% - Basic acceptance for strategic planning
-- **Spec Phase**: 85% - Production ready technical specifications
+- **Plan Phase**: MCP Server-determined thresholds for strategic planning
+- **Spec Phase**: MCP Server-determined thresholds for technical specifications
 - **Build Plan Phase**: Configurable via environment variables
-- **Build Code Phase**: 95% - Excellence standard for implementation
+- **Build Code Phase**: MCP Server-determined excellence standards for implementation
 
 *For detailed threshold configuration, see [MCP Loop Tools Implementation](MCP_LOOP_TOOLS_IMPLEMENTATION.md#phase-1-core-models-and-configuration)*
 
@@ -258,13 +258,13 @@ The MCP server provides high-level orchestration tools that coordinate complex w
        │  • "complete"           │
        │  • "user-input"         │
 ┌─────────────┐                  │
-│ Producer    │              ✓ Quality ≥ threshold:  "complete"
-│ Refines     │              ✗ Quality < threshold:  "refine"
+│ Producer    │              ✓ Quality meets MCP criteria:  "complete"
+│ Refines     │              ✗ Quality below MCP criteria:  "refine"
 │ Content     │              ✗ Quality Stagnation:   "user-input"
 └─────────────┘                (2 consecutive low improvements)
 ```
 
-**Loop State Management**: Session-scoped with simple stagnation detection (2 consecutive iterations below improvement threshold)
+**Loop State Management**: Session-scoped with MCP-managed stagnation detection and threshold evaluation
 
 ## Platform Integration Patterns
 
@@ -316,16 +316,17 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 
 #### Stage 1: Strategic Planning (`/plan`)
 **Input**: Natural language business requirements
-**Process**:
-1. Conversational requirements analysis
-    a. User Conversational Refinement Loop
-        - `plan-generator` agent
-        - `plan-critic` agent
-2. Business objective extraction
-    a. `plan-analyst` agent (rename for clarity)
-3. Constraint identification
-4. Technology stack consideration
-**Output**: Strategic plan document with clear objectives
+**Process**: Dual-loop orchestration workflow
+1. **Initialize Planning Loop**: MCP state management setup
+2. **Conversational Requirements**: `/plan-conversation` command guides discovery
+3. **Strategic Plan Creation**: Main Agent processes conversation context using template
+4. **Plan Quality Assessment**: `plan-critic` evaluates against FSDD framework
+5. **Plan Refinement Loop**: MCP manages plan refinement iterations
+6. **Initialize Analyst Loop**: Second validation loop setup
+7. **Objective Extraction**: `plan-analyst` structures business objectives
+8. **Analyst Quality Assessment**: `analyst-critic` validates extraction quality
+9. **Analyst Validation Loop**: MCP manages analyst refinement iterations
+**Output**: Strategic plan document with dual validation scores
 
 #### Stage 2: Technical Specification (`/spec`)
 **Input**: Strategic plan + technical focus area

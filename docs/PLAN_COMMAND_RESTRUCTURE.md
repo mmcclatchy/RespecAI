@@ -17,7 +17,7 @@ This document outlines the successfully implemented architectural restructuring 
 ```text
 /plan command (dual-loop orchestration)
 ├── Step 1: Initialize plan + analyst loops
-├── Step 2: /generate-plan (conversation)
+├── Step 2: /plan-conversation (conversation)
 ├── Step 3: Main Agent creates strategic plan
 ├── Steps 4-5: plan-critic + MCP plan refinement loop
 ├── Steps 6-7: plan-analyst + analyst-critic
@@ -36,7 +36,7 @@ Commands are markdown instruction templates for the Main Agent, enabling clean c
 ```text
 /plan command (dual-loop orchestration)
 ├── Step 1: Initialize MCP loops (plan + analyst)
-├── Step 2: /generate-plan (3-stage conversation)
+├── Step 2: /plan-conversation (3-stage conversation)
 │   ├── Stage 1: Vision discovery questions
 │   ├── Stage 2: Progressive refinement questions
 │   └── Stage 3: Validation questions
@@ -84,7 +84,7 @@ These tools are injected into agent templates at generation time based on the co
 ### Commands (Markdown Files)
 **Location**: `.claude/commands/`
 **Purpose**: Provide instructions to Main Agent
-**Example**: `generate-plan.md` guides conversation flow
+**Example**: `plan-conversation.md` guides conversation flow
 
 ### Generation Flow
 ```text
@@ -95,11 +95,11 @@ Template Function → Platform Config → Generated Command/Agent → Main Agent
 
 ### Phase 1: Core Command Restructuring
 
-#### 1.1 Create `/generate-plan` Command
+#### 1.1 Create `/plan-conversation` Command
 
 **Purpose**: Pure conversation guidance for Main Agent
 
-**Location**: `.claude/commands/generate-plan.md`
+**Location**: `.claude/commands/plan-conversation.md`
 
 **Structure**:
 ```markdown
@@ -191,7 +191,7 @@ description: Orchestrate strategic planning workflow
 Use initialize_refinement_loop('plan') → PLAN_LOOP_ID
 
 ## Step 2: Conversational Requirements Gathering
-Use /generate-plan command → CONVERSATION_CONTEXT (structured JSON)
+Use /plan-conversation command → CONVERSATION_CONTEXT (structured JSON)
 
 ## Step 3: Create Strategic Plan Document
 Main Agent processes CONVERSATION_CONTEXT using strategic plan template → CURRENT_PLAN
@@ -228,7 +228,7 @@ MCP decide_loop_next_action(ANALYST_LOOP_ID, ANALYST_SCORE) → ANALYST_LOOP_STA
 **Process**:
 ```markdown
 ## Step 3: Create Strategic Plan Document
-Using structured CONVERSATION_CONTEXT from /generate-plan:
+Using structured CONVERSATION_CONTEXT from /plan-conversation:
 
 **Strategic Plan Template:**
 # Strategic Plan: [Project Name from conversation]
@@ -271,7 +271,7 @@ plan-validation-critic  → Evaluates completeness and consistency
 ```
 
 **Integration Points**:
-- After each conversation stage in `/generate-plan`
+- After each conversation stage in `/plan-conversation`
 - Provides targeted feedback for specific aspects
 - Quality gates prevent advancing without meeting criteria
 
@@ -317,7 +317,7 @@ async def get_current_stage(
 ```text
 /plan with progress tracking
 ├── Initialize loop with stage tracking
-├── /generate-plan
+├── /plan-conversation
 │   ├── Check current stage via MCP
 │   ├── Resume from appropriate point
 │   └── Store stage summaries
@@ -337,7 +337,7 @@ async def get_current_stage(
 
 ### ✅ Completed Implementation (Phase 1)
 
-1. **✅ `/generate-plan` command implemented**
+1. **✅ `/plan-conversation` command implemented**
    - Pure conversation guidance for Main Agent
    - 3-stage structure (Vision → Refinement → Validation)
    - No agent invocations - clean conversation flow
@@ -345,7 +345,7 @@ async def get_current_stage(
 
 2. **✅ `/plan` command restructured**
    - Dual-loop orchestration architecture
-   - `/generate-plan` integration
+   - `/plan-conversation` integration
    - MCP state management integration
    - Complete variable management system
 
@@ -383,7 +383,7 @@ async def get_current_stage(
    - MCP manages state
 
 2. **Modular Conversation Management**
-   - `/generate-plan` is reusable
+   - `/plan-conversation` is reusable
    - Easy to modify conversation flow
    - Can create variants (quick-plan, detailed-plan)
 
@@ -405,7 +405,7 @@ async def get_current_stage(
    - Clear testing boundaries
 
 3. **Reusability**
-   - `/generate-plan` usable by other workflows
+   - `/plan-conversation` usable by other workflows
    - Conversation patterns become building blocks
    - Can compose complex workflows from simple parts
 
@@ -546,7 +546,7 @@ ERROR_RECOVERY = {
 **Risk**: Modular approach might feel disjointed
 
 **Mitigation**:
-- `/generate-plan` maintains natural flow
+- `/plan-conversation` maintains natural flow
 - Context bridging between stages
 - Main Agent preserves conversation tone
 
@@ -563,7 +563,7 @@ ERROR_RECOVERY = {
 
 ### Phase 1 Success Criteria
 
-- [x] `/generate-plan` conducts natural conversations
+- [x] `/plan-conversation` conducts natural conversations
 - [x] Context successfully passed to Main Agent for plan creation
 - [x] Strategic plans created using template processing
 - [x] Quality assessment via plan-critic works

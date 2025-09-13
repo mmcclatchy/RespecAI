@@ -79,16 +79,21 @@ Critic Score → MCP Server State Management → Next Action Decision:
 
 ### Loop 1: Strategic Planning (`/plan`)
 
-**Participants**: `plan-generator` ↔ `plan-critic`
+**Participants**: Main Agent orchestration with `plan-critic`, `plan-analyst`, `analyst-critic`
 
-**Process Flow**:
-1. **Conversational Discovery**: `plan-generator` conducts natural language requirements gathering
-2. **Quality Assessment**: `plan-critic` evaluates against FSDD framework without disrupting conversation flow  
-3. **Iterative Refinement**: Loop continues until quality thresholds met
-4. **Fallback Mechanism**: Stagnation detection → user consultation
+**Process Flow**: Dual-loop orchestration workflow
+1. **Initialize Planning Loop**: MCP state management setup
+2. **Conversational Discovery**: `/plan-conversation` command guides natural language requirements gathering
+3. **Strategic Plan Creation**: Main Agent processes conversation context using template
+4. **Plan Quality Assessment**: `plan-critic` evaluates against FSDD framework
+5. **Plan Refinement Loop**: MCP manages plan refinement iterations
+6. **Initialize Analyst Loop**: Second validation loop setup
+7. **Objective Extraction**: `plan-analyst` structures business objectives
+8. **Analyst Quality Assessment**: `analyst-critic` validates extraction quality
+9. **Analyst Validation Loop**: MCP manages analyst refinement iterations
 
-**Quality Gate**: 85% minimum (basic acceptance threshold)
-**Output**: Strategic plan document with clear business objectives
+**Quality Gate**: MCP Server-determined thresholds for strategic planning
+**Output**: Strategic plan document with dual validation scores
 
 ### Loop 2: Technical Specification (`/spec`)
 
@@ -101,7 +106,7 @@ Critic Score → MCP Server State Management → Next Action Decision:
 4. **Quality Validation**: `spec-critic` assesses technical completeness and FSDD compliance
 5. **Platform Storage**: Creates specifications in chosen platform (Linear/GitHub/Markdown)
 
-**Quality Gate**: 85%+ for production readiness
+**Quality Gate**: MCP Server-determined thresholds for production readiness
 **Output**: Platform-specific technical specification with research integration
 
 ### Loop 3: Implementation Planning (`/build` - Phase 1)
@@ -127,7 +132,7 @@ Critic Score → MCP Server State Management → Next Action Decision:
 3. **Plan Synchronization**: Assesses implementation alignment with strategic plan and technical specifications
 4. **Completion or Reassignment**: Either completes with documentation or reassigns to appropriate upstream agent
 
-**Quality Gate**: 95%+ for excellence standard
+**Quality Gate**: MCP Server-determined excellence standards for implementation
 **Output**: Production-ready implementation with comprehensive validation
 
 ## Complete Command Flow Analysis
@@ -136,13 +141,15 @@ Critic Score → MCP Server State Management → Next Action Decision:
 ```text
 User Input: Natural language business requirements
     ↓
-Conversational Loop: plan-generator ↔ plan-critic
-├── Natural progression from broad vision to detailed requirements
-├── FSDD quality assessment without disrupting conversation flow
-├── Understanding validation at progressive checkpoints
-└── Quality Gate: 85% (basic acceptance)
+Dual-Loop Orchestration: Main Agent with MCP state management
+├── Step 1: Initialize planning loop (MCP state setup)
+├── Step 2: /plan-conversation command (conversational discovery)
+├── Step 3: Main Agent strategic plan creation (template processing)
+├── Steps 4-5: plan-critic evaluation + MCP plan refinement loop
+├── Steps 6-9: plan-analyst extraction + analyst-critic + MCP analyst loop
+└── Quality Gate: MCP Server-determined thresholds
     ↓
-Output: Strategic plan document with business context and objectives
+Output: Strategic plan document with dual validation scores
 ```
 
 ### `/spec` Command - Technical Specification
@@ -158,7 +165,7 @@ Architecture Design Loop: spec-architect ↔ spec-critic
 ├── Technical system design using selected technology stack
 ├── Research integration from both archive and external sources
 ├── Platform-specific specification creation
-└── Quality Gate: 85% (production ready)
+└── Quality Gate: MCP Server-determined thresholds (production ready)
     ↓
 Output: Detailed technical specification in chosen platform
 ```
@@ -182,7 +189,7 @@ Build Implementation Loop: build-coder ↔ build-reviewer
 ├── TDD-based code implementation
 ├── Comprehensive quality validation (tests, types, compliance)
 ├── Plan synchronization assessment
-└── Quality Gate: 95% (excellence standard)
+└── Quality Gate: MCP Server-determined excellence standards
     ↓
 Output: Production-ready implementation with platform integration
 ```
@@ -196,7 +203,7 @@ Output: Production-ready implementation with platform integration
 - **Service Boundary Pattern**: Domain logic separated from MCP protocol concerns with proper exception mapping
 
 ### 2. Quality-Driven Progression  
-- **Progressive Standards**: Increasing quality thresholds (85% → 85% → configurable → 95%)
+- **Progressive Standards**: MCP Server-managed quality thresholds with increasing rigor across workflow stages
 
 *For detailed quality threshold configuration, see [MCP Loop Tools Implementation](MCP_LOOP_TOOLS_IMPLEMENTATION.md#phase-1-core-models-and-configuration)*
 - **Automated Assessment**: LLM-based scoring with structured evaluation criteria

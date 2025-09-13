@@ -515,9 +515,9 @@ description: Create strategic plans through conversational discovery
 ```text
 services/templates/
 ├── agents/
-│   ├── plan-command.py
-│   ├── spec-command.py
-│   └── build-command.py
+│   ├── plan_command.py
+│   ├── spec_command.py
+│   └── build_command.py
 ├── commands/
 │   └── [generated files]
 └── shared/
