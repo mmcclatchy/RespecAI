@@ -79,9 +79,6 @@ Retrieve the strategic plan and set up the technical specification workflow:
 # Initialize MCP refinement loop
 mcp__loop_state__initialize_refinement_loop:
   loop_type: "spec"
-  quality_threshold: 85
-  max_iterations: 5
-  improvement_threshold: 5
 
 # Retrieve strategic plan context
 STRATEGIC_PLAN_CONTEXT = [Previous /plan output or user-provided plan]

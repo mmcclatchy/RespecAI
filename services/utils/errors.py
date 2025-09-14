@@ -23,3 +23,18 @@ class LoopStateError(ToolError):
     def __init__(self, loop_id: str, operation: str, details: str):
         super().__init__(f'Loop {operation} failed for {loop_id}: {details}')
         self.loop_id = loop_id
+
+
+class RoadmapError(Exception): ...
+
+
+class RoadmapNotFoundError(RoadmapError): ...
+
+
+class SpecNotFoundError(RoadmapError): ...
+
+
+class RoadmapValidationError(ToolError):
+    def __init__(self, field: str, message: str):
+        super().__init__(f'Invalid {field}: {message}')
+        self.field = field

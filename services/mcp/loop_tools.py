@@ -1,6 +1,8 @@
-from services.utils.models import LoopState, LoopType, MCPResponse
-from services.utils.state_manager import StateManager, InMemoryStateManager
-from services.utils.errors import LoopNotFoundError, LoopAlreadyExistsError, LoopValidationError, LoopStateError
+from services.shared import state_manager
+from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, LoopStateError, LoopValidationError
+from services.utils.enums import LoopType
+from services.utils.models import LoopState, MCPResponse
+from services.utils.state_manager import StateManager
 
 
 class LoopTools:
@@ -70,4 +72,4 @@ class LoopTools:
             raise LoopStateError(loop_id, 'feedback_storage', f'Unexpected error: {str(e)}')
 
 
-loop_tools = LoopTools(InMemoryStateManager())
+loop_tools = LoopTools(state_manager)

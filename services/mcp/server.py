@@ -1,13 +1,15 @@
-from fastmcp import FastMCP, Context
-from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
-from fastmcp.server.middleware.logging import LoggingMiddleware
-from fastmcp.server.middleware import MiddlewareContext
 import logging
 
+from fastmcp import Context, FastMCP
+from fastmcp.server.middleware import MiddlewareContext
+from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
+from fastmcp.server.middleware.logging import LoggingMiddleware
+
 from services.mcp.loop_tools import loop_tools
-from services.utils.models import HealthStatus, MCPResponse
-from services.utils.setting_configs import mcp_settings
+from services.mcp.roadmap_tools import roadmap_tools
 from services.utils.enums import HealthState
+from services.utils.models import HealthStatus, MCPResponse, OperationResponse
+from services.utils.setting_configs import mcp_settings
 
 
 def create_mcp_server() -> FastMCP:
@@ -135,6 +137,55 @@ def create_mcp_server() -> FastMCP:
         await ctx.info(f'Storing objective feedback for loop {loop_id}')
         result = loop_tools.store_current_objective_feedback(loop_id, feedback)
         await ctx.info(f'Stored objective feedback for loop {loop_id}')
+        return result
+
+    @mcp.tool()
+    async def create_roadmap(project_id: str, roadmap_name: str, ctx: Context) -> OperationResponse:
+        await ctx.info(f'Creating roadmap for project {project_id}')
+        result = roadmap_tools.create_roadmap(project_id, roadmap_name)
+        await ctx.info(f'Created roadmap for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def get_roadmap(project_id: str, ctx: Context) -> OperationResponse:
+        await ctx.info(f'Getting roadmap for project {project_id}')
+        result = roadmap_tools.get_roadmap(project_id)
+        await ctx.info(f'Got roadmap for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def add_spec(project_id: str, spec_name: str, spec_markdown: str, ctx: Context) -> OperationResponse:
+        await ctx.info(f'Storing spec {spec_name} for project {project_id}')
+        result = roadmap_tools.add_spec(project_id, spec_name, spec_markdown)
+        await ctx.info(f'Stored spec {spec_name} for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def get_spec(project_id: str, spec_name: str, ctx: Context) -> OperationResponse:
+        await ctx.info(f'Getting spec {spec_name} for project {project_id}')
+        result = roadmap_tools.get_spec(project_id, spec_name)
+        await ctx.info(f'Got spec {spec_name} for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def update_spec(project_id: str, spec_name: str, spec_markdown: str, ctx: Context) -> OperationResponse:
+        await ctx.info(f'Updating spec {spec_name} for project {project_id}')
+        result = roadmap_tools.update_spec(project_id, spec_name, spec_markdown)
+        await ctx.info(f'Updated spec {spec_name} for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def list_specs(project_id: str, ctx: Context) -> OperationResponse:
+        await ctx.info(f'Listing specs for project {project_id}')
+        result = roadmap_tools.list_specs(project_id)
+        await ctx.info(f'Listed specs for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def delete_spec(project_id: str, spec_name: str, ctx: Context) -> OperationResponse:
+        await ctx.info(f'Deleting spec {spec_name} for project {project_id}')
+        result = roadmap_tools.delete_spec(project_id, spec_name)
+        await ctx.info(f'Deleted spec {spec_name} for project {project_id}')
         return result
 
     return mcp

@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from collections import deque
 
-from services.utils.models import LoopState, MCPResponse
-from services.utils.errors import LoopNotFoundError, LoopAlreadyExistsError
+from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError
+from services.utils.models import InitialSpec, LoopState, MCPResponse, RoadMap
 
 
 class StateManager(ABC):
+    # Loop Management
     @abstractmethod
     def add_loop(self, loop: LoopState) -> None: ...
 
@@ -27,6 +28,25 @@ class StateManager(ABC):
     @abstractmethod
     def store_objective_feedback(self, loop_id: str, feedback: str) -> MCPResponse: ...
 
+    # Roadmap Management
+    @abstractmethod
+    def store_roadmap(self, project_id: str, roadmap: RoadMap) -> str: ...
+
+    @abstractmethod
+    def get_roadmap(self, project_id: str) -> RoadMap: ...
+
+    @abstractmethod
+    def store_spec(self, project_id: str, spec: InitialSpec) -> str: ...
+
+    @abstractmethod
+    def get_spec(self, project_id: str, spec_name: str) -> InitialSpec: ...
+
+    @abstractmethod
+    def list_specs(self, project_id: str) -> list[str]: ...
+
+    @abstractmethod
+    def delete_spec(self, project_id: str, spec_name: str) -> bool: ...
+
 
 class Queue[T]:
     def __init__(self, maxlen: int) -> None:
@@ -34,8 +54,13 @@ class Queue[T]:
         self.maxlen = maxlen
 
     def append(self, item: T) -> T | None:
+        # Check if we're at capacity before adding
+        dropped_item = None
+        if len(self._deque) == self.maxlen:
+            # Will be dropped when new item is added
+            dropped_item = self._deque[0]
+
         self._deque.append(item)
-        dropped_item = self._deque.popleft() if len(self._deque) > self.maxlen else None
         return dropped_item
 
 
@@ -44,6 +69,7 @@ class InMemoryStateManager(StateManager):
         self._active_loops: dict[str, LoopState] = {}
         self._loop_history: Queue[str] = Queue(maxlen=max_history_size)
         self._objective_feedback: dict[str, str] = {}
+        self._roadmaps: dict[str, RoadMap] = {}
 
     def add_loop(self, loop: LoopState) -> None:
         if loop.id in self._active_loops:
@@ -83,3 +109,40 @@ class InMemoryStateManager(StateManager):
         return MCPResponse(
             id=loop_id, status=loop_state.status, message=f'Objective feedback stored for loop {loop_id}'
         )
+
+    def store_roadmap(self, project_id: str, roadmap: RoadMap) -> str:
+        self._roadmaps[project_id] = roadmap
+        return project_id
+
+    def get_roadmap(self, project_id: str) -> RoadMap:
+        if project_id not in self._roadmaps:
+            raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+        return self._roadmaps[project_id]
+
+    def store_spec(self, project_id: str, spec: InitialSpec) -> str:
+        if project_id not in self._roadmaps:
+            raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+        roadmap = self._roadmaps[project_id]
+        roadmap.add_spec(spec)
+        return spec.name
+
+    def get_spec(self, project_id: str, spec_name: str) -> InitialSpec:
+        if project_id not in self._roadmaps:
+            raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+        roadmap = self._roadmaps[project_id]
+        return roadmap.get_spec(spec_name)
+
+    def list_specs(self, project_id: str) -> list[str]:
+        if project_id not in self._roadmaps:
+            raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+        roadmap = self._roadmaps[project_id]
+        return list(roadmap.specs.keys())
+
+    def delete_spec(self, project_id: str, spec_name: str) -> bool:
+        if project_id not in self._roadmaps:
+            raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+        roadmap = self._roadmaps[project_id]
+        if spec_name in roadmap.specs:
+            del roadmap.specs[spec_name]
+            return True
+        return False

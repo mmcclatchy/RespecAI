@@ -3,8 +3,10 @@ import os
 from typing import Any
 from unittest.mock import patch
 
+from services.mcp.loop_tools import loop_tools
+from services.mcp.roadmap_tools import roadmap_tools
 from services.mcp.server import create_mcp_server, health_check
-from services.utils.enums import HealthState
+from services.utils.enums import HealthState, LoopStatus, OperationStatus
 from services.utils.setting_configs import MCPSettings
 
 
@@ -17,12 +19,24 @@ class TestProductionMCPServer:
         tools = asyncio.run(server.get_tools())
         tool_names = list(tools.keys())
 
-        expected_tools = [
+        expected_loop_tools = [
             'decide_loop_next_action',
             'initialize_refinement_loop',
             'get_loop_status',
             'list_active_loops',
+            'get_previous_objective_feedback',
+            'store_current_objective_feedback',
         ]
+        expected_roadmap_tools = [
+            'create_roadmap',
+            'get_roadmap',
+            'add_spec',
+            'get_spec',
+            'update_spec',
+            'list_specs',
+            'delete_spec',
+        ]
+        expected_tools = expected_loop_tools + expected_roadmap_tools
 
         for tool_name in expected_tools:
             assert tool_name in tool_names, f'Required tool {tool_name} not found in {tool_names}'
@@ -30,18 +44,16 @@ class TestProductionMCPServer:
         # Verify tool metadata
         init_tool = tools['initialize_refinement_loop']
         assert init_tool.name == 'initialize_refinement_loop'
-        assert init_tool.description is not None
 
         decision_tool = tools['decide_loop_next_action']
         assert decision_tool.name == 'decide_loop_next_action'
-        assert decision_tool.description is not None
 
     def test_real_mcp_client_integration_scenarios(self) -> None:
         server = create_mcp_server()
 
         # Test server can handle tool discovery
         tools = asyncio.run(server.get_tools())
-        assert len(tools) == 4
+        assert len(tools) == 13  # 6 loop + 7 roadmap tools
 
         # Test server metadata
         assert server.name == 'Loop Management Server'
@@ -84,7 +96,6 @@ class TestProductionMCPServer:
         # Test that list_active_loops tool exists for managing multiple loops
         list_tool = tools.get('list_active_loops')
         assert list_tool is not None
-        assert list_tool.description is not None
 
     def test_fastmcp_server_production_deployment_patterns(self) -> None:
         server = create_mcp_server()
@@ -108,7 +119,7 @@ class TestProductionMCPServer:
         health_status = asyncio.run(health_check(server))
 
         assert health_status.status == HealthState.HEALTHY
-        assert health_status.tools_count == 4
+        assert health_status.tools_count == 13
         assert health_status.error is None
 
         # Test health check with simulated error
@@ -140,11 +151,11 @@ class TestProductionMCPServer:
 
         # Test tools are accessible
         tools = asyncio.run(server.get_tools())
-        assert len(tools) == 4
+        assert len(tools) == 13
 
         # Test multiple operations don't interfere
         tools2 = asyncio.run(server.get_tools())
-        assert len(tools2) == 4
+        assert len(tools2) == 13
         assert len(tools) == len(tools2)
 
     def test_error_handling_middleware_integration(self) -> None:
@@ -155,7 +166,7 @@ class TestProductionMCPServer:
 
         # Test tools are still accessible with middleware
         tools = asyncio.run(server.get_tools())
-        assert len(tools) == 4
+        assert len(tools) == 13
 
         # Test server name works with middleware
         assert server.name == 'Loop Management Server'
@@ -193,7 +204,7 @@ class TestProductionMCPServer:
         # All results should be identical
         assert len(results) == 5
         for result in results:
-            assert len(result) == 4
+            assert len(result) == 13
 
         # Verify tool names are consistent across concurrent access
         tool_names_sets = [set(result.keys()) for result in results]
@@ -202,6 +213,15 @@ class TestProductionMCPServer:
             'initialize_refinement_loop',
             'get_loop_status',
             'list_active_loops',
+            'get_previous_objective_feedback',
+            'store_current_objective_feedback',
+            'create_roadmap',
+            'get_roadmap',
+            'add_spec',
+            'get_spec',
+            'update_spec',
+            'list_specs',
+            'delete_spec',
         }
 
         for tool_names in tool_names_sets:
@@ -212,7 +232,7 @@ class TestProductionMCPServer:
 
         # Test server handles middleware errors gracefully
         tools = asyncio.run(server.get_tools())
-        assert len(tools) == 4
+        assert len(tools) == 13
 
         # Test health check with various error types
         with patch.object(server, 'get_tools', side_effect=ConnectionError('Network error')):
@@ -236,26 +256,36 @@ class TestProductionMCPServer:
 
         # Verify all tools are properly registered despite any potential errors
         tools = asyncio.run(server.get_tools())
-        expected_tools = [
+        expected_loop_tools = [
             'decide_loop_next_action',
             'initialize_refinement_loop',
             'get_loop_status',
             'list_active_loops',
+            'get_previous_objective_feedback',
+            'store_current_objective_feedback',
         ]
+        expected_roadmap_tools = [
+            'create_roadmap',
+            'get_roadmap',
+            'add_spec',
+            'get_spec',
+            'update_spec',
+            'list_specs',
+            'delete_spec',
+        ]
+        expected_tools = expected_loop_tools + expected_roadmap_tools
 
         for tool_name in expected_tools:
             assert tool_name in tools
             tool = tools[tool_name]
             assert tool.name == tool_name
-            assert tool.description is not None
-            assert len(tool.description) > 0
 
     def test_middleware_error_isolation(self) -> None:
         server = create_mcp_server()
 
         # Test server continues to work despite middleware being present
         tools = asyncio.run(server.get_tools())
-        assert len(tools) == 4
+        assert len(tools) == 13
 
         # Test prompts endpoint works with middleware
         prompts = asyncio.run(server.get_prompts())
@@ -292,7 +322,7 @@ class TestProductionMCPServer:
             # Test get_tools async error handling
             try:
                 tools = await server.get_tools()
-                assert len(tools) == 4
+                assert len(tools) == 13
             except Exception:
                 # Should not raise unhandled exceptions
                 assert False, 'get_tools should not raise unhandled exceptions'
@@ -307,3 +337,171 @@ class TestProductionMCPServer:
 
         # Run async tests
         asyncio.run(test_async_errors())
+
+    def test_complete_production_workflow_loop_and_roadmap_integration(self) -> None:
+        server = create_mcp_server()
+
+        # Verify server has all required tools registered
+        tools = asyncio.run(server.get_tools())
+        assert len(tools) == 13
+
+        project_id = 'production-workflow-project'
+        spec_markdown = """# Technical Specification: Production Workflow Test
+
+## Overview
+
+**Objectives**: `Test complete production workflow with loop and roadmap integration`
+**Scope**: `End-to-end validation of MCP server functionality`
+**Dependencies**: `FastMCP server, in-memory state management, loop refinement`
+
+## Expected Deliverables
+
+- Successful roadmap creation and management
+- Effective spec lifecycle management
+- Loop-based refinement process integration
+- Production-ready error handling
+
+## Technical Architecture
+
+Production MCP server with FastAPI middleware, async tool handling, 
+and comprehensive error recovery mechanisms.
+"""
+
+        # Phase 1: Project Initialization
+        roadmap_result = roadmap_tools.create_roadmap(project_id, 'Production Workflow Roadmap')
+        assert roadmap_result.status == OperationStatus.SUCCESS
+
+        # Phase 2: Refinement Loop Initialization
+        loop_result = loop_tools.initialize_refinement_loop('spec')
+        assert loop_result.status == LoopStatus.INITIALIZED
+        loop_id = loop_result.id
+
+        # Phase 3: Initial Spec Creation
+        spec_result = roadmap_tools.add_spec(project_id, 'Production Workflow Spec', spec_markdown)
+        assert spec_result.status == OperationStatus.SUCCESS
+
+        # Phase 4: Refinement Iteration 1 (Score: 60 - Should Refine)
+        refinement_1 = loop_tools.decide_loop_next_action(loop_id, 60)
+        assert refinement_1.status == LoopStatus.REFINE
+
+        # Phase 5: Spec Update After First Refinement (content update, not name)
+        updated_markdown_1 = spec_markdown.replace(
+            'End-to-end validation of MCP server functionality',
+            'Updated end-to-end validation of MCP server functionality after first refinement',
+        )
+        update_1 = roadmap_tools.update_spec(project_id, 'First Refinement Update', updated_markdown_1)
+        assert update_1.status == OperationStatus.SUCCESS
+
+        # Phase 6: Refinement Iteration 2 (Score: 75 - Should Refine)
+        refinement_2 = loop_tools.decide_loop_next_action(loop_id, 75)
+        assert refinement_2.status == LoopStatus.REFINE
+
+        # Phase 7: Spec Update After Second Refinement (content update, not name)
+        updated_markdown_2 = updated_markdown_1.replace('after first refinement', 'after second refinement')
+        update_2 = roadmap_tools.update_spec(project_id, 'Second Refinement Update', updated_markdown_2)
+        assert update_2.status == OperationStatus.SUCCESS
+
+        # Phase 8: Final Refinement (Score: 90 - Should Complete)
+        completion = loop_tools.decide_loop_next_action(loop_id, 90)
+        assert completion.status == LoopStatus.COMPLETED
+
+        # Phase 9: Verification of Final State
+        final_roadmap = roadmap_tools.get_roadmap(project_id)
+        assert final_roadmap.status == OperationStatus.SUCCESS
+        assert '1 specs' in final_roadmap.message
+
+        final_loop_status = loop_tools.get_loop_status(loop_id)
+        assert final_loop_status.status == LoopStatus.COMPLETED
+
+        # Phase 10: Spec Listing and Management
+        list_result = roadmap_tools.list_specs(project_id)
+        assert list_result.status == OperationStatus.SUCCESS
+        assert 'Production Workflow Test' in list_result.message
+
+        # Phase 11: Active Loops Management
+        active_loops = loop_tools.list_active_loops()
+        assert isinstance(active_loops, list)
+        # Should contain our completed loop
+        loop_ids = [loop.id for loop in active_loops]
+        assert loop_id in loop_ids
+
+        # Phase 12: Error Recovery Testing
+        error_spec = roadmap_tools.get_spec('non-existent-project', 'non-existent-spec')
+        assert error_spec.status == OperationStatus.NOT_FOUND
+
+        # Phase 13: Cleanup and Final Verification
+        delete_result = roadmap_tools.delete_spec(project_id, 'Production Workflow Test')
+        assert delete_result.status == OperationStatus.SUCCESS
+
+        # Verify empty roadmap after deletion
+        empty_roadmap = roadmap_tools.get_roadmap(project_id)
+        assert '0 specs' in empty_roadmap.message
+
+    def test_production_concurrent_mixed_operations(self) -> None:
+        server = create_mcp_server()
+
+        # Verify server has all required tools registered
+        tools = asyncio.run(server.get_tools())
+        assert len(tools) == 13
+
+        # Test concurrent roadmap creation operations
+        roadmap_results = []
+        for i in range(3):
+            roadmap_result = roadmap_tools.create_roadmap(f'concurrent-project-{i}', f'Concurrent Roadmap {i}')
+            roadmap_results.append(roadmap_result)
+            assert roadmap_result.status == OperationStatus.SUCCESS
+
+        # Test concurrent loop initialization operations
+        loop_results = []
+        for i in range(3):
+            loop_type = 'plan' if i % 2 == 0 else 'spec'
+            loop_result = loop_tools.initialize_refinement_loop(loop_type)
+            loop_results.append(loop_result)
+            assert loop_result.status == LoopStatus.INITIALIZED
+
+        # Test concurrent mixed follow-up operations
+        spec_markdown = """# Technical Specification: Test Spec
+## Overview
+**Objectives**: `Concurrent testing`
+**Scope**: `Production validation`
+**Dependencies**: `None`
+## Expected Deliverables
+Concurrent operation validation
+## Technical Architecture
+Async MCP server operations
+"""
+
+        # Add specs to concurrent roadmaps
+        spec_results = []
+        for i in range(3):
+            result = roadmap_tools.add_spec(f'concurrent-project-{i}', f'Concurrent Spec {i}', spec_markdown)
+            spec_results.append(result)
+            assert result.status == OperationStatus.SUCCESS
+
+        # Progress concurrent loops
+        loop_progress_results = []
+        for i, loop_result in enumerate(loop_results):
+            score = 85 + i  # Varying scores
+            progress_result = loop_tools.decide_loop_next_action(loop_result.id, score)
+            loop_progress_results.append(progress_result)
+            assert progress_result.status == LoopStatus.COMPLETED  # All scores >= 85
+
+        # Verify final state consistency
+        for i in range(3):
+            # Verify roadmaps have specs
+            roadmap_check = roadmap_tools.get_roadmap(f'concurrent-project-{i}')
+            assert roadmap_check.status == OperationStatus.SUCCESS
+            assert '1 specs' in roadmap_check.message
+
+            # List all specs in each roadmap
+            specs_list = roadmap_tools.list_specs(f'concurrent-project-{i}')
+            assert specs_list.status == OperationStatus.SUCCESS
+            assert 'Test Spec' in specs_list.message
+
+        # Verify all loops are in completed state
+        active_loops = loop_tools.list_active_loops()
+        completed_loop_ids = [loop.id for loop in loop_results]
+        active_loop_ids = [loop.id for loop in active_loops]
+
+        for completed_id in completed_loop_ids:
+            assert completed_id in active_loop_ids

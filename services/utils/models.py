@@ -1,14 +1,102 @@
+import re
 import uuid
 from datetime import datetime
+from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from services.utils.enums import HealthState, LoopStatus, LoopType
+from services.utils.enums import HealthState, LoopStatus, LoopType, OperationStatus
+from services.utils.errors import SpecNotFoundError
+
+
+class InitialSpec(BaseModel):
+    name: str
+    objectives: str
+    scope: str
+    dependencies: str
+    deliverables: str
+    architecture: str
+
+    @classmethod
+    def parse_markdown(cls, markdown: str) -> Self:
+        sections = {
+            'objectives': r'## Overview\s*\n.*?\*\*Objectives\*\*:\s*`([^`]+)`',
+            'scope': r'\*\*Scope\*\*:\s*`([^`]+)`',
+            'dependencies': r'\*\*Dependencies\*\*:\s*`([^`]+)`',
+            'deliverables': r'## Expected Deliverables\s*\n(.*?)(?=\n##|\n\*\*|\Z)',
+            'architecture': r'## Technical Architecture\s*\n(.*?)(?=\n##|\n\*\*|\Z)',
+        }
+
+        # Extract name from title
+        name_match = re.search(r'# Technical Specification:\s*(.+)', markdown)
+        name = name_match.group(1).strip() if name_match else 'Unnamed Spec'
+
+        # Extract sections using regex
+        extracted = {}
+        for field, pattern in sections.items():
+            match = re.search(pattern, markdown, re.DOTALL | re.IGNORECASE)
+            if match:
+                extracted[field] = match.group(1).strip()
+            else:
+                extracted[field] = f'{field.title()} not specified'
+
+        return cls(name=name, **extracted)
+
+    def build_markdown(self) -> str:
+        return f"""# Technical Specification: {self.name}
+
+## Overview
+
+**Objectives**: `{self.objectives}`  
+**Scope**: `{self.scope}`  
+**Dependencies**: `{self.dependencies}`
+
+## Expected Deliverables
+
+{self.deliverables}
+
+## Technical Architecture  
+
+{self.architecture}
+
+## Quality Gates
+
+- [ ] All objectives met and validated
+- [ ] Scope boundaries respected  
+- [ ] Dependencies properly integrated
+- [ ] Deliverables complete and tested
+- [ ] Architecture decisions documented
+"""
+
+
+class RoadMap(BaseModel):
+    name: str
+    specs: dict[str, InitialSpec] = Field(default_factory=dict)
+
+    def add_spec(self, spec: InitialSpec) -> None:
+        self.specs[spec.name] = spec
+
+    def get_spec(self, spec_name: str) -> InitialSpec:
+        if spec_name not in self.specs:
+            raise SpecNotFoundError(f'Spec not found: {spec_name}')
+        return self.specs[spec_name]
+
+
+class MCPRoadMapResponse(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4())[:8])
+    status: LoopStatus
+    roadmap: RoadMap
 
 
 class MCPResponse(BaseModel):
     id: str
     status: LoopStatus
+    message: str = ''
+
+
+class OperationResponse(BaseModel):
+    id: str
+    status: OperationStatus
     message: str = ''
 
 

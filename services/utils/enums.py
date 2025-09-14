@@ -5,6 +5,7 @@ from services.utils.setting_configs import loop_config
 
 class LoopType(Enum):
     PLAN = 'plan'
+    ROADMAP = 'roadmap'
     SPEC = 'spec'
     BUILD_PLAN = 'build_plan'
     BUILD_CODE = 'build_code'
@@ -29,6 +30,12 @@ class LoopStatus(Enum):
     COMPLETED = 'completed'
     USER_INPUT = 'user_input'
     REFINE = 'refine'
+
+
+class OperationStatus(Enum):
+    SUCCESS = 'success'
+    ERROR = 'error'
+    NOT_FOUND = 'not_found'
 
 
 class HealthState(Enum):
