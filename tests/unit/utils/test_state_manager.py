@@ -5,6 +5,9 @@ from services.utils.enums import LoopType
 from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError, SpecNotFoundError
 
 
+# Import feedback module to ensure LoopState model is fully rebuilt with forward references
+
+
 class TestQueue:
     def test_queue_initialization(self) -> None:
         queue = Queue[str](maxlen=3)

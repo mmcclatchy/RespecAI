@@ -8,6 +8,13 @@ from pydantic import BaseModel, ConfigDict, Field
 from services.utils.enums import HealthState, LoopStatus, LoopType, OperationStatus
 from services.utils.errors import SpecNotFoundError
 
+from services.models.feedback import CriticFeedback
+
+
+# Import only for type annotations to avoid circular imports
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+
 
 class InitialSpec(BaseModel):
     name: str
@@ -110,6 +117,8 @@ class LoopState(BaseModel):
     score_history: list[int] = Field(default_factory=list)
     iteration: int = Field(default=1, ge=1)
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    feedback_history: list[CriticFeedback] = Field(default_factory=list)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
     @property
     def mcp_response(self) -> MCPResponse:
@@ -154,6 +163,14 @@ class LoopState(BaseModel):
             self._calculate_improvement(1),
         ]
         return all(improvement < threshold for improvement in recent_improvements)
+
+    def add_feedback(self, feedback: CriticFeedback) -> None:
+        self.feedback_history.append(feedback)
+        self.add_score(feedback.quality_score)  # type: ignore[arg-type]  # mypy bug with Pydantic computed fields
+        self.updated_at = datetime.now()
+
+    def get_recent_feedback(self, count: int = 5) -> list[CriticFeedback]:
+        return self.feedback_history[-count:] if self.feedback_history else []
 
 
 class HealthStatus(BaseModel):

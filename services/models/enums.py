@@ -43,3 +43,27 @@ class BuildStatus(str, Enum):
     CODE_REVIEW = 'code-review'
     COMPLETED = 'completed'
     BLOCKED = 'blocked'
+
+
+class FSSDCriteria(str, Enum):
+    CLARITY = 'clarity'
+    COMPLETENESS = 'completeness'
+    CONSISTENCY = 'consistency'
+    FEASIBILITY = 'feasibility'
+    TESTABILITY = 'testability'
+    MAINTAINABILITY = 'maintainability'
+    SCALABILITY = 'scalability'
+    SECURITY = 'security'
+    PERFORMANCE = 'performance'
+    USABILITY = 'usability'
+    DOCUMENTATION = 'documentation'
+    INTEGRATION = 'integration'
+
+
+class CriticAgent(str, Enum):
+    PLAN_CRITIC = 'plan-critic'
+    ANALYST_CRITIC = 'analyst-critic'
+    ROADMAP_CRITIC = 'roadmap-critic'
+    SPEC_CRITIC = 'spec-critic'
+    BUILD_CRITIC = 'build-critic'
+    BUILD_REVIEWER = 'build-reviewer'

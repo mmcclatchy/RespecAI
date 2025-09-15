@@ -10,21 +10,21 @@ This document contains the detailed implementation specifications for transformi
 **Goal**: Create document models with markdown parsing/building capabilities
 
 #### Document Model Creation
-- [ ] Create `TechnicalSpec` model in services/utils/models.py
-- [ ] Add fields based on phase_spec_template.md structure:
-  - [ ] name, objectives, scope, dependencies, deliverables
-  - [ ] architecture, technology_stack, functional_requirements
-  - [ ] non_functional_requirements, development_plan, testing_strategy
-  - [ ] research_requirements, success_criteria, integration_context
-- [ ] Implement `parse_markdown()` method following InitialSpec pattern
-- [ ] Implement `build_markdown()` method for phase_spec_template.md format
-- [ ] Create placeholder `StrategicPlan` model for /plan workflow
-- [ ] Create placeholder `BuildPlan` model for /build workflow
+- [x] Create `TechnicalSpec` model in services/utils/models.py
+- [x] Add fields based on phase_spec_template.md structure:
+  - [x] name, objectives, scope, dependencies, deliverables
+  - [x] architecture, technology_stack, functional_requirements
+  - [x] non_functional_requirements, development_plan, testing_strategy
+  - [x] research_requirements, success_criteria, integration_context
+- [x] Implement `parse_markdown()` method following InitialSpec pattern
+- [x] Implement `build_markdown()` method for phase_spec_template.md format
+- [x] Create placeholder `StrategicPlan` model for /plan workflow
+- [x] Create placeholder `BuildPlan` model for /build workflow
 
 #### Testing
-- [ ] Unit tests for TechnicalSpec markdown parsing/building
-- [ ] Test with actual phase_spec_template.md content
-- [ ] Validate round-trip: markdown → model → markdown
+- [x] Unit tests for TechnicalSpec markdown parsing/building
+- [x] Test with actual phase_spec_template.md content
+- [x] Validate round-trip: markdown → model → markdown
 
 **Success Criteria**: TechnicalSpec can accurately parse and build phase_spec_template.md format
 
@@ -32,21 +32,21 @@ This document contains the detailed implementation specifications for transformi
 **Goal**: Create structured feedback system for quality tracking
 
 #### CriticFeedback Model Enhancement
-- [ ] Extend existing `CriticFeedback` model for document-specific feedback
-- [ ] Add fields for FSDD scoring (0-10 scale across 12 criteria)
-- [ ] Create feedback aggregation methods
-- [ ] Implement feedback history tracking
+- [x] Extend existing `CriticFeedback` model for document-specific feedback
+- [x] Add fields for FSDD scoring (0-10 scale across 12 criteria)
+- [x] Create feedback aggregation methods
+- [x] Implement feedback history tracking
 
 #### Quality Integration
-- [ ] Integrate feedback models with document models
-- [ ] Create quality scoring utilities for TechnicalSpec
-- [ ] Implement FSDD rubric validation
-- [ ] Add quality gate threshold checking
+- [x] Integrate feedback models with document models
+- [x] Create quality scoring utilities for TechnicalSpec
+- [x] Implement FSDD rubric validation
+- [x] Add quality gate threshold checking
 
 #### Testing
-- [ ] Unit tests for enhanced CriticFeedback model
-- [ ] Test quality scoring integration
-- [ ] Validate FSDD rubric calculations
+- [x] Unit tests for enhanced CriticFeedback model
+- [x] Test quality scoring integration
+- [x] Validate FSDD rubric calculations
 
 **Success Criteria**: Structured feedback system tracks quality scores for all document types
 

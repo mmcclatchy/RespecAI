@@ -313,12 +313,12 @@ class CriticFeedback(BaseModel):
     timestamp: datetime
 
     # Integration with existing LoopState
-    def calculate_overall_score(self) -> int:
-        """Calculate 0-100 score from FSDD criteria scores"""
+    @computed_field
+    def quality_score(self) -> int:
         if not self.fsdd_scores:
             return 0
         avg_score = sum(self.fsdd_scores.values()) / len(self.fsdd_scores)
-        return int(avg_score * 10)  # Convert 0-10 to 0-100
+        return round(avg_score * 10)  # Convert 0-10 to 0-100
 ```
 
 #### FSDD Scoring Approach
