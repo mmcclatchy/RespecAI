@@ -28,7 +28,7 @@ The `/plan-roadmap` command transforms strategic plans into phased implementatio
 ## Workflow Position
 
 ```text
-Strategic Plan → /plan-roadmap → [plan-decomposer ↔ roadmap-critic loop] → Implementation Roadmap
+Strategic Plan → /plan-roadmap → [plan-roadmap ↔ roadmap-critic loop] → Implementation Roadmap
                                            ↓                                          ↓
                                    Phase Breakdown                          Quality Assessment
                                            ↓                                          ↓
@@ -55,7 +55,7 @@ Strategic Plan → /plan-roadmap → [plan-decomposer ↔ roadmap-critic loop] �
 
 2. **Implementation Decomposition Orchestration**
    - Initialize MCP refinement loop for roadmap generation
-   - Launch `plan-decomposer` agent for phase breakdown
+   - Launch `plan-roadmap` agent for phase breakdown
    - Manage iterative roadmap development process
    - Coordinate phase scoping and dependency mapping
 
@@ -66,7 +66,7 @@ Strategic Plan → /plan-roadmap → [plan-decomposer ↔ roadmap-critic loop] �
    - Monitor iteration count and improvement trends
 
 4. **Refinement Cycle Coordination**
-   - Route critic feedback to plan-decomposer for improvements
+   - Route critic feedback to plan-roadmap for improvements
    - Maintain roadmap context across iterations
    - Manage stagnation detection and user escalation
    - Ensure MCP Server completion criteria before finishing
@@ -92,12 +92,12 @@ Main Agent (via /plan-roadmap)
     │   └── Capture phasing preferences from user
     │
     ├── 3. Roadmap Generation Loop
-    │   ├── Task: plan-decomposer (phase breakdown)
+    │   ├── Task: plan-roadmap (phase breakdown)
     │   ├── Task: roadmap-critic (quality assessment → score)
     │   └── mcp_tool: decide_loop_next_action(roadmap_loop_id, score)
     │
     ├── 4. Handle Loop Decision
-    │   ├── IF "refine" → Pass feedback to plan-decomposer
+    │   ├── IF "refine" → Pass feedback to plan-roadmap
     │   ├── IF "complete" → Proceed to final preparation
     │   └── IF "user_input" → Request phasing clarification
     │
@@ -107,8 +107,8 @@ Main Agent (via /plan-roadmap)
 
 ### Data Flow Between Agents
 **Roadmap Generation Phase:**
-- **Main Agent → plan-decomposer**: Strategic plan + objectives + preferences
-- **plan-decomposer → Main Agent**: Implementation roadmap (markdown)
+- **Main Agent → plan-roadmap**: Strategic plan + objectives + preferences
+- **plan-roadmap → Main Agent**: Implementation roadmap (markdown)
 - **Main Agent → roadmap-critic**: Roadmap document for assessment
 - **roadmap-critic → Main Agent**: Quality score (0-100) and feedback
 - **Main Agent → MCP Server**: Score for roadmap loop decision logic
@@ -243,7 +243,7 @@ The roadmap-critic evaluates roadmaps against these areas:
 
 ## Agent Coordination
 
-### plan-decomposer Agent
+### plan-roadmap Agent
 - **Input**: Strategic plan + structured objectives
 - **Output**: Multi-phase implementation roadmap
 - **Focus**: Breaking down requirements into implementable chunks
@@ -273,7 +273,7 @@ IF strategic plan format unrecognizable:
 
 ### Agent Failures
 ```text
-IF plan-decomposer fails:
+IF plan-roadmap fails:
   Retry: Once with simplified input
   Fallback: Create basic 3-phase roadmap
   Document: Limitations in output
@@ -300,9 +300,9 @@ User: /plan-roadmap
 
 Main Agent: I'll transform your strategic plan into a phased implementation roadmap. Let me analyze the plan and break it down into manageable phases.
 
-[Invokes plan-decomposer agent]
+[Invokes plan-roadmap agent]
 
-plan-decomposer: Analyzing strategic plan for AI-powered feedback system. Creating 4-phase roadmap based on dependencies and value delivery...
+plan-roadmap: Analyzing strategic plan for AI-powered feedback system. Creating 4-phase roadmap based on dependencies and value delivery...
 
 [Main Agent invokes roadmap-critic for quality assessment]
 [Score: 73% - needs better phase scoping and risk distribution]
@@ -325,7 +325,7 @@ Main Agent: Creating roadmap with 2-week sprint phases targeting MVP delivery in
 
 ### Required Components
 - **MCP Server**: Loop state management and decision logic
-- **plan-decomposer agent**: Phase breakdown and roadmap generation
+- **plan-roadmap agent**: Phase breakdown and roadmap generation
 - **roadmap-critic agent**: Quality assessment and feedback
 
 ### MCP Tools Used
@@ -340,7 +340,7 @@ Main Agent: Creating roadmap with 2-week sprint phases targeting MVP delivery in
 The command handles three MCP Server responses:
 
 1. **refine**:
-   - Pass critic feedback to plan-decomposer for improvements
+   - Pass critic feedback to plan-roadmap for improvements
    - Continue refinement cycle with updated roadmap
    - Maintain context across iterations
 
@@ -378,7 +378,7 @@ The `/plan-roadmap` command operates identically across all platforms (Linear, G
 
 ## Related Documentation
 - **Previous Phase**: [`/plan` Command Specification](plan.md)
-- **Primary Agent**: [`plan-decomposer` Agent Specification](../agents/plan-decomposer.md)
+- **Primary Agent**: [`plan-roadmap` Agent Specification](../agents/plan-roadmap.md)
 - **Quality Agent**: [`roadmap-critic` Agent Specification](../agents/roadmap-critic.md)
 - **Next Phase**: [`/spec` Command Specification](spec.md)
 - **MCP Tools**: [MCP Tools Specification](../MCP_TOOLS_SPECIFICATION.md)

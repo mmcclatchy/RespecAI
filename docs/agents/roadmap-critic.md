@@ -14,7 +14,7 @@ The `roadmap-critic` agent evaluates implementation roadmaps against quality cri
 ## Invocation Context
 
 ### When Invoked
-- **After Each Generation**: Following plan-decomposer output
+- **After Each Generation**: Following plan-roadmap output
 - **Quality Validation**: Assessment for refinement decisions
 - **Before Completion**: Final quality check
 
@@ -41,7 +41,7 @@ Task(
 ## Workflow Position
 
 ```text
-plan-decomposer → [Implementation Roadmap] → roadmap-critic → [Score + Feedback]
+plan-roadmap → [Implementation Roadmap] → roadmap-critic → [Score + Feedback]
                                                     ↓
                                                MCP Decision
                                                     ↓
@@ -110,7 +110,7 @@ plan-decomposer → [Implementation Roadmap] → roadmap-critic → [Score + Fee
 Evaluate this implementation roadmap for quality and completeness.
 
 Implementation Roadmap:
-[Complete roadmap from plan-decomposer]
+[Complete roadmap from plan-roadmap]
 
 Iteration: [1-5 if tracking]
 Previous Score: [If applicable]
@@ -317,7 +317,7 @@ STRENGTHS: Basic phase structure exists, core features identified
 
 ## Integration Notes
 
-### Coordination with plan-decomposer
+### Coordination with plan-roadmap
 - Feedback drives roadmap improvements
 - Maintains phase structure focus
 - Preserves good decisions
@@ -331,6 +331,6 @@ STRENGTHS: Basic phase structure exists, core features identified
 
 ## Related Documentation
 - [`/plan-roadmap` Command Specification](../commands/plan-roadmap.md)
-- [`plan-decomposer` Agent Specification](plan-decomposer.md)
+- [`plan-roadmap` Agent Specification](plan-roadmap.md)
 - [`/spec` Command Specification](../commands/spec.md)
 - [Agent Development Guidelines](../AGENT_DEVELOPMENT_GUIDELINES.md)

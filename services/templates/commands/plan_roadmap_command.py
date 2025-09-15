@@ -7,7 +7,7 @@ def generate_plan_roadmap_command_template(
 ) -> str:
     return f"""---
 allowed-tools:
-  - Task(plan-decomposer)
+  - Task(plan-roadmap)
   - Task(roadmap-critic)
   - {get_project_plan_tool}
   - {update_project_plan_tool}
@@ -36,7 +36,7 @@ Orchestrate the transformation of strategic plans into discrete, implementable p
 
 ### 2. Implementation Decomposition Orchestration
 - Initialize MCP refinement loop for roadmap generation
-- Launch plan-decomposer agent for phase breakdown
+- Launch plan-roadmap agent for phase breakdown
 - Manage iterative roadmap development process
 - Coordinate phase scoping and dependency mapping
 
@@ -72,12 +72,12 @@ Main Agent (via /plan-roadmap)
     │   └── Capture phasing preferences from user input
     │
     ├── 3. Roadmap Generation Loop
-    │   ├── Task: plan-decomposer (phase breakdown)
+    │   ├── Task: plan-roadmap (phase breakdown)
     │   ├── Task: roadmap-critic (quality assessment → score)
     │   └── mcp__loop_state__decide_loop_next_action(roadmap_loop_id, score)
     │
     ├── 4. Handle Loop Decision
-    │   ├── IF "refine" → Pass feedback to plan-decomposer
+    │   ├── IF "refine" → Pass feedback to plan-roadmap
     │   ├── IF "complete" → Proceed to final preparation
     │   └── IF "user_input" → Request phasing clarification
     │
@@ -116,8 +116,8 @@ Set up MCP-managed quality refinement loop:
 ROADMAP_LOOP_ID = mcp__loop_state__initialize_refinement_loop:
   loop_type: "roadmap"
 
-# Prepare decomposer input context
-DECOMPOSER_CONTEXT = Combine:
+# Prepare roadmap input context
+ROADMAP_CONTEXT = Combine:
   Strategic Plan: ${{STRATEGIC_PLAN_CONTENT}}
   Structured Objectives: ${{STRUCTURED_OBJECTIVES}}
   Phasing Preferences: ${{PHASING_PREFERENCES}}
@@ -126,12 +126,12 @@ DECOMPOSER_CONTEXT = Combine:
 
 ### Step 3: Phase Breakdown Generation
 
-Invoke plan-decomposer for roadmap creation:
+Invoke plan-roadmap for roadmap creation:
 
 ```
 # Generate initial roadmap
-Invoke plan-decomposer agent with this input:
-${{DECOMPOSER_CONTEXT}}
+Invoke plan-roadmap agent with this input:
+${{ROADMAP_CONTEXT}}
 
 Expected Output Format:
 - Implementation roadmap in markdown format
@@ -140,8 +140,8 @@ Expected Output Format:
 - Deliverables and success criteria per phase
 - Technical focus areas for /spec preparation
 
-# Capture decomposer output
-CURRENT_ROADMAP = [plan-decomposer output: complete implementation roadmap]
+# Capture roadmap output
+CURRENT_ROADMAP = [plan-roadmap output: complete implementation roadmap]
 ```
 
 ### Step 4: Roadmap Quality Assessment
@@ -181,7 +181,7 @@ IF ROADMAP_DECISION == "complete":
 IF ROADMAP_DECISION == "refine":
   → Return to Step 3 with refined context:
   
-  Invoke plan-decomposer agent with this input:
+  Invoke plan-roadmap agent with this input:
   
   Previous Roadmap: ${{CURRENT_ROADMAP}}
   Quality Feedback: ${{ROADMAP_IMPROVEMENT_FEEDBACK}}
@@ -346,7 +346,7 @@ IF strategic plan format unrecognizable:
 
 #### 3. Agent Failures
 ```
-IF plan-decomposer fails:
+IF plan-roadmap fails:
   ERROR_RESPONSE = {
         'error_type': "agent_failure",
     "error_message": "Phase breakdown generation failed",
@@ -362,7 +362,7 @@ IF roadmap-critic fails:
     "error_message": "Roadmap quality assessment failed",
     "recovery_action": "Continuing without quality loop",
     "user_guidance": "Roadmap generated without quality validation. Manual review recommended.",
-    "partial_output": "Unvalidated roadmap from plan-decomposer"
+    "partial_output": "Unvalidated roadmap from plan-roadmap"
   }
   → Present best-effort roadmap with manual review warning
 ```

@@ -129,6 +129,7 @@ def generate_template(
 #### 1. Command Templates
 Generate user-facing commands that orchestrate workflows:
 
+- **`plan_roadmap_command_template`**: Transforms strategic plans into phased implementation roadmaps
 - **`spec_command_template`**: Converts strategic plans to technical specifications
 - **`build_command_template`**: Creates implementation plans from specifications
 - **`refine_spec_command_template`**: Quality improvement for specifications
@@ -142,6 +143,8 @@ Generate specialized AI agents with platform-specific capabilities:
 
 - **`plan_analyst_template`**: Business requirement extraction (with iterative refinement)
 - **`plan_critic_template`**: Strategic plan quality assessment
+- **`plan_roadmap_template`**: Implementation roadmap generation and phase decomposition
+- **`roadmap_critic_template`**: Implementation roadmap quality assessment
 - **`spec_architect_template`**: Technical design and architecture (with iterative refinement)
 - **`spec_critic_template`**: Technical specification quality assessment
 - **`build_planner_template`**: Implementation planning (with iterative refinement)
@@ -188,6 +191,11 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 #### Strategic Planning Tools
 - **`execute_plan_workflow`**: Conversational requirements discovery
 - **`assess_content_fssd`**: Quality gate evaluation for plans
+
+#### Implementation Roadmap Tools
+- **`initialize_refinement_loop`**: Initialize roadmap quality refinement loop
+- **`decide_loop_next_action`**: Roadmap loop decision engine for refinement cycles
+- **`get_loop_status`**: Monitor roadmap loop progress and iteration status
 
 #### Technical Specification Tools
 - **`execute_spec_workflow`**: Plan-to-specification conversion
@@ -328,19 +336,33 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 9. **Analyst Validation Loop**: MCP manages analyst refinement iterations
 **Output**: Strategic plan document with dual validation scores
 
-#### Stage 2: Technical Specification (`/spec`)
-**Input**: Strategic plan + technical focus area
-**Process**:
-1. Plan analysis and requirement extraction
-2. Technical architecture design
-    a. Refinement Loop
-        - `spec-architect` agent
-        - `spec-critic` agent
-3. Platform-specific specification creation
-4. FSDD quality gate validation
-**Output**: Detailed technical specification in chosen platform
+#### Stage 2: Implementation Roadmap (`/plan-roadmap`)
+**Input**: Strategic plan + optional phasing preferences
+**Process**: Quality-driven roadmap decomposition workflow
+1. **Strategic Plan Analysis**: Extract requirements and business objectives
+2. **Phase Decomposition**: Break down implementation into 3-7 discrete phases
+3. **Dependency Mapping**: Establish logical phase sequencing and prerequisites
+4. **Roadmap Quality Loop**: MCP manages roadmap refinement iterations
+   - `plan-roadmap` agent creates phase breakdown
+   - `roadmap-critic` evaluates phase scoping and dependencies
+5. **Spec Scaffolding**: Create initial technical specifications for each phase
+6. **Platform Integration**: Store roadmap and scaffolded specs in chosen platform
+**Quality Gate**: MCP Server-determined thresholds for roadmap completeness
+**Output**: Implementation roadmap with phase-specific scaffolded specifications
 
-#### Stage 3: Implementation Workflow (`/build`)
+#### Stage 3: Technical Specification (`/spec`)
+**Input**: Scaffolded specification from roadmap + technical focus area
+**Process**: Enhanced specification workflow with pre-structured context
+1. **Scaffolded Spec Analysis**: Review phase-specific specification template
+2. **Research Integration**: Incorporate archive and external research findings
+3. **Technical Architecture Design**: Complete detailed system architecture
+   - Refinement Loop: `spec-architect` ↔ `spec-critic`
+4. **Platform-Specific Enhancement**: Enrich specification with platform integration details
+5. **FSDD Quality Gate Validation**: Ensure specification meets production readiness criteria
+**Quality Gate**: MCP Server-determined thresholds for technical specifications
+**Output**: Complete technical specification with full implementation guidance
+
+#### Stage 4: Implementation Workflow (`/build`)
 **Input**: Technical specification identifier
 **Process**: Streamlined workflow with 2 meaningful quality loops
 - **Technology Environment Discovery**: Detect current project technology stack
@@ -361,7 +383,10 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 - **Platform Integration & Completion**: Document results and update tickets
 **Output**: Complete implementation with comprehensive validation and platform integration
 
-**Key Architecture Improvement**: Eliminated redundant refinement agents and combined planning/quality assessment into a single meaningful loop, resulting in cleaner separation of concerns between planning quality and implementation quality.
+**Key Architecture Improvements**:
+- **Roadmap Bridge Phase**: Added implementation roadmap generation to bridge strategic planning and technical specification, improving phase-based development workflow
+- **Spec Scaffolding**: Pre-structured specifications provide clear templates and context for technical specification completion
+- **Streamlined Implementation**: Eliminated redundant refinement agents in build phase, resulting in cleaner separation between planning quality and implementation quality
 
 ### Quality-Driven Refinement
 

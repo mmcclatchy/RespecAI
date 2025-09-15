@@ -1,11 +1,11 @@
-# plan-decomposer Agent Specification
+# plan-roadmap Agent Specification
 
 ## Overview
-The `plan-decomposer` agent transforms strategic plans and business objectives into phased implementation roadmaps. It analyzes requirements to create discrete, implementable phases that each deliver user value.
+The `plan-roadmap` agent transforms strategic plans and business objectives into phased implementation roadmaps. It analyzes requirements to create discrete, implementable phases that each deliver user value.
 
 ## Agent Metadata
 
-**Name**: `plan-decomposer`  
+**Name**: `plan-roadmap`  
 **Type**: Implementation planning specialist  
 **Model**: Claude Sonnet  
 **Invoked By**: Main Agent via `/plan-roadmap` command  
@@ -20,9 +20,9 @@ The `plan-decomposer` agent transforms strategic plans and business objectives i
 
 ### Invocation Pattern
 ```text
-# Main Agent invokes plan-decomposer
+# Main Agent invokes plan-roadmap
 Task(
-    agent="plan-decomposer",
+    agent="plan-roadmap",
     prompt=f"""
     Strategic Plan: {strategic_plan}
     Structured Objectives: {objectives_analysis}
@@ -37,7 +37,7 @@ Task(
 ## Workflow Position
 
 ```text
-Strategic Plan → plan-decomposer → Implementation Roadmap → roadmap-critic
+Strategic Plan → plan-roadmap → Implementation Roadmap → roadmap-critic
                       ↓                                          ↓
               Phase Breakdown                          Quality Assessment
                       ↓                                          ↓
@@ -328,7 +328,7 @@ If timeline unrealistic:
 
 ### Initial Decomposition
 ```markdown
-plan-decomposer: Analyzing strategic plan for AI-powered feedback system.
+plan-roadmap: Analyzing strategic plan for AI-powered feedback system.
 
 Identifying implementation phases based on:
 - Core requirements: feedback collection, AI analysis, routing

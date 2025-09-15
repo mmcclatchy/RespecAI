@@ -75,7 +75,7 @@ Critic Score → MCP Server State Management → Next Action Decision:
 - **User Escalation**: System requests clarification when automated refinement fails
 - **MVP Scope**: No cross-session persistence - stateless loop management
 
-## Four Refinement Loops Architecture
+## Five Refinement Loops Architecture
 
 ### Loop 1: Strategic Planning (`/plan`)
 
@@ -95,21 +95,38 @@ Critic Score → MCP Server State Management → Next Action Decision:
 **Quality Gate**: MCP Server-determined thresholds for strategic planning
 **Output**: Strategic plan document with dual validation scores
 
-### Loop 2: Technical Specification (`/spec`)
+### Loop 2: Implementation Roadmap (`/plan-roadmap`)
+
+**Participants**: `plan-roadmap` ↔ `roadmap-critic`
+
+**Process Flow**:
+1. **Strategic Plan Context Gathering**: Access completed strategic plan and structured objectives
+2. **Phase Decomposition**: Break down strategic plan into 3-7 implementable phases
+3. **Dependency Mapping**: Establish logical sequencing and prerequisite relationships
+4. **Roadmap Generation**: Create implementation roadmap with phase-specific contexts
+5. **Quality Validation**: `roadmap-critic` assesses phase scoping, dependencies, and implementation readiness
+6. **Spec Scaffolding**: Generate initial technical specifications for each phase
+7. **Platform Integration**: Store roadmap and scaffolded specs in chosen platform
+
+**Quality Gate**: MCP Server-determined thresholds for roadmap completeness and implementation readiness
+**Output**: Implementation roadmap with phase-specific scaffolded specifications
+
+### Loop 3: Technical Specification (`/spec`)
 
 **Participants**: `spec-architect` ↔ `spec-critic`
 
 **Process Flow**:
-1. **Archive Integration**: `spec-architect` scans existing best practices documentation
-2. **Research Gap Analysis**: Identifies external research requirements
-3. **Technical Architecture**: Designs system architecture with technology stack integration
-4. **Quality Validation**: `spec-critic` assesses technical completeness and FSDD compliance
-5. **Platform Storage**: Creates specifications in chosen platform (Linear/GitHub/Markdown)
+1. **Scaffolded Spec Analysis**: Review phase-specific specification template from roadmap
+2. **Archive Integration**: `spec-architect` scans existing best practices documentation
+3. **Research Gap Analysis**: Identifies external research requirements for phase focus areas
+4. **Technical Architecture**: Complete detailed system architecture with technology stack integration
+5. **Quality Validation**: `spec-critic` assesses technical completeness and FSDD compliance
+6. **Platform Enhancement**: Enrich specification with comprehensive implementation guidance
 
 **Quality Gate**: MCP Server-determined thresholds for production readiness
-**Output**: Platform-specific technical specification with research integration
+**Output**: Complete technical specification with full implementation guidance
 
-### Loop 3: Implementation Planning (`/build` - Phase 1)
+### Loop 4: Implementation Planning (`/build` - Phase 1)
 
 **Participants**: `build-planner` ↔ `build-critic`
 
@@ -122,7 +139,7 @@ Critic Score → MCP Server State Management → Next Action Decision:
 **Quality Gate**: Configurable threshold via environment variables
 **Output**: Detailed implementation roadmap with specific file modifications and sequences
 
-### Loop 4: Code Implementation (`/build` - Phase 2)
+### Loop 5: Code Implementation (`/build` - Phase 2)
 
 **Participants**: `build-coder` ↔ `build-reviewer`
 
@@ -152,22 +169,38 @@ Dual-Loop Orchestration: Main Agent with MCP state management
 Output: Strategic plan document with dual validation scores
 ```
 
+### `/plan-roadmap` Command - Implementation Roadmap
+```text
+Input: Strategic plan + optional phasing preferences
+    ↓
+Roadmap Generation Loop: plan-roadmap ↔ roadmap-critic
+├── Step 1: Strategic plan context gathering and analysis
+├── Step 2: Phase decomposition (3-7 implementable phases)
+├── Step 3: Dependency mapping and sequencing
+├── Step 4: Roadmap quality validation and refinement cycles
+├── Step 5: Spec scaffolding for each phase
+└── Quality Gate: MCP Server-determined thresholds (implementation readiness)
+    ↓
+Output: Implementation roadmap with phase-specific scaffolded specifications
+```
+
 ### `/spec` Command - Technical Specification
 ```text
-Input: Strategic plan + technical focus area
+Input: Scaffolded specification from roadmap + technical focus area
     ↓
-Research Integration Phase:
+Enhanced Specification Phase:
+├── Scaffolded spec analysis and phase context review
 ├── Archive scanning via research-advisor-archive-scan.sh
-├── External research gap identification
+├── External research gap identification for phase-specific needs
 └── Research prompt creation for missing knowledge
     ↓
 Architecture Design Loop: spec-architect ↔ spec-critic
-├── Technical system design using selected technology stack
-├── Research integration from both archive and external sources
-├── Platform-specific specification creation
+├── Complete detailed system architecture using selected technology stack
+├── Research integration from archive and external sources
+├── Platform-specific specification enhancement
 └── Quality Gate: MCP Server-determined thresholds (production ready)
     ↓
-Output: Detailed technical specification in chosen platform
+Output: Complete technical specification with full implementation guidance
 ```
 
 ### `/build` Command - Implementation
@@ -181,7 +214,7 @@ Research Orchestration Phase:
     ↓
 Build Planning Loop: build-planner ↔ build-critic
 ├── Documentation consumption and codebase analysis
-├── Implementation roadmap creation
+├── Implementation plan creation
 ├── Plan validation against spec requirements
 └── Quality Gate: Configurable threshold
     ↓
@@ -215,12 +248,14 @@ Output: Production-ready implementation with platform integration
 - **Parallel Efficiency**: Multiple research instances execute simultaneously
 - **Structured Prompts**: Consistent research request formatting for reliability
 - **Consumption Separation**: Research orchestration separate from consumption
+- **Phase-Specific Research**: Roadmap-driven research focuses on phase requirements
 
 ### 4. Platform Flexibility
 - **Markdown Foundation**: All content structured for portability across platforms
 - **Tool Abstraction**: Platform-specific operations abstracted through template system
 - **Conversion Capability**: Ability to switch between Linear/GitHub/Markdown
 - **Storage Agnostic**: Business logic independent of storage platform choice
+- **Spec Scaffolding**: Pre-structured specifications created in platform-appropriate format
 
 ### 5. Workflow Orchestration
 - **MCP Server Coordination**: Centralized state management and decision logic
@@ -234,7 +269,8 @@ Output: Production-ready implementation with platform integration
 ## MVP Scope Boundaries
 
 ### In Scope (Current MVP)
-- **Four Refinement Loops**: All quality-driven feedback loops with critic agents
+- **Five Refinement Loops**: All quality-driven feedback loops with critic agents (including roadmap loop)
+- **Implementation Roadmap**: Phase-based development workflow with spec scaffolding
 - **Research Orchestration**: Archive scanning + external research synthesis via Exa
 - **Platform Integration**: Linear/GitHub/Markdown support with template system
 - **Quality Framework**: FSDD gates with configurable thresholds via Pydantic-Settings
@@ -272,6 +308,6 @@ Output: Production-ready implementation with platform integration
 
 The Spec-Driven Workflow architecture represents a sophisticated yet maintainable approach to AI-assisted software development. Its strength lies in the clear separation of concerns, progressive quality enforcement, and intelligent research integration. The system balances automation with human oversight, providing fallback mechanisms when automated refinement reaches its limits.
 
-The four-loop architecture ensures quality at every stage while maintaining efficiency through parallel processing and archive-first research strategies. The platform-agnostic design enables teams to work within their preferred tools while maintaining consistent workflow quality.
+The five-loop architecture ensures quality at every stage while maintaining efficiency through parallel processing and archive-first research strategies. The implementation roadmap bridge phase provides crucial structure between strategic planning and technical specification, enabling phase-based development with pre-scaffolded specifications. The platform-agnostic design enables teams to work within their preferred tools while maintaining consistent workflow quality.
 
 This analysis serves as the foundation for understanding system behavior, planning implementations, and making architectural decisions during development and testing phases.
