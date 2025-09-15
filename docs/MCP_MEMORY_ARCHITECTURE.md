@@ -128,11 +128,12 @@ class InitialSpec:
 - Seamless integration with existing `/spec` command workflow
 
 ## Future Loop Integration
-Once MVP proves successful with Loop 3, expand to other loops in this order:
-1. **Loop 2** (Roadmap): Similar structure, clear deliverables
-2. **Loop 4** (Build Planning): Well-defined steps and dependencies
-3. **Loop 1** (Strategic Planning): More complex with conversational context
-4. **Loop 5** (Code Implementation): Most complex with TDD cycle tracking
+Once MVP proves successful with Loop 4 (Technical Specification), expand to other loops in this order:
+1. **Loop 3** (Roadmap): Similar structure, clear deliverables
+2. **Loop 2** (Feature Requirements): Technical translation and constraint definition
+3. **Loop 5** (Build Planning): Well-defined steps and dependencies
+4. **Loop 1** (Strategic Planning): More complex with conversational context
+5. **Loop 6** (Code Implementation): Most complex with TDD cycle tracking
 
 ## Core Concepts
 
@@ -196,14 +197,76 @@ class CriticAgent(str, Enum):
 
 ### Document Model Architecture
 
-#### Three Document Types Required
+The workflow follows a **tightening and deepening of information** progression:
 
-**1. TechnicalSpec Model (for /spec workflow)**
+**ProjectPlan** → **FeatureRequirements** → **Roadmap** → **TechnicalSpec** → **BuildPlan**
+
+This progression moves from strategic planning through technical translation, implementation roadmapping, detailed system architecture, and finally to code implementation planning.
+
+#### Five Document Types Required
+
+**1. ProjectPlan Model (for /plan workflow)**
+```python
+# PROPOSED: ProjectPlan (for /plan workflow)
+class ProjectPlan(BaseModel):
+    # Big-picture overview providing understanding and context
+    # Fields based on project_plan_template.md structure
+    # Following InitialSpec pattern with parse_markdown() and build_markdown()
+```
+
+**2. FeatureRequirements Model (for /feature-requirements workflow)**
+```python
+# IMPLEMENTED: FeatureRequirements (for /feature-requirements workflow)
+class FeatureRequirements(BaseModel):
+    # Technical translation of business needs defining intent and constraints
+    project_name: str
+    feature_description: str
+    problem_statement: str
+    target_users: str
+    business_value: str
+    user_stories: str
+    acceptance_criteria: str
+    user_experience_goals: str
+    functional_requirements: str
+    non_functional_requirements: str
+    integration_requirements: str
+    user_metrics: str
+    performance_metrics: str
+    technical_metrics: str
+    must_have_features: str
+    should_have_features: str
+    could_have_features: str
+    wont_have_features: str
+    requirements_status: str
+    creation_date: str
+    last_updated: str
+    feature_owner: str
+
+    # Following InitialSpec pattern
+    @classmethod
+    def parse_markdown(cls, markdown: str) -> Self:
+        """Parse feature_requirements_template.md format into structured fields"""
+
+    def build_markdown(self) -> str:
+        """Generate markdown in feature_requirements_template.md format"""
+```
+
+**3. Roadmap Model (for /plan-roadmap workflow)**
+```python
+# PROPOSED: Roadmap (for /plan-roadmap workflow)
+class Roadmap(BaseModel):
+    # High-level implementation roadmap organizing Specs step-by-step
+    # Fields based on roadmap_template.md structure
+    # Following InitialSpec pattern with parse_markdown() and build_markdown()
+```
+
+**4. TechnicalSpec Model (for /spec workflow)**
 Based on phase_spec_template.md structure with fields for complete technical specifications:
 ```python
 # PROPOSED: TechnicalSpec (for /spec workflow)
 class TechnicalSpec(BaseModel):
-    name: str
+    # System Architecture Design - first Engineering-forward step
+    phase_name: str
     objectives: str
     scope: str
     dependencies: str
@@ -227,19 +290,12 @@ class TechnicalSpec(BaseModel):
         """Generate markdown in phase_spec_template.md format"""
 ```
 
-**2. StrategicPlan Model (for /plan workflow)**
-```python
-# PROPOSED: StrategicPlan (for /plan workflow)
-class StrategicPlan(BaseModel):
-    # Fields TBD based on actual /plan workflow requirements
-    # Following InitialSpec pattern with parse_markdown() and build_markdown()
-```
-
-**3. BuildPlan Model (for /build workflow)**
+**5. BuildPlan Model (for /build workflow)**
 ```python
 # PROPOSED: BuildPlan (for /build workflow)
 class BuildPlan(BaseModel):
-    # Fields TBD based on actual /build workflow requirements
+    # Detailed implementation plan with specific patterns and best-practices
+    # Fields based on build_plan_template.md structure
     # Following InitialSpec pattern with parse_markdown() and build_markdown()
 ```
 

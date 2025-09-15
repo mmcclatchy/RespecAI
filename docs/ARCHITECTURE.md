@@ -322,6 +322,10 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 
 ### Multi-Stage Development Workflow
 
+The workflow follows a **tightening and deepening of information** progression where each stage builds upon the previous with increasingly technical focus:
+
+**ProjectPlan** → **FeatureRequirements** → **Roadmap** → **TechnicalSpec** → **BuildPlan**
+
 #### Stage 1: Strategic Planning (`/plan`)
 **Input**: Natural language business requirements
 **Process**: Dual-loop orchestration workflow
@@ -334,37 +338,49 @@ The MCP server provides high-level orchestration tools that coordinate complex w
 7. **Objective Extraction**: `plan-analyst` structures business objectives
 8. **Analyst Quality Assessment**: `analyst-critic` validates extraction quality
 9. **Analyst Validation Loop**: MCP manages analyst refinement iterations
-**Output**: Strategic plan document with dual validation scores
+**Quality Gate**: MCP Server-determined thresholds for strategic planning
+**Output**: Big-picture overview providing understanding and context on what we're building and why
 
-#### Stage 2: Implementation Roadmap (`/plan-roadmap`)
-**Input**: Strategic plan + optional phasing preferences
+#### Stage 2: Feature Requirements (`/feature-requirements`)
+**Input**: Strategic plan document
+**Process**: Technical translation workflow
+1. **Business Context Analysis**: Extract user workflows and business intent from strategic plan
+2. **Constraint Definition**: Identify performance, scalability, compliance, and security requirements
+3. **Success Criteria Definition**: Establish clear acceptance criteria and measurable outcomes
+4. **Integration Context Mapping**: Document integration points and external dependencies
+5. **Technical Assumptions Documentation**: Capture assumptions that will guide technical decisions
+**Quality Gate**: Requirements completeness and clarity validation
+**Output**: Technical translation of business needs defining intent and constraints on what is to be built
+
+#### Stage 3: Implementation Roadmap (`/plan-roadmap`)
+**Input**: Feature requirements + optional phasing preferences
 **Process**: Quality-driven roadmap decomposition workflow
-1. **Strategic Plan Analysis**: Extract requirements and business objectives
-2. **Phase Decomposition**: Break down implementation into 3-7 discrete phases
-3. **Dependency Mapping**: Establish logical phase sequencing and prerequisites
+1. **Requirements Analysis**: Extract technical constraints and dependencies from feature requirements
+2. **Phase Decomposition**: Break down implementation into 3-7 discrete phases based on constraints
+3. **Dependency Mapping**: Establish logical phase sequencing ensuring requirements are met
 4. **Roadmap Quality Loop**: MCP manages roadmap refinement iterations
    - `plan-roadmap` agent creates phase breakdown
    - `roadmap-critic` evaluates phase scoping and dependencies
 5. **Spec Scaffolding**: Create initial technical specifications for each phase
 6. **Platform Integration**: Store roadmap and scaffolded specs in chosen platform
 **Quality Gate**: MCP Server-determined thresholds for roadmap completeness
-**Output**: Implementation roadmap with phase-specific scaffolded specifications
+**Output**: High-level implementation roadmap organizing Specs in step-by-step manner with phase foundations
 
-#### Stage 3: Technical Specification (`/spec`)
+#### Stage 4: Technical Specification (`/spec`)
 **Input**: Scaffolded specification from roadmap + technical focus area
 **Process**: Enhanced specification workflow with pre-structured context
-1. **Scaffolded Spec Analysis**: Review phase-specific specification template
-2. **Research Integration**: Incorporate archive and external research findings
-3. **Technical Architecture Design**: Complete detailed system architecture
+1. **Scaffolded Spec Analysis**: Review phase-specific specification template with requirements context
+2. **Research Integration**: Incorporate archive and external research findings for constraints
+3. **Technical Architecture Design**: Complete detailed system architecture addressing requirements
    - Refinement Loop: `spec-architect` ↔ `spec-critic`
-4. **Platform-Specific Enhancement**: Enrich specification with platform integration details
+4. **Requirements Validation**: Ensure architecture meets feature requirements and constraints
 5. **FSDD Quality Gate Validation**: Ensure specification meets production readiness criteria
 **Quality Gate**: MCP Server-determined thresholds for technical specifications
-**Output**: Complete technical specification with full implementation guidance
+**Output**: System Architecture Design - first Engineering-forward step creating Project System Design and identifying research needs
 
-#### Stage 4: Implementation Workflow (`/build`)
+#### Stage 5: Build Planning (`/build`)
 **Input**: Technical specification identifier
-**Process**: Streamlined workflow with 2 meaningful quality loops
+**Process**: Detailed implementation planning workflow
 - **Technology Environment Discovery**: Detect current project technology stack
 - **Research Requirements Orchestration**: Gather implementation guidance
   - The Research Requirements section in the spec will have a list of items that can be either:
@@ -381,7 +397,8 @@ The MCP server provides high-level orchestration tools that coordinate complex w
     - `build-coder` agent (creates + refines based on feedback)
     - `build-reviewer` agent (evaluates implementation + provides feedback)
 - **Platform Integration & Completion**: Document results and update tickets
-**Output**: Complete implementation with comprehensive validation and platform integration
+**Quality Gate**: Implementation readiness and code quality standards
+**Output**: Detailed implementation plan taking Research and creating very detailed plan for how the Spec will be implemented using specific patterns and best-practices
 
 **Key Architecture Improvements**:
 - **Roadmap Bridge Phase**: Added implementation roadmap generation to bridge strategic planning and technical specification, improving phase-based development workflow

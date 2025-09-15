@@ -76,8 +76,10 @@ This document contains the detailed implementation specifications for transformi
 
 ### Additional Document Models (Future Phases)
 
-1. **StrategicPlan Model** - For `/plan` workflow
-2. **BuildPlan Model** - For `/build` workflow
+1. **ProjectPlan Model** - For `/plan` workflow
+2. **FeatureRequirements Model** - For `/feature-requirements` workflow
+3. **Roadmap Model** - For `/plan-roadmap` workflow
+4. **BuildPlan Model** - For `/build` workflow
 
 Each expansion follows the same pattern:
 1. **Model Creation**: Define document-specific model with parse_markdown/build_markdown methods
@@ -154,16 +156,35 @@ The model fields directly map to template variables:
 
 ### Implementation Details
 
-#### Week 1: Document Models (TDD + Standards Compliance)
-- [ ] **RED**: Write failing tests for `TechnicalSpec` model markdown parsing
-- [ ] **GREEN**: Create minimal `TechnicalSpec` model in services/models/spec.py (following InitialSpec pattern)
-- [ ] **REFACTOR**: Ensure full typing (`str | None` syntax), no unnecessary docstrings, imports at top
-- [ ] **RED**: Write failing tests for `build_markdown()` method
-- [ ] **GREEN**: Implement `build_markdown()` for phase_spec_template.md format
-- [ ] **REFACTOR**: Apply SOLID principles, resolve all mypy/ruff errors
-- [ ] **RED**: Write failing tests for `StrategicPlan` and `BuildPlan` placeholder models
-- [ ] **GREEN**: Create minimal placeholder models in services/models/
-- [ ] **REFACTOR**: Ensure all tests pass, no warnings, coding standards compliance
+#### Week 1: Complete Template & Model Creation (TDD + Standards Compliance)
+**Goal**: Create ALL templates and models for the complete workflow with full parsing/building
+
+##### ProjectPlan Template & Model
+- [x] **RED**: Write failing tests for `ProjectPlan` markdown parsing/building
+- [x] **GREEN**: Create `project_plan_template.md` and `ProjectPlan` model
+- [x] **REFACTOR**: Ensure full typing, no unnecessary docstrings, coding standards
+
+##### FeatureRequirements Template & Model
+- [x] **RED**: Write failing tests for `FeatureRequirements` markdown parsing/building
+- [x] **GREEN**: Create `feature_requirements_template.md` and `FeatureRequirements` model
+- [x] **REFACTOR**: Apply SOLID principles, resolve all mypy/ruff errors
+
+##### Roadmap Template & Model
+- [x] **RED**: Write failing tests for `Roadmap` markdown parsing/building
+- [x] **GREEN**: Create `roadmap_template.md` and `Roadmap` model
+- [x] **REFACTOR**: Ensure round-trip parsing accuracy
+
+##### Enhanced Spec Template & Model
+- [x] **RED**: Write failing tests for enhanced `TechnicalSpec`
+- [x] **GREEN**: Update existing `phase_spec_template.md` and `TechnicalSpec` model
+- [x] **REFACTOR**: Ensure character-for-character round-trip accuracy
+
+##### BuildPlan Template & Model
+- [x] **RED**: Write failing tests for `BuildPlan` markdown parsing/building
+- [x] **GREEN**: Create `build_plan_template.md` and `BuildPlan` model
+- [x] **REFACTOR**: Final standards compliance validation
+
+**Success Criteria**: All document types can parse markdown → model → markdown with identical output ✅ **COMPLETED**
 
 #### Week 2: Structured Feedback (TDD + Standards Compliance)
 - [ ] **RED**: Write failing tests for `FSSDCriteria` and `CriticAgent` enums
@@ -189,17 +210,27 @@ The model fields directly map to template variables:
 
 ## File Structure Implementation
 
-### MVP Project Structure
+### Current Project Structure (Week 1 Complete)
 
 ```text
 spec-driven-development/
 ├── services/
-│   ├── models/                            # Simple model organization
+│   ├── models/                            # Complete document models
 │   │   ├── __init__.py
-│   │   ├── base.py                        # BaseModel, core enums, shared types
-│   │   ├── spec.py                        # TechnicalSpec model (MVP focus)
-│   │   ├── feedback.py                    # CriticFeedback model
-│   │   └── session.py                     # LoopSession model
+│   │   ├── project_plan.py                # ProjectPlan model (35 fields)
+│   │   ├── feature_requirements.py        # FeatureRequirements model (22 fields)
+│   │   ├── roadmap.py                     # Roadmap model (40+ fields)
+│   │   ├── spec.py                        # TechnicalSpec model (20 fields)
+│   │   └── build_plan.py                  # BuildPlan model (21 fields)
+│   ├── templates/                         # All document templates
+│   │   ├── agents/
+│   │   ├── commands/
+│   │   ├── documents/
+│   │   │   ├── build_plan_template.md
+│   │   │   ├── feature_requirements_template.md
+│   │   │   ├── project_plan_template.md
+│   │   │   ├── roadmap_template.md
+│   │   │   └── spec_template.md
 │   ├── stores/
 │   │   ├── __init__.py
 │   │   ├── interfaces.py                  # Store interfaces
@@ -213,28 +244,33 @@ spec-driven-development/
 │       └── markdown.py                    # Markdown generation utilities
 ├── tests/
 │   ├── unit/
-│   │   ├── test_models.py
+│   │   ├── models/
+│   │   │   ├── test_project_plan.py
+│   │   │   ├── test_feature_requirements.py
+│   │   │   ├── test_roadmap.py
+│   │   │   ├── test_spec.py
+│   │   │   └── test_build_plan.py
 │   │   ├── test_stores.py
 │   │   └── test_spec_tools.py
 │   └── integration/
 │       └── test_spec_workflow.py
 └── docs/
-    ├── MCP_MEMORY_ARCHITECTURE.md         # This document
-    ├── MCP_MEMORY_FUTURE_FEATURES.md      # Deferred features
-    └── migration/
-        └── MVP_MIGRATION_GUIDE.md
+    ├── MCP_MEMORY_ARCHITECTURE.md          # MCP Memory Architecture
+    ├── STRUCTURED_MEMORY_IMPLEMENTATION.md # This document
+    ├── ARCHITECTURE.md                     # System architecture
+    └── ARCHITECTURE_ANALYSIS.md            # Workflow analysis
 ```
 
 ### Future Expansion Structure
 As additional loops are added, the structure will grow:
 ```text
 services/models/
-├── base.py              # Core enums and shared types
-├── plan.py              # Loop 1 models
-├── roadmap.py           # Loop 2 models
-├── spec.py              # Loop 3 models (MVP)
-├── build.py             # Loop 4 models
-└── code.py              # Loop 5 models
+├── base.py                  # Core enums and shared types
+├── project_plan.py          # Loop 1 models
+├── feature_requirements.py  # Loop 2 models
+├── roadmap.py              # Loop 3 models
+├── spec.py                 # Loop 4 models (MVP)
+└── build_plan.py           # Loop 5 models
 ```
 
 **Note**: All models import enums from `base.py` to ensure type safety and consistency across loops.
@@ -253,35 +289,57 @@ services/models/
 3. **MCP Tools**: Protocol adaptation layer only
 4. **Utils**: Minimal cross-cutting concerns (errors, markdown generation)
 
-## Coding Standards Compliance
+## Coding Standards Compliance (Per CLAUDE.md)
 
-### Mandatory Requirements (Per CLAUDE.md)
+### **MANDATORY REQUIREMENTS - These override ALL other guidelines**
 
-**Every implementation step must follow:**
+#### **Critical Requirements**
+- **No test logic in production** - Keep test code completely separate
+- **Minimal comments** - Code should be self-documenting through clear naming and structure
+- **Docstrings ONLY for**:
+  - Public API interfaces exposed to other services
+  - MCP tools that will be called by external agents
+  - Complex algorithms where the "why" isn't obvious from the code
+  - **NOT for**: Obvious getters, simple CRUD operations, basic parameter mapping
+- **Comments ONLY for**:
+  - Non-obvious business logic or algorithms
+  - Complex mathematical operations
+  - Regulatory/compliance requirements
+  - **NEVER for**: Variable declarations, simple function calls, obvious operations
+- **No global variables** (except `UPPER_CASE` constants)
+- **Minimal nesting** - Max 3 levels deep
+- **No inline imports** - All imports at file top (except circular dependency resolution)
+- **Languages**: Python only
 
-1. **No Unnecessary Documentation**
-   - No docstrings for obvious getters, simple CRUD operations
-   - Docstrings ONLY for MCP tools (external agent interfaces) and complex algorithms
-   - No obvious comments on variable declarations or simple operations
+#### **Python Standards**
+- **Virtual environment**: Use `uv` for all Python operations
+- **Imports**: Absolute imports at file top
+- **Async/await**: Required for all I/O operations
+- **Full typing**: Every parameter and return value typed
+- **Type syntax**: `str | None` (never `Optional[str]`)
+- **Models**: Use Pydantic v2
+- **Architecture**: Service layer separate from endpoints
+- **Testing**: pytest + pytest-mock only
 
-2. **Full Typing Standards**
-   - Every parameter and return value typed
-   - Use `str | None` syntax (never `Optional[str]`)
-   - All imports at file top (no inline imports)
+#### **Quality Gates**
+- All endpoints delegate to services
+- All functions fully typed
+- No business logic in routes
+- Tests cover service layer
 
-3. **Code Quality Gates**
-   - All tests pass without warnings
-   - Zero mypy errors
-   - Zero ruff errors
-   - Max 3 levels of nesting
-   - No global variables (except UPPER_CASE constants)
+### **TDD Methodology - Modified for External Packages**
 
-4. **TDD Methodology**
-   - **RED**: Write failing test first
-   - **GREEN**: Minimal implementation to pass test
-   - **REFACTOR**: Apply standards, SOLID principles, resolve all linting errors
+**Standard TDD Cycle:**
+1. **RED**: Write failing test first
+2. **GREEN**: Minimal implementation to pass test
+3. **REFACTOR**: Apply standards, SOLID principles, resolve all linting errors
 
-### Implementation Validation
+**Exception for External Packages:**
+- **Skip sole testing of Pydantic models** - Trust they work out-of-the-box
+- **Test business logic integration** - Test how our code uses Pydantic
+- **Test complex parsing/building logic** - Our custom regex and template logic needs testing
+
+### **Weekly Validation Requirements**
 
 Each week concludes with mandatory validation:
 - [ ] `uv run mypy services/` passes with no errors
@@ -289,44 +347,23 @@ Each week concludes with mandatory validation:
 - [ ] `uv run pytest tests/` passes with no warnings
 - [ ] Manual code review for unnecessary docstrings/comments
 - [ ] SOLID principles applied (Single Responsibility, Open/Closed, etc.)
+- [ ] No mock/placeholder code in production
 
-### Example Model Structure
+### **Enforcement**
 
-```python
-# services/models/spec.py
-from datetime import datetime
-from pydantic import BaseModel, Field
+**MANDATORY COMPLIANCE**: These rules override all global guidelines and defaults.
 
-class TechnicalSpec(BaseModel):
-    name: str
-    objectives: str
-    scope: str
-    dependencies: str
-    deliverables: str
-    architecture: str
-    technology_stack: str
-    functional_requirements: str
-    non_functional_requirements: str
-    development_plan: str
-    testing_strategy: str
-    research_requirements: str
-    success_criteria: str
-    integration_context: str
-    created_at: datetime = Field(default_factory=datetime.now)
+**Immediate Correction Required**: Any violation must be fixed before proceeding with other work.
 
-    @classmethod
-    def parse_markdown(cls, markdown: str) -> "TechnicalSpec":
-        """Parse phase_spec_template.md format into structured fields.
+**No Exceptions Without Authorization**: These standards apply to ALL code - services, tests, utilities, scripts.
 
-        Implements complex regex parsing logic for variable extraction
-        from markdown template format.
-        """
-        # Complex implementation warranting docstring
-
-    def build_markdown(self) -> str:
-        # Simple template substitution - no docstring needed
-        return template.substitute(self.model_dump())
-```
+### **Self-Review Checklist**
+- [ ] No obvious docstrings or comments
+- [ ] All imports at top of file
+- [ ] No inline imports
+- [ ] Functions/variables have clear, self-documenting names
+- [ ] Complex logic (and only complex logic) is documented
+- [ ] No mock/placeholder production code
 
 ## Anti-patterns & Implementation Gotchas
 

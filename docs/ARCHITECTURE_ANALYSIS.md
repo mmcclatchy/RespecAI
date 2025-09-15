@@ -75,7 +75,7 @@ Critic Score → MCP Server State Management → Next Action Decision:
 - **User Escalation**: System requests clarification when automated refinement fails
 - **MVP Scope**: No cross-session persistence - stateless loop management
 
-## Five Refinement Loops Architecture
+## Seven Refinement Loops Architecture
 
 ### Loop 1: Strategic Planning (`/plan`)
 
@@ -95,51 +95,67 @@ Critic Score → MCP Server State Management → Next Action Decision:
 **Quality Gate**: MCP Server-determined thresholds for strategic planning
 **Output**: Strategic plan document with dual validation scores
 
-### Loop 2: Implementation Roadmap (`/plan-roadmap`)
+### Loop 2: Feature Requirements (`/feature-requirements`)
+
+**Participants**: Main Agent analysis with quality validation
+
+**Process Flow**:
+1. **Strategic Plan Analysis**: Extract business context and user workflows from strategic plan
+2. **Constraint Definition**: Identify performance, scalability, compliance, and security requirements
+3. **Success Criteria Definition**: Establish clear acceptance criteria and measurable outcomes
+4. **Integration Context Mapping**: Document integration points and external dependencies
+5. **Technical Assumptions Documentation**: Capture assumptions that will guide technical decisions
+6. **Requirements Validation**: Ensure completeness and clarity of technical translation
+
+**Quality Gate**: Requirements completeness and clarity validation
+**Output**: Technical translation of business needs defining intent and constraints
+
+### Loop 3: Implementation Roadmap (`/plan-roadmap`)
 
 **Participants**: `plan-roadmap` ↔ `roadmap-critic`
 
 **Process Flow**:
-1. **Strategic Plan Context Gathering**: Access completed strategic plan and structured objectives
-2. **Phase Decomposition**: Break down strategic plan into 3-7 implementable phases
-3. **Dependency Mapping**: Establish logical sequencing and prerequisite relationships
-4. **Roadmap Generation**: Create implementation roadmap with phase-specific contexts
-5. **Quality Validation**: `roadmap-critic` assesses phase scoping, dependencies, and implementation readiness
-6. **Spec Scaffolding**: Generate initial technical specifications for each phase
+1. **Feature Requirements Analysis**: Extract technical constraints and dependencies from feature requirements
+2. **Phase Decomposition**: Break down implementation into 3-7 implementable phases based on constraints
+3. **Dependency Mapping**: Establish logical sequencing ensuring requirements are met
+4. **Roadmap Generation**: Create implementation roadmap with requirements context
+5. **Quality Validation**: `roadmap-critic` assesses phase scoping, dependencies, and requirements alignment
+6. **Spec Scaffolding**: Generate initial technical specifications for each phase with requirements context
 7. **Platform Integration**: Store roadmap and scaffolded specs in chosen platform
 
 **Quality Gate**: MCP Server-determined thresholds for roadmap completeness and implementation readiness
-**Output**: Implementation roadmap with phase-specific scaffolded specifications
+**Output**: Step-by-step roadmap organizing Specs with phase foundations
 
-### Loop 3: Technical Specification (`/spec`)
+### Loop 4: Technical Specification (`/spec`)
 
 **Participants**: `spec-architect` ↔ `spec-critic`
 
 **Process Flow**:
-1. **Scaffolded Spec Analysis**: Review phase-specific specification template from roadmap
+1. **Scaffolded Spec Analysis**: Review phase-specific specification template from roadmap with requirements context
 2. **Archive Integration**: `spec-architect` scans existing best practices documentation
-3. **Research Gap Analysis**: Identifies external research requirements for phase focus areas
-4. **Technical Architecture**: Complete detailed system architecture with technology stack integration
-5. **Quality Validation**: `spec-critic` assesses technical completeness and FSDD compliance
-6. **Platform Enhancement**: Enrich specification with comprehensive implementation guidance
+3. **Research Gap Analysis**: Identifies external research requirements for constraints and phase focus areas
+4. **Technical Architecture**: Complete detailed system architecture addressing feature requirements
+5. **Requirements Validation**: Ensure architecture meets feature requirements and constraints
+6. **Quality Validation**: `spec-critic` assesses technical completeness and FSDD compliance
+7. **Platform Enhancement**: Enrich specification with comprehensive implementation guidance
 
 **Quality Gate**: MCP Server-determined thresholds for production readiness
-**Output**: Complete technical specification with full implementation guidance
+**Output**: System Architecture Design - first Engineering-forward step creating Project System Design
 
-### Loop 4: Implementation Planning (`/build` - Phase 1)
+### Loop 6: Implementation Planning (`/build` - Phase 1)
 
 **Participants**: `build-planner` ↔ `build-critic`
 
 **Process Flow**:
 1. **Research Consumption**: `build-planner` reads all research documentation provided by Main Agent
 2. **Codebase Analysis**: Analyzes current project structure and patterns
-3. **Implementation Planning**: Creates detailed road maps tailored to current codebase
-4. **Plan Validation**: `build-critic` reviews plan against spec requirements and internal criteria
+3. **Implementation Planning**: Creates detailed plans with specific patterns and best-practices
+4. **Plan Validation**: `build-critic` reviews plan against spec requirements and constraints
 
 **Quality Gate**: Configurable threshold via environment variables
-**Output**: Detailed implementation roadmap with specific file modifications and sequences
+**Output**: Detailed implementation plan with specific patterns and best-practices
 
-### Loop 5: Code Implementation (`/build` - Phase 2)
+### Loop 7: Code Implementation (`/build` - Phase 2)
 
 **Participants**: `build-coder` ↔ `build-reviewer`
 
@@ -154,6 +170,10 @@ Critic Score → MCP Server State Management → Next Action Decision:
 
 ## Complete Command Flow Analysis
 
+The workflow follows a **tightening and deepening of information** progression:
+
+**ProjectPlan** → **FeatureRequirements** → **Roadmap** → **TechnicalSpec** → **BuildPlan**
+
 ### `/plan` Command - Strategic Planning
 ```text
 User Input: Natural language business requirements
@@ -166,22 +186,37 @@ Dual-Loop Orchestration: Main Agent with MCP state management
 ├── Steps 6-9: plan-analyst extraction + analyst-critic + MCP analyst loop
 └── Quality Gate: MCP Server-determined thresholds
     ↓
-Output: Strategic plan document with dual validation scores
+Output: Big-picture overview of what we're building and why (business context)
+```
+
+### `/feature-requirements` Command - Technical Translation
+```text
+Input: Strategic plan document
+    ↓
+Requirements Translation Workflow: Main Agent analysis
+├── Step 1: Business context analysis (user workflows, business intent)
+├── Step 2: Constraint definition (performance, scalability, compliance, security)
+├── Step 3: Success criteria definition (acceptance criteria, measurable outcomes)
+├── Step 4: Integration context mapping (integration points, external dependencies)
+├── Step 5: Technical assumptions documentation (guide technical decisions)
+└── Quality Gate: Requirements completeness and clarity validation
+    ↓
+Output: Technical translation defining intent and constraints for implementation
 ```
 
 ### `/plan-roadmap` Command - Implementation Roadmap
 ```text
-Input: Strategic plan + optional phasing preferences
+Input: Feature requirements + optional phasing preferences
     ↓
 Roadmap Generation Loop: plan-roadmap ↔ roadmap-critic
-├── Step 1: Strategic plan context gathering and analysis
-├── Step 2: Phase decomposition (3-7 implementable phases)
-├── Step 3: Dependency mapping and sequencing
+├── Step 1: Requirements analysis (extract constraints and dependencies)
+├── Step 2: Phase decomposition (3-7 implementable phases based on constraints)
+├── Step 3: Dependency mapping (logical sequencing ensuring requirements met)
 ├── Step 4: Roadmap quality validation and refinement cycles
-├── Step 5: Spec scaffolding for each phase
+├── Step 5: Spec scaffolding for each phase with requirements context
 └── Quality Gate: MCP Server-determined thresholds (implementation readiness)
     ↓
-Output: Implementation roadmap with phase-specific scaffolded specifications
+Output: Step-by-step roadmap organizing Specs with phase foundations
 ```
 
 ### `/spec` Command - Technical Specification
@@ -189,33 +224,33 @@ Output: Implementation roadmap with phase-specific scaffolded specifications
 Input: Scaffolded specification from roadmap + technical focus area
     ↓
 Enhanced Specification Phase:
-├── Scaffolded spec analysis and phase context review
+├── Scaffolded spec analysis with requirements context
 ├── Archive scanning via research-advisor-archive-scan.sh
-├── External research gap identification for phase-specific needs
+├── External research gap identification for constraints
 └── Research prompt creation for missing knowledge
     ↓
 Architecture Design Loop: spec-architect ↔ spec-critic
-├── Complete detailed system architecture using selected technology stack
+├── Complete detailed system architecture addressing requirements
 ├── Research integration from archive and external sources
-├── Platform-specific specification enhancement
+├── Requirements validation (ensure architecture meets constraints)
 └── Quality Gate: MCP Server-determined thresholds (production ready)
     ↓
-Output: Complete technical specification with full implementation guidance
+Output: System Architecture Design - first Engineering-forward step
 ```
 
-### `/build` Command - Implementation
+### `/build` Command - Implementation Planning
 ```text
 Input: Technical specification identifier
     ↓
 Research Orchestration Phase:
 ├── Main Agent identifies external research needs from spec
-├── Parallel research-synthesizer instances with specific prompts  
+├── Parallel research-synthesizer instances with specific prompts
 └── File path collection (not content reading)
     ↓
 Build Planning Loop: build-planner ↔ build-critic
 ├── Documentation consumption and codebase analysis
-├── Implementation plan creation
-├── Plan validation against spec requirements
+├── Implementation plan creation with specific patterns/best-practices
+├── Plan validation against spec requirements and constraints
 └── Quality Gate: Configurable threshold
     ↓
 Build Implementation Loop: build-coder ↔ build-reviewer
@@ -224,7 +259,7 @@ Build Implementation Loop: build-coder ↔ build-reviewer
 ├── Plan synchronization assessment
 └── Quality Gate: MCP Server-determined excellence standards
     ↓
-Output: Production-ready implementation with platform integration
+Output: Detailed implementation plan with specific patterns and best-practices
 ```
 
 ## Key Architectural Strengths
