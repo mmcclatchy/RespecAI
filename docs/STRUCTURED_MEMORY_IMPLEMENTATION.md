@@ -50,25 +50,47 @@ This document contains the detailed implementation specifications for transformi
 
 **Success Criteria**: Structured feedback system tracks quality scores for all document types
 
-### Week 3: MCP Integration
-**Goal**: Integrate document models with existing MCP workflow
+### Week 3: Comprehensive MCP Integration
+**Goal**: Integrate ALL document models and structured feedback with complete MCP workflow coverage
 
-#### MCP Tool Updates
-- [ ] Update spec tools to use TechnicalSpec model
-- [ ] Modify loop decision logic for structured feedback
-- [ ] Integrate with existing LoopState management
-- [ ] Update roadmap tools for document model compatibility
+#### Universal Feedback Tools (All Workflows)
+- [ ] Create `store_critic_feedback` MCP tool - works with ANY loop type
+- [ ] Create `get_feedback_history` MCP tool - retrieves structured feedback for ANY loop
+- [ ] Update existing `loop_tools.py` to use structured CriticFeedback instead of string feedback
+- [ ] Integrate FSDD scoring with all existing loop decision logic
 
-#### Workflow Integration
-- [ ] Test `/spec` command with TechnicalSpec model
-- [ ] Validate structured feedback in loops
-- [ ] Test end-to-end workflow scenarios
-- [ ] Verify quality gate integration
+#### Document-Specific MCP Tools (Complete CRUD)
+- [ ] Create `project_plan_tools.py` - Full CRUD for ProjectPlan model (/plan workflow)
+- [ ] Create `feature_requirements_tools.py` - Full CRUD for FeatureRequirements model (/feature-requirements workflow)
+- [ ] Create `roadmap_tools.py` enhancement - Add Roadmap model support (/plan-roadmap workflow)
+- [ ] Create `spec_tools.py` - Full CRUD for TechnicalSpec model (/spec workflow)
+- [ ] Create `build_plan_tools.py` - Full CRUD for BuildPlan model (/build workflow)
 
-#### Documentation
-- [ ] Update MCP tool documentation
-- [ ] Create usage examples
-- [ ] Document model relationships
+#### Enhanced Loop Integration (All 5 Workflows)
+- [ ] Update loop decision logic to use structured feedback across ALL loop types
+- [ ] Integrate quality gate thresholds with FSDD scoring for ALL workflows
+- [ ] Ensure backward compatibility with existing sophisticated loop management
+- [ ] Test all 5 workflows: /plan, /feature-requirements, /plan-roadmap, /spec, /build
+
+#### Comprehensive Workflow Coverage
+- [ ] Test ProjectPlan workflow with structured feedback and quality gates
+- [ ] Test FeatureRequirements workflow with critic feedback integration
+- [ ] Test Roadmap workflow with enhanced document model support
+- [ ] Test TechnicalSpec workflow with complete FSDD integration
+- [ ] Test BuildPlan workflow with structured feedback and decision logic
+- [ ] Validate cross-workflow state management and feedback consistency
+
+#### Quality Gate Integration (Universal)
+- [ ] FSDD scoring integrated with ALL 5 document types
+- [ ] Quality thresholds working across ALL loop types
+- [ ] Stagnation detection enhanced with structured feedback for ALL workflows
+- [ ] Critic feedback consistency across iterations for ALL document types
+
+#### Documentation & Standards
+- [ ] Update MCP tool documentation for ALL 5 workflows
+- [ ] Create comprehensive usage examples for each document type
+- [ ] Document structured feedback model relationships
+- [ ] Ensure all code follows TDD methodology and coding standards
 
 **Success Criteria**: All workflows use structured models with quality tracking
 
@@ -197,16 +219,45 @@ The model fields directly map to template variables:
 - [ ] **GREEN**: Enhance existing LoopState without breaking sophistication
 - [ ] **REFACTOR**: Resolve all mypy/ruff errors, maintain existing decision logic integrity
 
-#### Week 3: MCP Integration (TDD + Standards Compliance)
-- [ ] **RED**: Write failing tests for `store_critic_feedback` MCP tool
-- [ ] **GREEN**: Add MCP tool to services/mcp/loop_tools.py (minimal implementation)
-- [ ] **REFACTOR**: Full typing, async/await for I/O, no unnecessary docstrings
-- [ ] **RED**: Write failing tests for `get_feedback_history` MCP tool
-- [ ] **GREEN**: Implement feedback retrieval with existing LoopState integration
-- [ ] **REFACTOR**: SOLID principles, resolve all mypy/ruff errors
-- [ ] **RED**: Write failing integration tests for complete `/spec` workflow
-- [ ] **GREEN**: Update critic templates, integrate FSDD scoring with existing thresholds
-- [ ] **REFACTOR**: All tests pass, no warnings, backward compatibility verified
+#### Week 3: Comprehensive MCP Integration (TDD + Standards Compliance)
+
+##### Universal Feedback Tools (All Workflows)
+- [ ] **RED**: Write failing tests for `FeedbackTools` class with `store_critic_feedback` method
+- [ ] **GREEN**: Create services/mcp/feedback_tools.py with universal feedback storage
+- [ ] **REFACTOR**: Full typing, SOLID principles, error handling for all loop types
+- [ ] **RED**: Write failing tests for `get_feedback_history` method in FeedbackTools
+- [ ] **GREEN**: Implement feedback retrieval working with ANY loop type
+- [ ] **REFACTOR**: Resolve all mypy/ruff errors, consistent response formats
+
+##### Document-Specific MCP Tools (Complete CRUD Coverage)
+- [ ] **RED**: Write failing tests for `ProjectPlanTools` - full CRUD operations
+- [ ] **GREEN**: Create services/mcp/project_plan_tools.py with ProjectPlan model integration
+- [ ] **REFACTOR**: Consistent error handling, full typing, standards compliance
+- [ ] **RED**: Write failing tests for `FeatureRequirementsTools` - full CRUD operations
+- [ ] **GREEN**: Create services/mcp/feature_requirements_tools.py with FeatureRequirements model
+- [ ] **REFACTOR**: SOLID principles, no unnecessary docstrings
+- [ ] **RED**: Write failing tests for enhanced `RoadmapTools` - add Roadmap model support
+- [ ] **GREEN**: Update services/mcp/roadmap_tools.py to support both RoadMap and Roadmap models
+- [ ] **REFACTOR**: Backward compatibility, clean separation of concerns
+- [ ] **RED**: Write failing tests for `SpecTools` - TechnicalSpec model integration
+- [ ] **GREEN**: Create services/mcp/spec_tools.py with TechnicalSpec model support
+- [ ] **REFACTOR**: Full typing, async/await for I/O, error handling
+- [ ] **RED**: Write failing tests for `BuildPlanTools` - full CRUD operations
+- [ ] **GREEN**: Create services/mcp/build_plan_tools.py with BuildPlan model integration
+- [ ] **REFACTOR**: Standards compliance, consistent API patterns
+
+##### Enhanced Loop Integration (All 5 Workflows)
+- [ ] **RED**: Write failing tests for enhanced `LoopTools` with structured feedback
+- [ ] **GREEN**: Update services/mcp/loop_tools.py to use CriticFeedback instead of strings
+- [ ] **REFACTOR**: Maintain existing sophisticated decision logic, add feedback integration
+- [ ] **RED**: Write failing integration tests for ALL 5 workflows with structured feedback
+- [ ] **GREEN**: Integrate FSDD scoring with quality gates across all loop types
+- [ ] **REFACTOR**: All tests pass, no warnings, complete backward compatibility verified
+
+##### Comprehensive Testing & Validation
+- [ ] **RED**: Write failing end-to-end tests for complete workflows: /plan, /feature-requirements, /plan-roadmap, /spec, /build
+- [ ] **GREEN**: Ensure all document models work seamlessly with their respective MCP tools
+- [ ] **REFACTOR**: Performance optimization, error message consistency, documentation updates
 
 ## File Structure Implementation
 
@@ -506,15 +557,30 @@ except ComponentNotFoundError as e:
 
 ## Success Criteria
 
-The MVP will be considered successful when:
+The comprehensive structured memory system will be considered successful when:
 
-1. **TechnicalSpec Model**: Successfully parse and build phase_spec_template.md format (100% field mapping accuracy)
-2. **FSDD Integration**: CriticFeedback model with 12-point scoring (0-10 → 0-100) implemented and tested
-3. **LoopState Enhancement**: Feedback history integrated with existing decision logic without breaking current thresholds
-4. **MCP Integration**: `/spec` command uses structured models seamlessly with existing workflow
-5. **Round-trip Validation**: Markdown → model → markdown produces identical content (character-for-character match)
-6. **Quality Tracking**: FSDD scores tracked and improving across iterations (scores increase or maintain 7+ consistently)
-7. **Code Quality**: Zero mypy errors, zero ruff errors, all tests pass without warnings
-8. **Standards Compliance**: No unnecessary docstrings/comments, full typing, TDD methodology followed
+### Week 1: Document Models ✅ **COMPLETED**
+1. **All Document Models**: ProjectPlan, FeatureRequirements, Roadmap, TechnicalSpec, BuildPlan parse/build templates (100% accuracy)
+2. **Round-trip Validation**: ALL document types: markdown → model → markdown produces identical content
+3. **Template Integration**: All 5 document templates working with their respective models
+
+### Week 2: Structured Feedback ✅ **COMPLETED**
+1. **FSDD Integration**: CriticFeedback model with 12-point scoring (0-10 → 0-100) implemented and tested
+2. **LoopState Enhancement**: Feedback history integrated with existing decision logic without breaking sophistication
+3. **Quality Framework**: FSDD scoring system working across all document types
+
+### Week 3: Comprehensive MCP Integration
+1. **Universal Feedback Tools**: `store_critic_feedback` and `get_feedback_history` work with ALL 5 loop types
+2. **Complete Document CRUD**: MCP tools for ALL 5 document types (ProjectPlan, FeatureRequirements, Roadmap, TechnicalSpec, BuildPlan)
+3. **Enhanced Loop Integration**: ALL 5 workflows (/plan, /feature-requirements, /plan-roadmap, /spec, /build) use structured feedback
+4. **Quality Gate Integration**: FSDD scoring integrated with loop decision logic across ALL workflow types
+5. **Backward Compatibility**: Existing sophisticated loop management preserved and enhanced
+6. **Cross-Workflow Validation**: All document types work seamlessly with structured feedback and quality gates
+
+### Technical Excellence Standards
+1. **Code Quality**: Zero mypy errors, zero ruff errors, all tests pass without warnings across ALL implementations
+2. **Standards Compliance**: No unnecessary docstrings/comments, full typing, TDD methodology followed throughout
+3. **Performance**: Efficient state management across all 5 document types and feedback systems
+4. **Error Handling**: Consistent, informative error messages across all MCP tools and workflows
 
 This implementation guide provides the concrete steps needed to enhance the MCP Server with structured feedback capabilities for the Spec-Driven Development workflow.

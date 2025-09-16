@@ -169,6 +169,10 @@ class LoopState(BaseModel):
         self.add_score(feedback.quality_score)  # type: ignore[arg-type]  # mypy bug with Pydantic computed fields
         self.updated_at = datetime.now()
 
+        # Update status to indicate loop is active with feedback
+        if self.status == LoopStatus.INITIALIZED:
+            self.status = LoopStatus.IN_PROGRESS
+
     def get_recent_feedback(self, count: int = 5) -> list[CriticFeedback]:
         return self.feedback_history[-count:] if self.feedback_history else []
 
