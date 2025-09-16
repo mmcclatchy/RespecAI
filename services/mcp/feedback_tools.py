@@ -1,8 +1,9 @@
+from fastmcp.exceptions import ResourceError, ToolError
 from pydantic import ValidationError
 
 from services.models.enums import CriticAgent, FSSDCriteria
 from services.models.feedback import CriticFeedback
-from services.utils.errors import LoopNotFoundError, LoopStateError
+from services.utils.errors import LoopNotFoundError
 from services.utils.models import MCPResponse
 from services.utils.state_manager import StateManager
 
@@ -39,13 +40,13 @@ class FeedbackTools:
             loop_state.add_feedback(feedback)
             return loop_state.mcp_response
         except ValidationError:
-            raise LoopStateError(loop_id, 'feedback_storage', 'Invalid feedback data provided')
+            raise ToolError('Invalid feedback data provided')
         except ValueError:
-            raise LoopStateError(loop_id, 'feedback_storage', f'Invalid critic agent: {critic_agent}')
+            raise ToolError(f'Invalid critic agent: {critic_agent}')
         except LoopNotFoundError:
-            raise LoopStateError(loop_id, 'feedback_storage', 'Loop does not exist')
+            raise ResourceError('Loop does not exist')
         except Exception as e:
-            raise LoopStateError(loop_id, 'feedback_storage', f'Unexpected error storing feedback: {str(e)}')
+            raise ToolError(f'Unexpected error storing feedback: {str(e)}')
 
     def get_feedback_history(self, loop_id: str, count: int = 5) -> MCPResponse:
         """Retrieve recent feedback history for any loop type.
@@ -65,9 +66,9 @@ class FeedbackTools:
             message = self._format_feedback_summary(recent_feedback)
             return MCPResponse(id=loop_id, status=loop_state.status, message=message)
         except LoopNotFoundError:
-            raise LoopStateError(loop_id, 'feedback_retrieval', 'Loop does not exist')
+            raise ResourceError('Loop does not exist')
         except Exception as e:
-            raise LoopStateError(loop_id, 'feedback_retrieval', f'Unexpected error retrieving feedback: {str(e)}')
+            raise ToolError(f'Unexpected error retrieving feedback: {str(e)}')
 
     def _format_feedback_summary(self, recent_feedback: list[CriticFeedback]) -> str:
         feedback_count = len(recent_feedback)

@@ -1,8 +1,9 @@
+from fastmcp.exceptions import ResourceError, ToolError
 from pydantic import ValidationError
 
 from services.models.project_plan import ProjectPlan
 from services.utils.enums import LoopStatus, LoopType
-from services.utils.errors import LoopNotFoundError, LoopStateError
+from services.utils.errors import LoopNotFoundError
 from services.utils.models import LoopState, MCPResponse
 from services.utils.state_manager import StateManager
 
@@ -35,15 +36,13 @@ class ProjectPlanTools:
                     message=f'Stored project plan: {project_plan.project_name}',
                 )
         except ValidationError:
-            raise LoopStateError(loop_id or 'new', 'project_plan_storage', 'Invalid project plan data provided')
+            raise ToolError('Invalid project plan data provided')
         except ValueError:
-            raise LoopStateError(loop_id or 'new', 'project_plan_storage', 'Invalid project plan: cannot be None')
+            raise ToolError('Invalid project plan: cannot be None')
         except LoopNotFoundError:
-            raise LoopStateError(loop_id or 'unknown', 'project_plan_storage', 'Loop does not exist')
+            raise ResourceError('Loop does not exist')
         except Exception as e:
-            raise LoopStateError(
-                loop_id or 'unknown', 'project_plan_storage', f'Unexpected error storing project plan: {str(e)}'
-            )
+            raise ToolError(f'Unexpected error storing project plan: {str(e)}')
 
     def get_project_plan_data(self, loop_id: str) -> ProjectPlan:
         try:
@@ -51,15 +50,15 @@ class ProjectPlanTools:
             self.state.get_loop(loop_id)
 
             if loop_id not in self._project_plans:
-                raise LoopStateError(loop_id, 'project_plan_retrieval', 'No project plan stored for this loop')
+                raise ResourceError('No project plan stored for this loop')
 
             return self._project_plans[loop_id]
         except LoopNotFoundError:
-            raise LoopStateError(loop_id, 'project_plan_retrieval', 'Loop does not exist')
+            raise ResourceError('Loop does not exist')
+        except (ResourceError, ToolError):
+            raise  # Re-raise FastMCP exceptions as-is
         except Exception as e:
-            raise LoopStateError(
-                loop_id, 'project_plan_retrieval', f'Unexpected error retrieving project plan: {str(e)}'
-            )
+            raise ToolError(f'Unexpected error retrieving project plan: {str(e)}')
 
     def get_project_plan_markdown(self, loop_id: str, platform: str = 'local') -> MCPResponse:
         try:
@@ -69,11 +68,9 @@ class ProjectPlanTools:
             markdown = project_plan.build_markdown()
             return MCPResponse(id=loop_id, status=loop_state.status, message=markdown)
         except LoopNotFoundError:
-            raise LoopStateError(loop_id, 'project_plan_markdown_generation', 'Loop does not exist')
+            raise ResourceError('Loop does not exist')
         except Exception as e:
-            raise LoopStateError(
-                loop_id, 'project_plan_markdown_generation', f'Unexpected error generating markdown: {str(e)}'
-            )
+            raise ToolError(f'Unexpected error generating markdown: {str(e)}')
 
     def list_project_plans(self, count: int = 10) -> MCPResponse:
         try:
@@ -92,7 +89,7 @@ class ProjectPlanTools:
             message = f'Found {plan_count} project plan{"s" if plan_count != 1 else ""}: ' + '; '.join(plan_summaries)
             return MCPResponse(id='list', status=LoopStatus.COMPLETED, message=message)
         except Exception as e:
-            raise LoopStateError('list', 'project_plan_listing', f'Unexpected error listing project plans: {str(e)}')
+            raise ToolError(f'Unexpected error listing project plans: {str(e)}')
 
     def delete_project_plan(self, loop_id: str) -> MCPResponse:
         try:
@@ -107,6 +104,6 @@ class ProjectPlanTools:
                 plan_name = 'Unknown'
             return MCPResponse(id=loop_id, status=LoopStatus.COMPLETED, message=f'Deleted project plan: {plan_name}')
         except LoopNotFoundError:
-            raise LoopStateError(loop_id, 'project_plan_deletion', 'Loop does not exist')
+            raise ResourceError('Loop does not exist')
         except Exception as e:
-            raise LoopStateError(loop_id, 'project_plan_deletion', f'Unexpected error deleting project plan: {str(e)}')
+            raise ToolError(f'Unexpected error deleting project plan: {str(e)}')

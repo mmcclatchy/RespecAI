@@ -1,10 +1,10 @@
 import pytest
+from fastmcp.exceptions import ResourceError, ToolError
 
 from services.mcp.project_plan_tools import ProjectPlanTools
 from services.models.enums import ProjectStatus
 from services.models.project_plan import ProjectPlan
 from services.utils.enums import LoopStatus, LoopType
-from services.utils.errors import LoopStateError
 from services.utils.models import LoopState, MCPResponse
 from services.utils.state_manager import InMemoryStateManager
 
@@ -117,7 +117,7 @@ class TestStoreProjectPlan:
 
         # Test validation will be handled by the tool implementation
         # This test expects the tool to catch and translate ValidationError
-        with pytest.raises(LoopStateError):
+        with pytest.raises(ToolError):
             project_plan_tools.store_project_plan(None)  # type: ignore[arg-type]  # Intentionally testing None
 
 
@@ -137,11 +137,10 @@ class TestGetProjectPlan:
         assert retrieved_plan.primary_objectives == sample_project_plan.primary_objectives
 
     def test_get_project_plan_raises_error_when_loop_not_found(self, project_plan_tools: ProjectPlanTools) -> None:
-        with pytest.raises(LoopStateError) as exc_info:
+        with pytest.raises(ResourceError) as exc_info:
             project_plan_tools.get_project_plan_data('non-existent-loop')
 
-        assert 'non-existent-loop' in str(exc_info.value)
-        assert 'project_plan_retrieval' in str(exc_info.value)
+        assert 'Loop does not exist' in str(exc_info.value)
 
     def test_get_project_plan_raises_error_when_no_plan_stored(
         self, project_plan_tools: ProjectPlanTools, state_manager: InMemoryStateManager
@@ -150,7 +149,7 @@ class TestGetProjectPlan:
         loop_state = LoopState(loop_type=LoopType.PLAN)
         state_manager.add_loop(loop_state)
 
-        with pytest.raises(LoopStateError) as exc_info:
+        with pytest.raises(ResourceError) as exc_info:
             project_plan_tools.get_project_plan_data(loop_state.id)
 
         assert 'No project plan stored' in str(exc_info.value)
@@ -190,11 +189,10 @@ class TestGetProjectPlanMarkdown:
     def test_get_project_plan_markdown_raises_error_when_loop_not_found(
         self, project_plan_tools: ProjectPlanTools
     ) -> None:
-        with pytest.raises(LoopStateError) as exc_info:
+        with pytest.raises(ResourceError) as exc_info:
             project_plan_tools.get_project_plan_markdown('non-existent-loop')
 
-        assert 'non-existent-loop' in str(exc_info.value)
-        assert 'project_plan_markdown_generation' in str(exc_info.value)
+        assert 'Loop does not exist' in str(exc_info.value)
 
 
 class TestListProjectPlans:
@@ -290,12 +288,11 @@ class TestDeleteProjectPlan:
         assert 'Deleted project plan' in delete_response.message
 
         # Verify plan and loop are removed
-        with pytest.raises(LoopStateError):
+        with pytest.raises(ResourceError):
             project_plan_tools.get_project_plan_data(response.id)
 
     def test_delete_project_plan_raises_error_when_loop_not_found(self, project_plan_tools: ProjectPlanTools) -> None:
-        with pytest.raises(LoopStateError) as exc_info:
+        with pytest.raises(ResourceError) as exc_info:
             project_plan_tools.delete_project_plan('non-existent-loop')
 
-        assert 'non-existent-loop' in str(exc_info.value)
-        assert 'project_plan_deletion' in str(exc_info.value)
+        assert 'Loop does not exist' in str(exc_info.value)

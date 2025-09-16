@@ -1,9 +1,9 @@
 import pytest
+from fastmcp.exceptions import ResourceError, ToolError
 
 from services.mcp.feedback_tools import FeedbackTools
 from services.models.enums import CriticAgent, FSSDCriteria
 from services.utils.enums import LoopStatus, LoopType
-from services.utils.errors import LoopStateError
 from services.utils.models import LoopState, MCPResponse
 from services.utils.state_manager import InMemoryStateManager
 
@@ -109,7 +109,7 @@ class TestStoreCriticFeedback:
             assert updated_loop.current_score == 70
 
     def test_store_critic_feedback_raises_error_when_loop_not_found(self, feedback_tools: FeedbackTools) -> None:
-        with pytest.raises(LoopStateError):
+        with pytest.raises(ResourceError):
             feedback_tools.store_critic_feedback(
                 loop_id='non-existent-loop',
                 critic_agent=CriticAgent.SPEC_CRITIC.value,
@@ -122,7 +122,7 @@ class TestStoreCriticFeedback:
     def test_store_critic_feedback_validates_critic_agent_enum(
         self, feedback_tools: FeedbackTools, sample_loop: LoopState
     ) -> None:
-        with pytest.raises(LoopStateError):
+        with pytest.raises(ToolError):
             feedback_tools.store_critic_feedback(
                 loop_id=sample_loop.id,
                 critic_agent='invalid-critic',
@@ -137,7 +137,7 @@ class TestStoreCriticFeedback:
     ) -> None:
         invalid_scores = {FSSDCriteria.CLARITY: 15}  # Invalid: > 10
 
-        with pytest.raises(LoopStateError):
+        with pytest.raises(ToolError):
             feedback_tools.store_critic_feedback(
                 loop_id=sample_loop.id,
                 critic_agent=CriticAgent.SPEC_CRITIC.value,
@@ -238,7 +238,7 @@ class TestGetFeedbackHistory:
             assert f'Assessment for {loop_type.value}' in response.message
 
     def test_get_feedback_history_raises_error_when_loop_not_found(self, feedback_tools: FeedbackTools) -> None:
-        with pytest.raises(LoopStateError):
+        with pytest.raises(ResourceError):
             feedback_tools.get_feedback_history('non-existent-loop')
 
     def test_get_feedback_history_default_count_is_five(
