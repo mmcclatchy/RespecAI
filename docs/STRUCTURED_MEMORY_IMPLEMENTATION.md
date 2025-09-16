@@ -531,8 +531,8 @@ def get_all_sessions(self):
 #### Lazy Loading
 ```python
 # RIGHT: Load only what's needed
-def get_active_session(self, session_id: str):
-    return self.load_session(session_id)
+def get_active_session(self, loop_id: str):
+    return self.load_session(loop_id)
 ```
 
 ### 8. Error Handling Mistakes

@@ -1,4 +1,4 @@
-from services.models.enums import CriticAgent, FSSDCriteria
+from services.models.enums import CriticAgent
 from services.models.feedback import CriticFeedback
 from services.utils.enums import LoopType
 from services.utils.models import LoopState
@@ -15,19 +15,21 @@ class TestEnhancedLoopState:
         loop_state = LoopState(loop_type=LoopType.SPEC)
 
         feedback = CriticFeedback(
-            session_id=loop_state.id,
+            loop_id=loop_state.id,
             critic_agent=CriticAgent.SPEC_CRITIC,
             iteration=1,
-            overall_assessment='Good specification',
-            improvements=['Add security details'],
-            fsdd_scores={criteria: 8 for criteria in FSSDCriteria},
+            overall_score=80,
+            assessment_summary='Good specification with room for improvement',
+            detailed_feedback='The specification covers requirements but needs security details.',
+            key_issues=['Missing security requirements'],
+            recommendations=['Add security details'],
         )
 
         loop_state.add_feedback(feedback)
 
         assert len(loop_state.feedback_history) == 1
         assert loop_state.feedback_history[0] == feedback
-        assert loop_state.current_score == 80  # All scores are 8, so 80%
+        assert loop_state.current_score == 80
 
     def test_get_recent_feedback_returns_limited_feedback(self) -> None:
         loop_state = LoopState(loop_type=LoopType.SPEC)
@@ -35,12 +37,14 @@ class TestEnhancedLoopState:
         # Add 7 feedback items
         for i in range(7):
             feedback = CriticFeedback(
-                session_id=loop_state.id,
+                loop_id=loop_state.id,
                 critic_agent=CriticAgent.SPEC_CRITIC,
                 iteration=i + 1,
-                overall_assessment=f'Assessment {i}',
-                improvements=[],
-                fsdd_scores={criteria: 7 for criteria in FSSDCriteria},
+                overall_score=70,
+                assessment_summary=f'Assessment {i}',
+                detailed_feedback=f'Detailed analysis for iteration {i}',
+                key_issues=[],
+                recommendations=[],
             )
             loop_state.add_feedback(feedback)
 
@@ -69,12 +73,14 @@ class TestEnhancedLoopState:
         initial_updated_at = loop_state.updated_at
 
         feedback = CriticFeedback(
-            session_id=loop_state.id,
+            loop_id=loop_state.id,
             critic_agent=CriticAgent.SPEC_CRITIC,
             iteration=1,
-            overall_assessment='Test assessment',
-            improvements=[],
-            fsdd_scores={criteria: 7 for criteria in FSSDCriteria},
+            overall_score=70,
+            assessment_summary='Test assessment',
+            detailed_feedback='Test detailed feedback for timestamp verification',
+            key_issues=[],
+            recommendations=[],
         )
 
         loop_state.add_feedback(feedback)

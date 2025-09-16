@@ -159,10 +159,8 @@ class TestGetProjectPlanMarkdown:
     def test_get_project_plan_markdown_generates_platform_output(
         self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
     ) -> None:
-        # Store plan first
         response = project_plan_tools.store_project_plan(sample_project_plan)
 
-        # Generate markdown
         markdown_response = project_plan_tools.get_project_plan_markdown(response.id)
 
         assert isinstance(markdown_response, MCPResponse)
@@ -172,19 +170,14 @@ class TestGetProjectPlanMarkdown:
         assert sample_project_plan.project_name in markdown_response.message
         assert sample_project_plan.project_vision in markdown_response.message
 
-    def test_get_project_plan_markdown_works_with_all_platforms(
+    def test_get_project_plan_markdown_platform_agnostic(
         self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
     ) -> None:
-        # Store plan first
         response = project_plan_tools.store_project_plan(sample_project_plan)
 
-        # Test platform-specific markdown generation
-        platforms = ['linear', 'github', 'local']
-
-        for platform in platforms:
-            markdown_response = project_plan_tools.get_project_plan_markdown(response.id, platform)
-            assert isinstance(markdown_response, MCPResponse)
-            assert sample_project_plan.project_name in markdown_response.message
+        markdown_response = project_plan_tools.get_project_plan_markdown(response.id)
+        assert isinstance(markdown_response, MCPResponse)
+        assert sample_project_plan.project_name in markdown_response.message
 
     def test_get_project_plan_markdown_raises_error_when_loop_not_found(
         self, project_plan_tools: ProjectPlanTools

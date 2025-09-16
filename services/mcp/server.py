@@ -1,12 +1,18 @@
 import logging
 
 from fastmcp import Context, FastMCP
+from fastmcp.exceptions import ResourceError, ToolError
 from fastmcp.server.middleware import MiddlewareContext
 from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
 from fastmcp.server.middleware.logging import LoggingMiddleware
 
+from services.mcp.feedback_tools import FeedbackTools
 from services.mcp.loop_tools import loop_tools
+from services.mcp.project_plan_tools import ProjectPlanTools
 from services.mcp.roadmap_tools import roadmap_tools
+from services.models.feedback import CriticFeedback
+from services.models.project_plan import ProjectPlan
+from services.shared import state_manager
 from services.utils.enums import HealthState
 from services.utils.models import HealthStatus, MCPResponse
 from services.utils.setting_configs import mcp_settings
@@ -14,6 +20,10 @@ from services.utils.setting_configs import mcp_settings
 
 def create_mcp_server() -> FastMCP:
     mcp = FastMCP(mcp_settings.server_name)
+
+    # Initialize tool instances
+    feedback_tools = FeedbackTools(state_manager)
+    project_plan_tools = ProjectPlanTools(state_manager)
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger('mcp_errors')
@@ -28,6 +38,10 @@ def create_mcp_server() -> FastMCP:
     )
 
     mcp.add_middleware(LoggingMiddleware(include_payloads=mcp_settings.debug, max_payload_length=200))
+
+    # ============================================================================
+    # LOOP MANAGEMENT TOOLS
+    # ============================================================================
 
     @mcp.tool()
     async def decide_loop_next_action(loop_id: str, current_score: int, ctx: Context) -> MCPResponse:
@@ -138,6 +152,204 @@ def create_mcp_server() -> FastMCP:
         result = loop_tools.store_current_objective_feedback(loop_id, feedback)
         await ctx.info(f'Stored objective feedback for loop {loop_id}')
         return result
+
+    @mcp.tool()
+    async def get_loop_feedback_summary(loop_id: str, ctx: Context) -> MCPResponse:
+        """Get structured feedback summary for loop decision making.
+
+        Provides feedback metrics and trends to support intelligent
+        loop progression decisions. Returns score progression,
+        feedback count, and recent assessment summaries.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Contains feedback summary with metrics and trends
+        """
+        await ctx.info(f'Retrieving feedback summary for loop {loop_id}')
+        result = loop_tools.get_loop_feedback_summary(loop_id)
+        await ctx.info(f'Retrieved feedback summary for loop {loop_id}')
+        return result
+
+    @mcp.tool()
+    async def get_loop_improvement_analysis(loop_id: str, ctx: Context) -> MCPResponse:
+        """Analyze improvement patterns from structured feedback.
+
+        Examines feedback history to identify improvement trends,
+        recurring issues, and recommendation patterns. Supports
+        intelligent refinement strategy decisions.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Contains improvement analysis with trends and patterns
+        """
+        await ctx.info(f'Retrieving improvement analysis for loop {loop_id}')
+        result = loop_tools.get_loop_improvement_analysis(loop_id)
+        await ctx.info(f'Retrieved improvement analysis for loop {loop_id}')
+        return result
+
+    # ============================================================================
+    # FEEDBACK MANAGEMENT TOOLS
+    # ============================================================================
+
+    @mcp.tool()
+    async def store_critic_feedback(
+        loop_id: str,
+        feedback_markdown: str,
+        ctx: Context,
+    ) -> MCPResponse:
+        """Store structured critic feedback for any loop type from markdown.
+
+        Parses markdown feedback into structured CriticFeedback and stores it.
+        This universal tool works with ALL 5 workflow types and integrates
+        with the existing sophisticated LoopState management system.
+
+        Parameters:
+        - feedback_markdown: Complete critic feedback in markdown format
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Contains loop_id, status, and storage confirmation
+        """
+        await ctx.info(f'Parsing and storing critic feedback for loop {loop_id}')
+        try:
+            # Parse markdown into structured feedback using the model's parse method
+            feedback = CriticFeedback.parse_markdown(feedback_markdown)
+
+            # Update loop_id to match the provided loop_id
+            feedback.loop_id = loop_id
+
+            result = feedback_tools.store_critic_feedback(feedback)
+            await ctx.info(f'Stored feedback for loop {loop_id}')
+            return result
+        except Exception as e:
+            await ctx.error(f'Failed to store critic feedback: {str(e)}')
+            raise ToolError(f'Failed to store critic feedback: {str(e)}')
+
+    @mcp.tool()
+    async def get_feedback_history(loop_id: str, count: int, ctx: Context) -> MCPResponse:
+        """Retrieve recent feedback history for any loop type.
+
+        Returns structured feedback history that critics can use for context
+        and consistency across iterations. Works with ALL loop types.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+        - count: Number of recent feedback items to retrieve
+
+        Returns:
+        - MCPResponse: Contains loop_id, status, and feedback history
+        """
+        await ctx.info(f'Retrieving feedback history for loop {loop_id}')
+        try:
+            result = feedback_tools.get_feedback_history(loop_id, count)
+            await ctx.info(f'Retrieved {count} feedback items for loop {loop_id}')
+            return result
+        except Exception as e:
+            await ctx.error(f'Failed to retrieve feedback history: {str(e)}')
+            raise ResourceError(f'Feedback history unavailable for loop {loop_id}: {str(e)}')
+
+    # ============================================================================
+    # PROJECT PLAN MANAGEMENT TOOLS
+    # ============================================================================
+
+    @mcp.tool()
+    async def store_project_plan(loop_id: str, project_plan_markdown: str, ctx: Context) -> MCPResponse:
+        """Store structured project plan data from markdown.
+
+        Parses markdown content into a ProjectPlan model and stores it with
+        the specified loop.
+
+        Parameters:
+        - loop_id: Loop ID to store the project plan in
+        - project_plan_markdown: Complete project plan in markdown format
+
+        Returns:
+        - MCPResponse: Contains loop_id, status, and confirmation message
+        """
+
+        await ctx.info(f'Parsing and storing project plan markdown with loop_id: {loop_id}')
+
+        try:
+            # Parse markdown into ProjectPlan model
+            project_plan = ProjectPlan.parse_markdown(project_plan_markdown)
+            result = project_plan_tools.store_project_plan(project_plan, loop_id)
+
+            await ctx.info(f'Stored project plan with ID: {result.id}')
+            return result
+        except Exception as e:
+            await ctx.error(f'Failed to store project plan: {str(e)}')
+            raise ToolError(f'Failed to store project plan: {str(e)}')
+
+    @mcp.tool()
+    async def get_project_plan_markdown(loop_id: str, ctx: Context) -> MCPResponse:
+        """Generate markdown for project plan.
+
+        Retrieves stored project plan and formats as markdown
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Contains loop_id, status, and formatted markdown content
+        """
+        await ctx.info(f'Generating markdown for project plan {loop_id}')
+        try:
+            result = project_plan_tools.get_project_plan_markdown(loop_id)
+            await ctx.info(f'Generated markdown for project plan {loop_id}')
+            return result
+        except Exception as e:
+            await ctx.error(f'Failed to generate project plan markdown: {str(e)}')
+            raise ResourceError(f'Project plan not found for loop {loop_id}: {str(e)}')
+
+    @mcp.tool()
+    async def list_project_plans(count: int, ctx: Context) -> MCPResponse:
+        """List available project plans.
+
+        Returns summary of stored project plans with basic metadata.
+
+        Parameters:
+        - count: Maximum number of plans to return
+
+        Returns:
+        - MCPResponse: Contains list status and project plan summaries
+        """
+        await ctx.info(f'Listing up to {count} project plans')
+        try:
+            result = project_plan_tools.list_project_plans(count)
+            await ctx.info('Retrieved project plan list')
+            return result
+        except Exception as e:
+            await ctx.error(f'Failed to list project plans: {str(e)}')
+            raise ToolError(f'Failed to list project plans: {str(e)}')
+
+    @mcp.tool()
+    async def delete_project_plan(loop_id: str, ctx: Context) -> MCPResponse:
+        """Delete a stored project plan.
+
+        Removes project plan data associated with the given loop ID.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Contains loop_id, status, and deletion confirmation
+        """
+        await ctx.info(f'Deleting project plan {loop_id}')
+        try:
+            result = project_plan_tools.delete_project_plan(loop_id)
+            await ctx.info(f'Deleted project plan {loop_id}')
+            return result
+        except Exception as e:
+            await ctx.error(f'Failed to delete project plan: {str(e)}')
+            raise ToolError(f'Failed to delete project plan: {str(e)}')
+
+    # ============================================================================
+    # ROADMAP MANAGEMENT TOOLS
+    # ============================================================================
 
     @mcp.tool()
     async def create_roadmap(project_id: str, roadmap_name: str, ctx: Context) -> str:

@@ -1,9 +1,10 @@
 import pytest
+from fastmcp.exceptions import ResourceError
 
 from services.mcp.loop_tools import LoopTools
 from services.mcp.roadmap_tools import RoadmapTools
 from services.shared import state_manager
-from services.utils.enums import LoopStatus, OperationStatus
+from services.utils.enums import LoopStatus
 from services.utils.errors import LoopStateError
 from services.utils.state_manager import InMemoryStateManager
 
@@ -54,18 +55,20 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
 
         # Create roadmap and spec
         roadmap_result = roadmap_tools.create_roadmap('test-project', 'Test Roadmap')
-        assert roadmap_result.status == OperationStatus.SUCCESS
+        assert isinstance(roadmap_result, str)
+        assert 'Created roadmap' in roadmap_result
 
         spec_result = roadmap_tools.add_spec('test-project', 'Test Spec', sample_spec_markdown)
-        assert spec_result.status == OperationStatus.SUCCESS
+        assert isinstance(spec_result, str)
+        assert 'Added spec' in spec_result
 
         # Both domains should work independently
         loop_status = loop_tools.get_loop_status(loop_id)
         assert loop_status.status == LoopStatus.INITIALIZED
 
         roadmap_status = roadmap_tools.get_roadmap('test-project')
-        assert roadmap_status.status == OperationStatus.SUCCESS
-        assert '1 specs' in roadmap_status.message
+        assert isinstance(roadmap_status, str)
+        assert '1 specs' in roadmap_status
 
     def test_state_manager_handles_concurrent_access(
         self, loop_tools: LoopTools, roadmap_tools: RoadmapTools, sample_spec_markdown: str
@@ -94,7 +97,7 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
         status_result = loop_tools.get_loop_status(loop_id)
 
         # All operations should succeed
-        assert 'Shared State Test' in list_result.message  # Spec from markdown parsing
+        assert 'Shared State Test' in list_result  # Spec from markdown parsing
         assert status_result.status == LoopStatus.REFINE
 
     def test_state_manager_memory_limits_affect_only_loops(
@@ -120,10 +123,10 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
 
         # But all specs should still exist
         list_result = roadmap_tools.list_specs('memory-test')
-        assert list_result.status == OperationStatus.SUCCESS
+        assert isinstance(list_result, str)
         # Should contain all 10 specs
         for i in range(10):
-            assert f'Spec {i}' in list_result.message
+            assert f'Spec {i}' in list_result
 
     def test_state_persistence_across_tool_instances(self, sample_spec_markdown: str) -> None:
         # Create initial tools and add data
@@ -143,8 +146,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
 
         # Data should be accessible through new instances
         roadmap_result = new_roadmap_tools.get_roadmap('persistence-test')
-        assert roadmap_result.status == OperationStatus.SUCCESS
-        assert 'Persistence Roadmap' in roadmap_result.message
+        assert isinstance(roadmap_result, str)
+        assert 'Persistence Roadmap' in roadmap_result
 
         loop_status = new_loop_tools.get_loop_status(loop_id)
         assert loop_status.status == LoopStatus.INITIALIZED
@@ -156,8 +159,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
         loop_id = loop_result.id
 
         # Cause error in roadmap domain
-        error_roadmap = roadmap_tools.get_roadmap('non-existent-project')
-        assert error_roadmap.status == OperationStatus.ERROR
+        with pytest.raises(ResourceError):
+            roadmap_tools.get_roadmap('non-existent-project')
 
         # Loop domain should still work
         loop_status = loop_tools.get_loop_status(loop_id)
@@ -169,7 +172,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
 
         # Roadmap domain should still work
         good_roadmap = roadmap_tools.get_roadmap('isolation-test')
-        assert good_roadmap.status == OperationStatus.SUCCESS
+        assert isinstance(good_roadmap, str)
+        assert 'Isolation Roadmap' in good_roadmap
 
     def test_state_manager_initialization_affects_both_tools(self) -> None:
         # Create custom state manager with different config
@@ -193,7 +197,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
         # But roadmap operations should be unaffected by loop history limits
         custom_roadmap_tools.create_roadmap('custom-test', 'Custom Roadmap')
         result = custom_roadmap_tools.get_roadmap('custom-test')
-        assert result.status == OperationStatus.SUCCESS
+        assert isinstance(result, str)
+        assert 'Custom Roadmap' in result
 
     def test_mixed_workflow_realistic_scenario(
         self, loop_tools: LoopTools, roadmap_tools: RoadmapTools, sample_spec_markdown: str
@@ -234,7 +239,7 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
 
         # 9. Verify final state
         final_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert '1 specs' in final_roadmap.message  # Should have one spec (updated)
+        assert '1 specs' in final_roadmap  # Should have one spec (updated)
 
         final_loop_status = loop_tools.get_loop_status(loop_id)
         assert final_loop_status.status == LoopStatus.COMPLETED
@@ -258,11 +263,11 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
 
             # Roadmap operation
             roadmap_result = test_roadmap_tools.create_roadmap(f'concurrent-{i}', f'Roadmap {i}')
-            results.append(('roadmap', roadmap_result.status == OperationStatus.SUCCESS))
+            results.append(('roadmap', isinstance(roadmap_result, str) and 'Created roadmap' in roadmap_result))
 
             # Mixed operation
             spec_result = test_roadmap_tools.add_spec(f'concurrent-{i}', f'Spec {i}', sample_spec_markdown)
-            results.append(('spec', spec_result.status == OperationStatus.SUCCESS))
+            results.append(('spec', isinstance(spec_result, str) and 'Added spec' in spec_result))
 
             # Loop progress
             loop_progress = test_loop_tools.decide_loop_next_action(loop_result.id, 85)
@@ -278,4 +283,5 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
         # All roadmaps should exist
         for i in range(5):
             roadmap_check = test_roadmap_tools.get_roadmap(f'concurrent-{i}')
-            assert roadmap_check.status == OperationStatus.SUCCESS
+            assert isinstance(roadmap_check, str)
+            assert f'Roadmap {i}' in roadmap_check

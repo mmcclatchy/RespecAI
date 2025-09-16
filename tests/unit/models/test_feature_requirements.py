@@ -1,0 +1,215 @@
+import pytest
+
+from services.models.feature_requirements import FeatureRequirements
+from services.models.enums import RequirementsStatus
+
+
+class TestFeatureRequirementsParsing:
+    def test_parse_markdown_extracts_all_fields(self) -> None:
+        markdown = """# Feature Requirements: User Authentication System
+
+## Feature Purpose
+
+**Feature Description**: `Secure user authentication with multi-factor support`
+**Problem Statement**: `Users need secure access to the platform with protection against unauthorized access`
+**Target Users**: `All platform users including administrators and end-users`
+**Business Value**: `Increased security compliance and user trust leading to higher retention`
+
+## User Requirements
+
+### User Stories
+`As a user, I want to log in securely so that my account is protected from unauthorized access`
+
+### Acceptance Criteria
+`User can login with email/password, MFA is required for admin accounts, password reset functionality works`
+
+### User Experience Goals
+`Simple login process, clear error messages, quick authentication under 2 seconds`
+
+## Technical Requirements
+
+### Functional Requirements
+`JWT token-based authentication, password hashing with bcrypt, session management`
+
+### Non-Functional Requirements
+`99.9% uptime, sub-1s login response time, support for 10,000 concurrent users`
+
+### Integration Requirements
+`OAuth providers (Google, GitHub), LDAP integration, audit logging system`
+
+## Success Metrics
+
+### User Metrics
+`User login success rate >95%, password reset completion rate >90%`
+
+### Performance Metrics
+`Average login time <1s, token refresh time <200ms, system availability >99.9%`
+
+### Technical Metrics
+`Failed authentication attempts <5%, security incidents = 0, API response time <500ms`
+
+## Implementation Scope
+
+### Must Have Features
+`Email/password login, secure session management, password reset via email`
+
+### Should Have Features
+`Two-factor authentication, OAuth integration, remember me functionality`
+
+### Could Have Features
+`Biometric authentication, single sign-on, social media integration`
+
+### Won't Have Features
+`SMS-based authentication (privacy concerns), password sharing features`
+
+---
+
+**Status**: `approved`
+**Created**: `2024-01-10`
+**Last Updated**: `2024-01-15`
+**Owner**: `Security Team`
+"""
+
+        requirements = FeatureRequirements.parse_markdown(markdown)
+
+        assert requirements.project_name == 'User Authentication System'
+        assert requirements.feature_description == 'Secure user authentication with multi-factor support'
+        assert (
+            requirements.problem_statement
+            == 'Users need secure access to the platform with protection against unauthorized access'
+        )
+        assert requirements.target_users == 'All platform users including administrators and end-users'
+        assert requirements.business_value == 'Increased security compliance and user trust leading to higher retention'
+        assert 'As a user, I want to log in securely' in requirements.user_stories
+        assert 'User can login with email/password' in requirements.acceptance_criteria
+        assert 'Simple login process' in requirements.user_experience_goals
+        assert 'JWT token-based authentication' in requirements.functional_requirements
+        assert '99.9% uptime' in requirements.non_functional_requirements
+        assert 'OAuth providers' in requirements.integration_requirements
+        assert 'User login success rate >95%' in requirements.user_metrics
+        assert 'Average login time <1s' in requirements.performance_metrics
+        assert 'Failed authentication attempts <5%' in requirements.technical_metrics
+        assert 'Email/password login' in requirements.must_have_features
+        assert 'Two-factor authentication' in requirements.should_have_features
+        assert 'Biometric authentication' in requirements.could_have_features
+        assert 'SMS-based authentication' in requirements.wont_have_features
+        assert requirements.requirements_status == RequirementsStatus.APPROVED
+        assert requirements.creation_date == '2024-01-10'
+        assert requirements.last_updated == '2024-01-15'
+        assert requirements.feature_owner == 'Security Team'
+
+    def test_parse_markdown_handles_missing_sections(self) -> None:
+        markdown = """# Feature Requirements: Basic Feature
+
+## Feature Purpose
+
+**Feature Description**: `Simple feature implementation`
+**Problem Statement**: `Need basic functionality`
+**Target Users**: `End users`
+**Business Value**: `Improved user experience`
+
+---
+
+**Status**: `draft`
+**Created**: `2024-01-01`
+**Last Updated**: `2024-01-01`
+**Owner**: `Development Team`
+"""
+
+        requirements = FeatureRequirements.parse_markdown(markdown)
+
+        assert requirements.project_name == 'Basic Feature'
+        assert requirements.feature_description == 'Simple feature implementation'
+        # Missing sections should have default values
+        assert 'User Stories not specified' in requirements.user_stories
+        assert 'Acceptance Criteria not specified' in requirements.acceptance_criteria
+        assert 'Must Have Features not specified' in requirements.must_have_features
+
+    def test_parse_markdown_invalid_format_raises_error(self) -> None:
+        invalid_markdown = """This is not a feature requirements format"""
+
+        with pytest.raises(ValueError, match='Invalid feature requirements format: missing title'):
+            FeatureRequirements.parse_markdown(invalid_markdown)
+
+
+class TestFeatureRequirementsMarkdownBuilding:
+    @pytest.fixture
+    def sample_requirements(self) -> FeatureRequirements:
+        return FeatureRequirements(
+            project_name='Shopping Cart Feature',
+            feature_description='Add items to cart for later purchase',
+            problem_statement='Users need to collect items before checkout',
+            target_users='All e-commerce customers',
+            business_value='Increased conversion rates and order values',
+            user_stories='As a customer, I want to add items to my cart so I can purchase multiple items at once',
+            acceptance_criteria='User can add/remove items, view cart total, proceed to checkout',
+            user_experience_goals='Intuitive cart management, clear pricing, quick add/remove actions',
+            functional_requirements='Cart persistence, item quantity management, price calculation',
+            non_functional_requirements='Cart loads in <500ms, supports 100 items per cart',
+            integration_requirements='Payment gateway integration, inventory system sync',
+            user_metrics='Cart abandonment rate <30%, add-to-cart conversion >15%',
+            performance_metrics='Cart operations <200ms, real-time inventory updates',
+            technical_metrics='Cart API uptime >99.5%, data consistency checks pass 100%',
+            must_have_features='Add items, remove items, view total price',
+            should_have_features='Save for later, quantity adjustment, price breakdown',
+            could_have_features='Wishlist integration, product recommendations',
+            wont_have_features='Shared carts between users, complex discounting rules',
+            requirements_status=RequirementsStatus.IN_REVIEW,
+            creation_date='2024-01-05',
+            last_updated='2024-01-12',
+            feature_owner='Product Team',
+        )
+
+    def test_build_markdown_creates_valid_template_format(self, sample_requirements: FeatureRequirements) -> None:
+        markdown = sample_requirements.build_markdown()
+
+        assert '# Feature Requirements: Shopping Cart Feature' in markdown
+        assert '**Feature Description**: `Add items to cart for later purchase`' in markdown
+        assert '### User Stories' in markdown
+        assert '`As a customer, I want to add items to my cart so I can purchase multiple items at once`' in markdown
+        assert '### Must Have Features' in markdown
+        assert '`Add items, remove items, view total price`' in markdown
+        assert '**Status**: `in-review`' in markdown
+        assert '**Owner**: `Product Team`' in markdown
+
+    def test_round_trip_parsing_maintains_data_integrity(self, sample_requirements: FeatureRequirements) -> None:
+        # Build markdown from the model
+        markdown = sample_requirements.build_markdown()
+
+        # Parse it back into a model
+        parsed_requirements = FeatureRequirements.parse_markdown(markdown)
+
+        # Should match original (except timestamps)
+        assert parsed_requirements.project_name == sample_requirements.project_name
+        assert parsed_requirements.feature_description == sample_requirements.feature_description
+        assert parsed_requirements.problem_statement == sample_requirements.problem_statement
+        assert parsed_requirements.target_users == sample_requirements.target_users
+        assert parsed_requirements.business_value == sample_requirements.business_value
+        assert parsed_requirements.user_stories == sample_requirements.user_stories
+        assert parsed_requirements.acceptance_criteria == sample_requirements.acceptance_criteria
+        assert parsed_requirements.user_experience_goals == sample_requirements.user_experience_goals
+        assert parsed_requirements.functional_requirements == sample_requirements.functional_requirements
+        assert parsed_requirements.non_functional_requirements == sample_requirements.non_functional_requirements
+        assert parsed_requirements.integration_requirements == sample_requirements.integration_requirements
+        assert parsed_requirements.user_metrics == sample_requirements.user_metrics
+        assert parsed_requirements.performance_metrics == sample_requirements.performance_metrics
+        assert parsed_requirements.technical_metrics == sample_requirements.technical_metrics
+        assert parsed_requirements.must_have_features == sample_requirements.must_have_features
+        assert parsed_requirements.should_have_features == sample_requirements.should_have_features
+        assert parsed_requirements.could_have_features == sample_requirements.could_have_features
+        assert parsed_requirements.wont_have_features == sample_requirements.wont_have_features
+        assert parsed_requirements.requirements_status == sample_requirements.requirements_status
+        assert parsed_requirements.creation_date == sample_requirements.creation_date
+        assert parsed_requirements.last_updated == sample_requirements.last_updated
+        assert parsed_requirements.feature_owner == sample_requirements.feature_owner
+
+    def test_character_for_character_round_trip_validation(self, sample_requirements: FeatureRequirements) -> None:
+        # Build markdown
+        original_markdown = sample_requirements.build_markdown()
+
+        # Parse and rebuild
+        parsed_requirements = FeatureRequirements.parse_markdown(original_markdown)
+        rebuilt_markdown = parsed_requirements.build_markdown()
+
+        # Should be identical
+        assert original_markdown == rebuilt_markdown

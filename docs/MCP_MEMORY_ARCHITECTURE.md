@@ -303,7 +303,7 @@ class BuildPlan(BaseModel):
 ```python
 # PROPOSED: CriticFeedback (new model for structured feedback)
 class CriticFeedback(BaseModel):
-    session_id: str  # Links to LoopState.id
+    loop_id: str  # Links to LoopState.id
     critic_agent: CriticAgent
     iteration: int
     quality_score: int  # 0-100 (calculated from fsdd_scores average * 10)

@@ -1,8 +1,9 @@
 import pytest
-from fastmcp.exceptions import ResourceError, ToolError
+from fastmcp.exceptions import ResourceError
 
 from services.mcp.feedback_tools import FeedbackTools
-from services.models.enums import CriticAgent, FSSDCriteria
+from services.models.enums import CriticAgent
+from services.models.feedback import CriticFeedback
 from services.utils.enums import LoopStatus, LoopType
 from services.utils.models import LoopState, MCPResponse
 from services.utils.state_manager import InMemoryStateManager
@@ -26,15 +27,17 @@ def sample_loop(state_manager: InMemoryStateManager) -> LoopState:
 
 
 @pytest.fixture
-def sample_feedback_data(sample_loop: LoopState) -> dict:
-    return {
-        'loop_id': sample_loop.id,
-        'critic_agent': CriticAgent.SPEC_CRITIC.value,
-        'iteration': 1,
-        'overall_assessment': 'Good specification with room for improvement',
-        'improvements': ['Add security details', 'Clarify integration patterns'],
-        'fsdd_scores': {criteria: 8 for criteria in FSSDCriteria},
-    }
+def sample_feedback(sample_loop: LoopState) -> CriticFeedback:
+    return CriticFeedback(
+        loop_id=sample_loop.id,
+        critic_agent=CriticAgent.SPEC_CRITIC,
+        iteration=1,
+        overall_score=85,
+        assessment_summary='Good specification with room for improvement',
+        detailed_feedback='The specification covers most requirements but needs security details and integration patterns.',
+        key_issues=['Missing security requirements', 'Integration patterns unclear'],
+        recommendations=['Add security details', 'Clarify integration patterns'],
+    )
 
 
 class TestFeedbackTools:
@@ -43,39 +46,39 @@ class TestFeedbackTools:
 
 class TestStoreCriticFeedback:
     def test_store_critic_feedback_returns_success_response(
-        self, feedback_tools: FeedbackTools, sample_feedback_data: dict
+        self, feedback_tools: FeedbackTools, sample_feedback: CriticFeedback
     ) -> None:
-        response = feedback_tools.store_critic_feedback(**sample_feedback_data)
+        response = feedback_tools.store_critic_feedback(sample_feedback)
 
         assert isinstance(response, MCPResponse)
-        assert response.id == sample_feedback_data['loop_id']
+        assert response.id == sample_feedback.loop_id
         assert response.status == LoopStatus.IN_PROGRESS
 
     def test_store_critic_feedback_adds_feedback_to_loop_state(
-        self, feedback_tools: FeedbackTools, sample_feedback_data: dict
+        self, feedback_tools: FeedbackTools, sample_feedback: CriticFeedback
     ) -> None:
-        feedback_tools.store_critic_feedback(**sample_feedback_data)
+        feedback_tools.store_critic_feedback(sample_feedback)
 
-        updated_loop = feedback_tools.state.get_loop(sample_feedback_data['loop_id'])
+        updated_loop = feedback_tools.state.get_loop(sample_feedback.loop_id)
         assert len(updated_loop.feedback_history) == 1
 
         stored_feedback = updated_loop.feedback_history[0]
-        assert stored_feedback.session_id == sample_feedback_data['loop_id']
-        assert stored_feedback.critic_agent.value == sample_feedback_data['critic_agent']
-        assert stored_feedback.overall_assessment == sample_feedback_data['overall_assessment']
-        assert stored_feedback.improvements == sample_feedback_data['improvements']
-        assert stored_feedback.fsdd_scores == sample_feedback_data['fsdd_scores']
+        assert stored_feedback.loop_id == sample_feedback.loop_id
+        assert stored_feedback.critic_agent == sample_feedback.critic_agent
+        assert stored_feedback.assessment_summary == sample_feedback.assessment_summary
+        assert stored_feedback.key_issues == sample_feedback.key_issues
+        assert stored_feedback.recommendations == sample_feedback.recommendations
 
     def test_store_critic_feedback_updates_loop_score(
-        self, feedback_tools: FeedbackTools, sample_loop: LoopState, sample_feedback_data: dict
+        self, feedback_tools: FeedbackTools, sample_loop: LoopState, sample_feedback: CriticFeedback
     ) -> None:
         initial_score = sample_loop.current_score
 
-        feedback_tools.store_critic_feedback(**sample_feedback_data)
+        feedback_tools.store_critic_feedback(sample_feedback)
 
-        updated_loop = feedback_tools.state.get_loop(sample_feedback_data['loop_id'])
+        updated_loop = feedback_tools.state.get_loop(sample_feedback.loop_id)
         assert updated_loop.current_score != initial_score
-        assert updated_loop.current_score == 80  # All scores are 8, so 80%
+        assert updated_loop.current_score == 85  # Overall score from feedback
 
     def test_store_critic_feedback_works_with_all_loop_types(
         self, feedback_tools: FeedbackTools, state_manager: InMemoryStateManager
@@ -94,14 +97,18 @@ class TestStoreCriticFeedback:
             loop_state = LoopState(loop_type=loop_type)
             state_manager.add_loop(loop_state)
 
-            response = feedback_tools.store_critic_feedback(
+            feedback = CriticFeedback(
                 loop_id=loop_state.id,
-                critic_agent=CriticAgent.SPEC_CRITIC.value,
+                critic_agent=CriticAgent.SPEC_CRITIC,
                 iteration=1,
-                overall_assessment=f'Assessment for {loop_type.value}',
-                improvements=[f'Improvement for {loop_type.value}'],
-                fsdd_scores={criteria: 7 for criteria in FSSDCriteria},
+                overall_score=70,
+                assessment_summary=f'Assessment for {loop_type.value}',
+                detailed_feedback=f'Detailed analysis for {loop_type.value}',
+                key_issues=[f'Issue for {loop_type.value}'],
+                recommendations=[f'Improvement for {loop_type.value}'],
             )
+
+            response = feedback_tools.store_critic_feedback(feedback)
 
             assert response.status == LoopStatus.IN_PROGRESS
             updated_loop = feedback_tools.state.get_loop(loop_state.id)
@@ -109,42 +116,33 @@ class TestStoreCriticFeedback:
             assert updated_loop.current_score == 70
 
     def test_store_critic_feedback_raises_error_when_loop_not_found(self, feedback_tools: FeedbackTools) -> None:
+        feedback = CriticFeedback(
+            loop_id='non-existent-loop',
+            critic_agent=CriticAgent.SPEC_CRITIC,
+            iteration=1,
+            overall_score=80,
+            assessment_summary='Test assessment',
+            detailed_feedback='Test detailed feedback',
+            key_issues=[],
+            recommendations=[],
+        )
+
         with pytest.raises(ResourceError):
-            feedback_tools.store_critic_feedback(
-                loop_id='non-existent-loop',
-                critic_agent=CriticAgent.SPEC_CRITIC.value,
-                iteration=1,
-                overall_assessment='Test assessment',
-                improvements=[],
-                fsdd_scores={criteria: 8 for criteria in FSSDCriteria},
-            )
+            feedback_tools.store_critic_feedback(feedback)
 
-    def test_store_critic_feedback_validates_critic_agent_enum(
+    def test_store_critic_feedback_validates_score_range(
         self, feedback_tools: FeedbackTools, sample_loop: LoopState
     ) -> None:
-        with pytest.raises(ToolError):
-            feedback_tools.store_critic_feedback(
+        with pytest.raises(ValueError, match='Overall score must be between 0 and 100'):
+            CriticFeedback(
                 loop_id=sample_loop.id,
-                critic_agent='invalid-critic',
+                critic_agent=CriticAgent.SPEC_CRITIC,
                 iteration=1,
-                overall_assessment='Test assessment',
-                improvements=[],
-                fsdd_scores={FSSDCriteria.CLARITY: 8},
-            )
-
-    def test_store_critic_feedback_validates_fsdd_score_range(
-        self, feedback_tools: FeedbackTools, sample_loop: LoopState
-    ) -> None:
-        invalid_scores = {FSSDCriteria.CLARITY: 15}  # Invalid: > 10
-
-        with pytest.raises(ToolError):
-            feedback_tools.store_critic_feedback(
-                loop_id=sample_loop.id,
-                critic_agent=CriticAgent.SPEC_CRITIC.value,
-                iteration=1,
-                overall_assessment='Test assessment',
-                improvements=[],
-                fsdd_scores=invalid_scores,
+                overall_score=150,  # Invalid: > 100
+                assessment_summary='Test assessment',
+                detailed_feedback='Test detailed feedback',
+                key_issues=[],
+                recommendations=[],
             )
 
 
@@ -164,14 +162,17 @@ class TestGetFeedbackHistory:
     ) -> None:
         # Add multiple feedback items
         for i in range(3):
-            feedback_tools.store_critic_feedback(
+            feedback = CriticFeedback(
                 loop_id=sample_loop.id,
-                critic_agent=CriticAgent.SPEC_CRITIC.value,
+                critic_agent=CriticAgent.SPEC_CRITIC,
                 iteration=i + 1,
-                overall_assessment=f'Assessment {i + 1}',
-                improvements=[f'Improvement {i + 1}'],
-                fsdd_scores={criteria: 7 + i for criteria in FSSDCriteria},
+                overall_score=70 + i * 5,
+                assessment_summary=f'Assessment {i + 1}',
+                detailed_feedback=f'Detailed analysis {i + 1}',
+                key_issues=[f'Issue {i + 1}'],
+                recommendations=[f'Improvement {i + 1}'],
             )
+            feedback_tools.store_critic_feedback(feedback)
 
         response = feedback_tools.get_feedback_history(sample_loop.id, count=2)
 
@@ -186,14 +187,17 @@ class TestGetFeedbackHistory:
     ) -> None:
         # Add 5 feedback items
         for i in range(5):
-            feedback_tools.store_critic_feedback(
+            feedback = CriticFeedback(
                 loop_id=sample_loop.id,
-                critic_agent=CriticAgent.SPEC_CRITIC.value,
+                critic_agent=CriticAgent.SPEC_CRITIC,
                 iteration=i + 1,
-                overall_assessment=f'Assessment {i + 1}',
-                improvements=[],
-                fsdd_scores={criteria: 7 for criteria in FSSDCriteria},
+                overall_score=70,
+                assessment_summary=f'Assessment {i + 1}',
+                detailed_feedback=f'Detailed analysis {i + 1}',
+                key_issues=[],
+                recommendations=[],
             )
+            feedback_tools.store_critic_feedback(feedback)
 
         # Request only last 3
         response = feedback_tools.get_feedback_history(sample_loop.id, count=3)
@@ -223,14 +227,17 @@ class TestGetFeedbackHistory:
             state_manager.add_loop(loop_state)
 
             # Add feedback
-            feedback_tools.store_critic_feedback(
+            feedback = CriticFeedback(
                 loop_id=loop_state.id,
-                critic_agent=CriticAgent.SPEC_CRITIC.value,
+                critic_agent=CriticAgent.SPEC_CRITIC,
                 iteration=1,
-                overall_assessment=f'Assessment for {loop_type.value}',
-                improvements=[],
-                fsdd_scores={criteria: 8 for criteria in FSSDCriteria},
+                overall_score=80,
+                assessment_summary=f'Assessment for {loop_type.value}',
+                detailed_feedback=f'Detailed analysis for {loop_type.value}',
+                key_issues=[],
+                recommendations=[],
             )
+            feedback_tools.store_critic_feedback(feedback)
 
             # Retrieve feedback
             response = feedback_tools.get_feedback_history(loop_state.id)
@@ -246,14 +253,17 @@ class TestGetFeedbackHistory:
     ) -> None:
         # Add 7 feedback items
         for i in range(7):
-            feedback_tools.store_critic_feedback(
+            feedback = CriticFeedback(
                 loop_id=sample_loop.id,
-                critic_agent=CriticAgent.SPEC_CRITIC.value,
+                critic_agent=CriticAgent.SPEC_CRITIC,
                 iteration=i + 1,
-                overall_assessment=f'Assessment {i + 1}',
-                improvements=[],
-                fsdd_scores={criteria: 7 for criteria in FSSDCriteria},
+                overall_score=70,
+                assessment_summary=f'Assessment {i + 1}',
+                detailed_feedback=f'Detailed analysis {i + 1}',
+                key_issues=[],
+                recommendations=[],
             )
+            feedback_tools.store_critic_feedback(feedback)
 
         # Request default (should be 5)
         response = feedback_tools.get_feedback_history(sample_loop.id)

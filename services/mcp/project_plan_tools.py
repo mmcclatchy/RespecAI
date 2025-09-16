@@ -60,7 +60,7 @@ class ProjectPlanTools:
         except Exception as e:
             raise ToolError(f'Unexpected error retrieving project plan: {str(e)}')
 
-    def get_project_plan_markdown(self, loop_id: str, platform: str = 'local') -> MCPResponse:
+    def get_project_plan_markdown(self, loop_id: str) -> MCPResponse:
         try:
             loop_state = self.state.get_loop(loop_id)
             project_plan = self.get_project_plan_data(loop_id)

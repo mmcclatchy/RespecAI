@@ -1,7 +1,6 @@
 from fastmcp.exceptions import ResourceError, ToolError
 from pydantic import ValidationError
 
-from services.models.enums import CriticAgent, FSSDCriteria
 from services.models.feedback import CriticFeedback
 from services.utils.errors import LoopNotFoundError
 from services.utils.models import MCPResponse
@@ -12,37 +11,18 @@ class FeedbackTools:
     def __init__(self, state: StateManager) -> None:
         self.state = state
 
-    def store_critic_feedback(
-        self,
-        loop_id: str,
-        critic_agent: str,
-        iteration: int,
-        overall_assessment: str,
-        improvements: list[str],
-        fsdd_scores: dict[FSSDCriteria, int],
-    ) -> MCPResponse:
+    def store_critic_feedback(self, feedback: CriticFeedback) -> MCPResponse:
         """Store structured critic feedback for any loop type.
 
         This universal tool works with ALL 5 workflow types and integrates
         with the existing sophisticated LoopState management system.
         """
         try:
-            agent_enum = CriticAgent(critic_agent)
-            feedback = CriticFeedback(
-                session_id=loop_id,
-                critic_agent=agent_enum,
-                iteration=iteration,
-                overall_assessment=overall_assessment,
-                improvements=improvements,
-                fsdd_scores=fsdd_scores,
-            )
-            loop_state = self.state.get_loop(loop_id)
+            loop_state = self.state.get_loop(feedback.loop_id)
             loop_state.add_feedback(feedback)
             return loop_state.mcp_response
         except ValidationError:
             raise ToolError('Invalid feedback data provided')
-        except ValueError:
-            raise ToolError(f'Invalid critic agent: {critic_agent}')
         except LoopNotFoundError:
             raise ResourceError('Loop does not exist')
         except Exception as e:
@@ -74,7 +54,7 @@ class FeedbackTools:
         feedback_count = len(recent_feedback)
         feedback_summaries = []
         for feedback in recent_feedback:
-            summary = f'Iteration {feedback.iteration}: {feedback.overall_assessment}'
+            summary = f'Iteration {feedback.iteration} (Score: {feedback.overall_score}): {feedback.assessment_summary}'
             feedback_summaries.append(summary)
 
         return f'Retrieved {feedback_count} feedback item{"s" if feedback_count != 1 else ""}: ' + '; '.join(

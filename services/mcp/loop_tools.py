@@ -71,5 +71,112 @@ class LoopTools:
         except Exception as e:
             raise LoopStateError(loop_id, 'feedback_storage', f'Unexpected error: {str(e)}')
 
+    def get_loop_feedback_summary(self, loop_id: str) -> MCPResponse:
+        """Get structured feedback summary for loop decision making.
+
+        Provides feedback metrics and trends to support intelligent
+        loop progression decisions. Returns score progression,
+        feedback count, and recent assessment summaries.
+        """
+        try:
+            loop_state = self.state.get_loop(loop_id)
+            recent_feedback = loop_state.get_recent_feedback(3)
+
+            if not recent_feedback:
+                return MCPResponse(
+                    id=loop_id,
+                    status=loop_state.status,
+                    message='No feedback available - loop ready for first assessment',
+                )
+
+            # Build feedback summary for decision context
+            feedback_count = len(loop_state.feedback_history)
+            current_score = loop_state.current_score
+            score_trend = self._calculate_score_trend(loop_state.score_history)
+
+            recent_summaries = [f'Iteration {fb.iteration}: {fb.assessment_summary}' for fb in recent_feedback]
+
+            summary_message = (
+                f'Feedback Summary: {feedback_count} total assessments, '
+                f'current score {current_score}, trend: {score_trend}. '
+                f'Recent: {"; ".join(recent_summaries[-2:])}'
+            )
+
+            return MCPResponse(id=loop_id, status=loop_state.status, message=summary_message)
+
+        except LoopNotFoundError:
+            raise LoopStateError(loop_id, 'feedback_summary', 'Loop does not exist')
+        except Exception as e:
+            raise LoopStateError(loop_id, 'feedback_summary', f'Unexpected error: {str(e)}')
+
+    def get_loop_improvement_analysis(self, loop_id: str) -> MCPResponse:
+        """Analyze improvement patterns from structured feedback.
+
+        Examines feedback history to identify improvement trends,
+        recurring issues, and recommendation patterns. Supports
+        intelligent refinement strategy decisions.
+        """
+        try:
+            loop_state = self.state.get_loop(loop_id)
+            feedback_history = loop_state.feedback_history
+
+            if len(feedback_history) < 2:
+                return MCPResponse(
+                    id=loop_id,
+                    status=loop_state.status,
+                    message='Insufficient feedback history for improvement analysis - need at least 2 assessments',
+                )
+
+            # Analyze improvement patterns
+            score_improvements = []
+            for i in range(1, len(feedback_history)):
+                score_improvements.append(feedback_history[i].overall_score - feedback_history[i - 1].overall_score)
+
+            avg_improvement = sum(score_improvements) / len(score_improvements)
+            last_improvement = score_improvements[-1] if score_improvements else 0
+
+            # Identify recurring issues
+            all_issues = [issue for fb in feedback_history for issue in fb.key_issues]
+            issue_counts: dict[str, int] = {}
+            for issue in all_issues:
+                issue_counts[issue] = issue_counts.get(issue, 0) + 1
+
+            recurring_issues = [issue for issue, count in issue_counts.items() if count >= 2]
+
+            # Build analysis message
+            trend_desc = 'improving' if avg_improvement > 0 else 'declining' if avg_improvement < 0 else 'stable'
+            analysis_message = (
+                f'Improvement Analysis: {trend_desc} trend (avg: {avg_improvement:+.1f} points), '
+                f'last change: {last_improvement:+d} points. '
+            )
+
+            if recurring_issues:
+                analysis_message += f'Recurring issues: {", ".join(recurring_issues[:3])}. '
+            else:
+                analysis_message += 'No recurring issues identified. '
+
+            return MCPResponse(id=loop_id, status=loop_state.status, message=analysis_message)
+
+        except LoopNotFoundError:
+            raise LoopStateError(loop_id, 'improvement_analysis', 'Loop does not exist')
+        except Exception as e:
+            raise LoopStateError(loop_id, 'improvement_analysis', f'Unexpected error: {str(e)}')
+
+    def _calculate_score_trend(self, score_history: list[int]) -> str:
+        if len(score_history) < 2:
+            return 'insufficient data'
+
+        recent_scores = score_history[-3:] if len(score_history) >= 3 else score_history
+        if len(recent_scores) < 2:
+            return 'insufficient data'
+
+        total_change = recent_scores[-1] - recent_scores[0]
+        if total_change > 5:
+            return 'improving'
+        elif total_change < -5:
+            return 'declining'
+        else:
+            return 'stable'
+
 
 loop_tools = LoopTools(state_manager)

@@ -2,11 +2,10 @@ import asyncio
 
 import pytest
 from fastmcp import FastMCP
+from fastmcp.exceptions import ResourceError, ToolError
 
 from services.mcp.roadmap_tools import roadmap_tools
 from services.mcp.server import create_mcp_server
-from services.utils.enums import OperationStatus
-from services.utils.models import OperationResponse
 
 
 class TestRoadmapServerIntegration:
@@ -66,10 +65,10 @@ Integration testing using FastMCP framework with in-memory state management.
         # Test tool functionality through direct call
         result = roadmap_tools.create_roadmap('integration-test-1', 'Integration Test Roadmap')
 
-        assert isinstance(result, OperationResponse)
-        assert result.status == OperationStatus.SUCCESS
-        assert result.id == 'integration-test-1'
-        assert 'Integration Test Roadmap' in result.message
+        assert isinstance(result, str)
+        assert 'Integration Test Roadmap' in result
+        assert 'integration-test-1' in result
+        assert 'Created roadmap' in result
 
     def test_get_roadmap_integration(self, server: FastMCP) -> None:
         # Setup: create a roadmap first
@@ -82,11 +81,9 @@ Integration testing using FastMCP framework with in-memory state management.
         # Test tool functionality
         result = roadmap_tools.get_roadmap('integration-test-2')
 
-        assert isinstance(result, OperationResponse)
-        assert result.status == OperationStatus.SUCCESS
-        assert result.id == 'integration-test-2'
-        assert 'Test Roadmap for Get' in result.message
-        assert '0 specs' in result.message
+        assert isinstance(result, str)
+        assert 'Test Roadmap for Get' in result
+        assert '0 specs' in result
 
     def test_add_spec_integration(self, server: FastMCP, valid_spec_markdown: str) -> None:
         project_id = 'spec-test-project'
@@ -101,10 +98,9 @@ Integration testing using FastMCP framework with in-memory state management.
         # Test tool functionality
         result = roadmap_tools.add_spec(project_id, 'Test Spec', valid_spec_markdown)
 
-        assert isinstance(result, OperationResponse)
-        assert result.status == OperationStatus.SUCCESS
-        assert 'spec-test-project-Integration Test Spec' in result.id  # Uses parsed name from markdown
-        assert 'Test Spec' in result.message
+        assert isinstance(result, str)
+        assert 'Test Spec' in result
+        assert 'Added spec' in result
 
     def test_get_spec_integration(self, server: FastMCP, valid_spec_markdown: str) -> None:
         project_id = 'get-spec-project'
@@ -120,9 +116,9 @@ Integration testing using FastMCP framework with in-memory state management.
         # Test tool functionality
         result = roadmap_tools.get_spec(project_id, 'Integration Test Spec')  # Use parsed name from markdown
 
-        assert isinstance(result, OperationResponse)
-        assert result.status == OperationStatus.SUCCESS
-        assert f'{project_id}-Integration Test Spec' in result.id
+        assert isinstance(result, str)
+        assert 'Retrieved spec' in result
+        assert 'Integration Test Spec' in result
 
     def test_update_spec_integration(self, server: FastMCP, valid_spec_markdown: str) -> None:
         project_id = 'update-spec-project'
@@ -140,9 +136,9 @@ Integration testing using FastMCP framework with in-memory state management.
 
         result = roadmap_tools.update_spec(project_id, 'Updated Name', updated_markdown)
 
-        assert isinstance(result, OperationResponse)
-        assert result.status == OperationStatus.SUCCESS
-        assert 'Updated Name' in result.message
+        assert isinstance(result, str)
+        assert 'Updated Name' in result
+        assert 'Updated spec' in result
 
     def test_list_specs_integration(self, server: FastMCP, valid_spec_markdown: str) -> None:
         project_id = 'list-specs-project'
@@ -164,12 +160,10 @@ Integration testing using FastMCP framework with in-memory state management.
         # Test tool functionality
         result = roadmap_tools.list_specs(project_id)
 
-        assert isinstance(result, OperationResponse)
-        assert result.status == OperationStatus.SUCCESS
-        assert result.id == project_id
+        assert isinstance(result, str)
         # Should contain both spec names (parsed from markdown)
-        assert 'Integration Test Spec' in result.message
-        assert 'Second Test Spec' in result.message
+        assert 'Integration Test Spec' in result
+        assert 'Second Test Spec' in result
 
     def test_delete_spec_integration(self, server: FastMCP, valid_spec_markdown: str) -> None:
         project_id = 'delete-spec-project'
@@ -185,10 +179,9 @@ Integration testing using FastMCP framework with in-memory state management.
         # Test tool functionality
         result = roadmap_tools.delete_spec(project_id, 'Integration Test Spec')  # Use parsed name
 
-        assert isinstance(result, OperationResponse)
-        assert result.status == OperationStatus.SUCCESS
-        assert 'Deleted spec' in result.message
-        assert 'Integration Test Spec' in result.message
+        assert isinstance(result, str)
+        assert 'Deleted spec' in result
+        assert 'Integration Test Spec' in result
 
     def test_complete_roadmap_workflow_integration(self, server: FastMCP, valid_spec_markdown: str) -> None:
         project_id = 'workflow-project'
@@ -210,42 +203,47 @@ Integration testing using FastMCP framework with in-memory state management.
 
         # Step 1: Create roadmap
         create_result = roadmap_tools.create_roadmap(project_id, 'Complete Workflow Roadmap')
-        assert create_result.status == OperationStatus.SUCCESS
+        assert isinstance(create_result, str)
+        assert 'Created roadmap' in create_result
 
         # Step 2: Verify empty roadmap
         empty_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert '0 specs' in empty_roadmap.message
+        assert '0 specs' in empty_roadmap
 
         # Step 3: Add spec
         add_result = roadmap_tools.add_spec(project_id, 'Workflow Spec', valid_spec_markdown)
-        assert add_result.status == OperationStatus.SUCCESS
+        assert isinstance(add_result, str)
+        assert 'Added spec' in add_result
 
         # Step 4: Verify roadmap now has spec
         populated_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert '1 specs' in populated_roadmap.message
+        assert '1 specs' in populated_roadmap
 
         # Step 5: List specs
         list_result = roadmap_tools.list_specs(project_id)
-        assert spec_name_from_markdown in list_result.message
+        assert spec_name_from_markdown in list_result
 
         # Step 6: Get specific spec
         get_result = roadmap_tools.get_spec(project_id, spec_name_from_markdown)
-        assert get_result.status == OperationStatus.SUCCESS
+        assert isinstance(get_result, str)
+        assert 'Retrieved spec' in get_result
 
         # Step 7: Update spec (content changes but name stays the same)
         updated_markdown = valid_spec_markdown.replace(
             'End-to-end testing of spec lifecycle', 'Updated end-to-end testing of spec lifecycle'
         )
         update_result = roadmap_tools.update_spec(project_id, 'Updated Display Name', updated_markdown)
-        assert update_result.status == OperationStatus.SUCCESS
+        assert isinstance(update_result, str)
+        assert 'Updated spec' in update_result
 
         # Step 8: Delete spec (use original spec name since names don't change)
         delete_result = roadmap_tools.delete_spec(project_id, spec_name_from_markdown)
-        assert delete_result.status == OperationStatus.SUCCESS
+        assert isinstance(delete_result, str)
+        assert 'Deleted spec' in delete_result
 
         # Step 9: Verify empty roadmap again
         final_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert '0 specs' in final_roadmap.message
+        assert '0 specs' in final_roadmap
 
     def test_error_handling_integration(self, server: FastMCP) -> None:
         # Verify error handling tools are registered
@@ -255,21 +253,21 @@ Integration testing using FastMCP framework with in-memory state management.
             assert tool_name in tools
 
         # Test getting non-existent roadmap
-        get_missing_roadmap = roadmap_tools.get_roadmap('non-existent-project')
-        assert get_missing_roadmap.status == OperationStatus.ERROR
+        with pytest.raises(ResourceError):
+            roadmap_tools.get_roadmap('non-existent-project')
 
         # Test adding spec to non-existent roadmap
-        add_spec_no_roadmap = roadmap_tools.add_spec('missing-project', 'Test Spec', '# Test\n\nSome content')
-        assert add_spec_no_roadmap.status == OperationStatus.ERROR
+        with pytest.raises(ToolError):
+            roadmap_tools.add_spec('missing-project', 'Test Spec', '# Test\n\nSome content')
 
         # Test getting non-existent spec
         roadmap_tools.create_roadmap('error-test-project', 'Error Test Roadmap')
-        get_missing_spec = roadmap_tools.get_spec('error-test-project', 'non-existent-spec')
-        assert get_missing_spec.status == OperationStatus.NOT_FOUND
+        with pytest.raises(ResourceError):
+            roadmap_tools.get_spec('error-test-project', 'non-existent-spec')
 
         # Test deleting non-existent spec
-        delete_missing_spec = roadmap_tools.delete_spec('error-test-project', 'non-existent-spec')
-        assert delete_missing_spec.status == OperationStatus.NOT_FOUND
+        with pytest.raises(ToolError):
+            roadmap_tools.delete_spec('error-test-project', 'non-existent-spec')
 
     def test_server_tools_consistency_integration(self, server: FastMCP) -> None:
         # Test multiple tool discovery calls return same results
@@ -312,13 +310,14 @@ Integration testing using FastMCP framework with in-memory state management.
         # Create multiple projects
         for i, project_id in enumerate(project_ids):
             result = roadmap_tools.create_roadmap(project_id, f'Consistency Test Roadmap {i}')
-            assert result.status == OperationStatus.SUCCESS
+            assert isinstance(result, str)
+            assert 'Created roadmap' in result
 
         # Verify all projects exist independently
         for i, project_id in enumerate(project_ids):
             result = roadmap_tools.get_roadmap(project_id)
-            assert result.status == OperationStatus.SUCCESS
-            assert f'Consistency Test Roadmap {i}' in result.message
+            assert isinstance(result, str)
+            assert f'Consistency Test Roadmap {i}' in result
 
         # Add specs to each project independently
         spec_markdown = """# Technical Specification: Test Spec
@@ -334,12 +333,13 @@ In-memory state management
 
         for project_id in project_ids:
             result = roadmap_tools.add_spec(project_id, f'Spec for {project_id}', spec_markdown)
-            assert result.status == OperationStatus.SUCCESS
+            assert isinstance(result, str)
+            assert 'Added spec' in result
 
         # Verify each project has exactly one spec
         for project_id in project_ids:
             roadmap_result = roadmap_tools.get_roadmap(project_id)
-            assert '1 specs' in roadmap_result.message
+            assert '1 specs' in roadmap_result
 
             list_result = roadmap_tools.list_specs(project_id)
-            assert 'Test Spec' in list_result.message  # Parsed name from markdown
+            assert 'Test Spec' in list_result  # Parsed name from markdown
