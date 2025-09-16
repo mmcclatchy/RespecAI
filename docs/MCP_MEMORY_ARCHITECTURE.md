@@ -168,9 +168,9 @@ class LoopStatus(Enum):
     REFINE = 'refine'
 ```
 
-### New Enums (To Be Added)
+### New Enums (Implemented)
 ```python
-# PROPOSED: FSDD Criteria for structured feedback
+# ✅ IMPLEMENTED: FSDD Criteria for structured feedback
 class FSSDCriteria(str, Enum):
     CLARITY = "clarity"
     COMPLETENESS = "completeness"
@@ -185,7 +185,7 @@ class FSSDCriteria(str, Enum):
     DOCUMENTATION = "documentation"
     INTEGRATION = "integration"
 
-# PROPOSED: Critic Agent identification
+# ✅ IMPLEMENTED: Critic Agent identification
 class CriticAgent(str, Enum):
     PLAN_CRITIC = "plan-critic"
     ANALYST_CRITIC = "analyst-critic"
@@ -207,18 +207,33 @@ This progression moves from strategic planning through technical translation, im
 
 **1. ProjectPlan Model (for /plan workflow)**
 ```python
-# PROPOSED: ProjectPlan (for /plan workflow)
+# ✅ IMPLEMENTED: ProjectPlan (for /plan workflow)
 class ProjectPlan(BaseModel):
     # Big-picture overview providing understanding and context
-    # Fields based on project_plan_template.md structure
-    # Following InitialSpec pattern with parse_markdown() and build_markdown()
+    # 35 fields based on project_plan_template.md structure
+    # Complete parse_markdown() and build_markdown() with round-trip tests
+    project_name: str
+    project_vision: str
+    project_mission: str
+    project_timeline: str
+    project_budget: str
+    # ... 30 additional fields for complete project planning
+
+    @classmethod
+    def parse_markdown(cls, markdown: str) -> Self:
+        """Parse project_plan_template.md format into structured fields"""
+
+    def build_markdown(self) -> str:
+        """Generate markdown in project_plan_template.md format"""
 ```
 
 **2. FeatureRequirements Model (for /feature-requirements workflow)**
 ```python
-# IMPLEMENTED: FeatureRequirements (for /feature-requirements workflow)
+# ✅ IMPLEMENTED: FeatureRequirements (for /feature-requirements workflow)
 class FeatureRequirements(BaseModel):
     # Technical translation of business needs defining intent and constraints
+    # 22 fields based on feature_requirements_template.md structure
+    # Complete parse_markdown() and build_markdown() with round-trip tests
     project_name: str
     feature_description: str
     problem_statement: str
@@ -237,12 +252,11 @@ class FeatureRequirements(BaseModel):
     should_have_features: str
     could_have_features: str
     wont_have_features: str
-    requirements_status: str
+    requirements_status: RequirementsStatus
     creation_date: str
     last_updated: str
     feature_owner: str
 
-    # Following InitialSpec pattern
     @classmethod
     def parse_markdown(cls, markdown: str) -> Self:
         """Parse feature_requirements_template.md format into structured fields"""
@@ -253,20 +267,41 @@ class FeatureRequirements(BaseModel):
 
 **3. Roadmap Model (for /plan-roadmap workflow)**
 ```python
-# PROPOSED: Roadmap (for /plan-roadmap workflow)
+# ✅ IMPLEMENTED: Roadmap (for /plan-roadmap workflow)
 class Roadmap(BaseModel):
     # High-level implementation roadmap organizing Specs step-by-step
-    # Fields based on roadmap_template.md structure
-    # Following InitialSpec pattern with parse_markdown() and build_markdown()
+    # 40+ fields based on roadmap_template.md structure
+    # Complete parse_markdown() and build_markdown() with round-trip tests
+    project_name: str
+    project_goal: str
+    total_duration: str
+    team_size: str
+    roadmap_budget: str
+    # Phase 1, 2, 3 fields (8 fields each)
+    # Risk assessment fields
+    # Resource planning fields
+    # Success metrics fields
+    roadmap_status: RoadmapStatus
+    creation_date: str
+    last_updated: str
+    phase_count: str
+
+    @classmethod
+    def parse_markdown(cls, markdown: str) -> Self:
+        """Parse roadmap_template.md format into structured fields"""
+
+    def build_markdown(self) -> str:
+        """Generate markdown in roadmap_template.md format"""
 ```
 
 **4. TechnicalSpec Model (for /spec workflow)**
-Based on phase_spec_template.md structure with fields for complete technical specifications:
 ```python
-# PROPOSED: TechnicalSpec (for /spec workflow)
+# ✅ IMPLEMENTED: TechnicalSpec (for /spec workflow)
 class TechnicalSpec(BaseModel):
     # System Architecture Design - first Engineering-forward step
-    phase_name: str
+    # 20 fields based on phase_spec_template.md structure
+    # Complete parse_markdown() and build_markdown() with round-trip tests
+    name: str
     objectives: str
     scope: str
     dependencies: str
@@ -280,8 +315,11 @@ class TechnicalSpec(BaseModel):
     research_requirements: str
     success_criteria: str
     integration_context: str
+    spec_status: SpecStatus
+    creation_date: str
+    last_updated: str
+    # Additional fields for complete technical specifications
 
-    # Following InitialSpec pattern
     @classmethod
     def parse_markdown(cls, markdown: str) -> Self:
         """Parse phase_spec_template.md format into structured fields"""
@@ -292,16 +330,44 @@ class TechnicalSpec(BaseModel):
 
 **5. BuildPlan Model (for /build workflow)**
 ```python
-# PROPOSED: BuildPlan (for /build workflow)
+# ✅ IMPLEMENTED: BuildPlan (for /build workflow)
 class BuildPlan(BaseModel):
     # Detailed implementation plan with specific patterns and best-practices
-    # Fields based on build_plan_template.md structure
-    # Following InitialSpec pattern with parse_markdown() and build_markdown()
+    # 21 fields based on build_plan_template.md structure
+    # Complete parse_markdown() and build_markdown() with round-trip tests
+    project_name: str
+    project_goal: str
+    total_duration: str
+    team_size: str
+    primary_language: str
+    framework: str
+    database: str
+    development_environment: str
+    database_schema: str
+    api_architecture: str
+    frontend_architecture: str
+    core_features: str
+    integration_points: str
+    testing_strategy: str
+    code_standards: str
+    performance_requirements: str
+    security_implementation: str
+    build_status: BuildStatus
+    creation_date: str
+    last_updated: str
+    build_owner: str
+
+    @classmethod
+    def parse_markdown(cls, markdown: str) -> Self:
+        """Parse build_plan_template.md format into structured fields"""
+
+    def build_markdown(self) -> str:
+        """Generate markdown in build_plan_template.md format"""
 ```
 
 #### New: CriticFeedback Model (Adding Structured Feedback)
 ```python
-# PROPOSED: CriticFeedback (new model for structured feedback)
+# ✅ IMPLEMENTED: CriticFeedback (structured feedback model)
 class CriticFeedback(BaseModel):
     loop_id: str  # Links to LoopState.id
     critic_agent: CriticAgent
@@ -311,6 +377,7 @@ class CriticFeedback(BaseModel):
     improvements: list[str]
     fsdd_scores: dict[FSSDCriteria, int]  # Each criterion scored 0-10
     timestamp: datetime
+    # Complete implementation with round-trip markdown parsing
 
     # Integration with existing LoopState
     @computed_field
@@ -352,9 +419,9 @@ class LoopState(BaseModel):
     def _detect_stagnation(self) -> bool:
         # Already implements sophisticated stagnation detection!
 
-# PROPOSED: LoopState Enhancement (add feedback storage)
+# ✅ IMPLEMENTED: LoopState Enhancement (with feedback storage)
 class EnhancedLoopState(LoopState):
-    # New field for structured feedback
+    # New field for structured feedback - integrated with existing sophistication
     feedback_history: list[CriticFeedback] = Field(default_factory=list)
     updated_at: datetime = Field(default_factory=datetime.now)
 

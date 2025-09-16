@@ -1,8 +1,15 @@
 import pytest
 from services.utils.state_manager import InMemoryStateManager, Queue
-from services.utils.models import InitialSpec, RoadMap, LoopState
+from services.utils.models import LoopState
 from services.utils.enums import LoopType
 from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError, SpecNotFoundError
+from services.models.roadmap import Roadmap
+from services.models.initial_spec import InitialSpec
+
+
+from services.models.enums import RoadmapStatus
+from datetime import datetime
+from services.models.enums import SpecStatus
 
 
 # Import feedback module to ensure LoopState model is fully rebuilt with forward references
@@ -65,18 +72,44 @@ class TestInMemoryStateManager:
         return InMemoryStateManager(max_history_size=3)
 
     @pytest.fixture
-    def sample_roadmap(self) -> RoadMap:
-        return RoadMap(name='Test Roadmap')
+    def sample_roadmap(self) -> Roadmap:
+        return Roadmap(
+            project_name='Test Roadmap',
+            project_goal='Test goal',
+            total_duration='8 weeks',
+            team_size='4 developers',
+            roadmap_budget='$100,000',
+            specs=[],
+            critical_path_analysis='Test analysis',
+            key_risks='Test risks',
+            mitigation_plans='Test mitigation',
+            buffer_time='1 week',
+            development_resources='4 developers',
+            infrastructure_requirements='Cloud hosting',
+            external_dependencies='None',
+            quality_assurance_plan='Automated testing',
+            technical_milestones='MVP delivery',
+            business_milestones='User acceptance',
+            quality_gates='All tests pass',
+            performance_targets='Fast response',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_count=0,
+        )
 
     @pytest.fixture
     def sample_spec(self) -> InitialSpec:
         return InitialSpec(
-            name='Sample Spec',
+            phase_name='Sample Spec',
             objectives='Test objectives',
             scope='Test scope',
             dependencies='Test dependencies',
             deliverables='Test deliverables',
-            architecture='Test architecture',
+            spec_status=SpecStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_owner='Test Owner',
         )
 
     @pytest.fixture
@@ -86,7 +119,7 @@ class TestInMemoryStateManager:
 
 class TestRoadmapOperations(TestInMemoryStateManager):
     def test_store_roadmap_returns_project_id(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap
     ) -> None:
         project_id = 'test-project'
 
@@ -95,7 +128,7 @@ class TestRoadmapOperations(TestInMemoryStateManager):
         assert result == project_id
 
     def test_store_roadmap_makes_retrievable(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap
     ) -> None:
         project_id = 'test-project'
 
@@ -103,7 +136,7 @@ class TestRoadmapOperations(TestInMemoryStateManager):
         retrieved_roadmap = state_manager.get_roadmap(project_id)
 
         assert retrieved_roadmap == sample_roadmap
-        assert retrieved_roadmap.name == 'Test Roadmap'
+        assert retrieved_roadmap.project_name == 'Test Roadmap'
 
     def test_get_roadmap_raises_error_when_not_found(self, state_manager: InMemoryStateManager) -> None:
         with pytest.raises(RoadmapNotFoundError) as exc_info:
@@ -113,14 +146,60 @@ class TestRoadmapOperations(TestInMemoryStateManager):
 
     def test_store_roadmap_overwrites_existing(self, state_manager: InMemoryStateManager) -> None:
         project_id = 'same-project'
-        original_roadmap = RoadMap(name='Original')
-        updated_roadmap = RoadMap(name='Updated')
+        original_roadmap = Roadmap(
+            project_name='Original',
+            project_goal='Test goal',
+            total_duration='8 weeks',
+            team_size='4 developers',
+            roadmap_budget='$100,000',
+            specs=[],
+            critical_path_analysis='Test analysis',
+            key_risks='Test risks',
+            mitigation_plans='Test mitigation',
+            buffer_time='1 week',
+            development_resources='4 developers',
+            infrastructure_requirements='Cloud hosting',
+            external_dependencies='None',
+            quality_assurance_plan='Automated testing',
+            technical_milestones='MVP delivery',
+            business_milestones='User acceptance',
+            quality_gates='All tests pass',
+            performance_targets='Fast response',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_count=0,
+        )
+        updated_roadmap = Roadmap(
+            project_name='Updated',
+            project_goal='Test goal',
+            total_duration='8 weeks',
+            team_size='4 developers',
+            roadmap_budget='$100,000',
+            specs=[],
+            critical_path_analysis='Test analysis',
+            key_risks='Test risks',
+            mitigation_plans='Test mitigation',
+            buffer_time='1 week',
+            development_resources='4 developers',
+            infrastructure_requirements='Cloud hosting',
+            external_dependencies='None',
+            quality_assurance_plan='Automated testing',
+            technical_milestones='MVP delivery',
+            business_milestones='User acceptance',
+            quality_gates='All tests pass',
+            performance_targets='Fast response',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_count=0,
+        )
 
         state_manager.store_roadmap(project_id, original_roadmap)
         state_manager.store_roadmap(project_id, updated_roadmap)
 
         retrieved = state_manager.get_roadmap(project_id)
-        assert retrieved.name == 'Updated'
+        assert retrieved.project_name == 'Updated'
 
     @pytest.mark.parametrize(
         'project_id,roadmap_name',
@@ -133,13 +212,36 @@ class TestRoadmapOperations(TestInMemoryStateManager):
     def test_roadmap_storage_with_various_ids(
         self, state_manager: InMemoryStateManager, project_id: str, roadmap_name: str
     ) -> None:
-        roadmap = RoadMap(name=roadmap_name)
+        roadmap = Roadmap(
+            project_name=roadmap_name,
+            project_goal='Test goal',
+            total_duration='8 weeks',
+            team_size='4 developers',
+            roadmap_budget='$100,000',
+            specs=[],
+            critical_path_analysis='Test analysis',
+            key_risks='Test risks',
+            mitigation_plans='Test mitigation',
+            buffer_time='1 week',
+            development_resources='4 developers',
+            infrastructure_requirements='Cloud hosting',
+            external_dependencies='None',
+            quality_assurance_plan='Automated testing',
+            technical_milestones='MVP delivery',
+            business_milestones='User acceptance',
+            quality_gates='All tests pass',
+            performance_targets='Fast response',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_count=0,
+        )
 
         stored_id = state_manager.store_roadmap(project_id, roadmap)
         retrieved = state_manager.get_roadmap(project_id)
 
         assert stored_id == project_id
-        assert retrieved.name == roadmap_name
+        assert retrieved.project_name == roadmap_name
 
 
 class TestSpecOperations(TestInMemoryStateManager):
@@ -150,23 +252,23 @@ class TestSpecOperations(TestInMemoryStateManager):
             state_manager.store_spec('non-existent-project', sample_spec)
 
     def test_store_spec_returns_spec_name(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap, sample_spec: InitialSpec
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: InitialSpec
     ) -> None:
         project_id = 'test-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
 
         result = state_manager.store_spec(project_id, sample_spec)
 
-        assert result == sample_spec.name
+        assert result == sample_spec.phase_name
 
     def test_store_spec_makes_retrievable(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap, sample_spec: InitialSpec
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: InitialSpec
     ) -> None:
         project_id = 'test-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
 
         state_manager.store_spec(project_id, sample_spec)
-        retrieved_spec = state_manager.get_spec(project_id, sample_spec.name)
+        retrieved_spec = state_manager.get_spec(project_id, sample_spec.phase_name)
 
         assert retrieved_spec == sample_spec
         assert retrieved_spec.objectives == 'Test objectives'
@@ -176,7 +278,7 @@ class TestSpecOperations(TestInMemoryStateManager):
             state_manager.get_spec('non-existent-project', 'any-spec')
 
     def test_get_spec_raises_error_when_spec_not_found(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap
     ) -> None:
         project_id = 'test-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
@@ -185,7 +287,7 @@ class TestSpecOperations(TestInMemoryStateManager):
             state_manager.get_spec(project_id, 'non-existent-spec')
 
     def test_list_specs_returns_empty_for_empty_roadmap(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap
     ) -> None:
         project_id = 'empty-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
@@ -195,26 +297,32 @@ class TestSpecOperations(TestInMemoryStateManager):
         assert spec_names == []
 
     def test_list_specs_returns_all_spec_names(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap
     ) -> None:
         project_id = 'multi-spec-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
 
         spec1 = InitialSpec(
-            name='Spec 1',
+            phase_name='Spec 1',
             objectives='Obj 1',
             scope='Scope 1',
             dependencies='Dep 1',
             deliverables='Del 1',
-            architecture='Arch 1',
+            spec_status=SpecStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_owner='Test Owner',
         )
         spec2 = InitialSpec(
-            name='Spec 2',
+            phase_name='Spec 2',
             objectives='Obj 2',
             scope='Scope 2',
             dependencies='Dep 2',
             deliverables='Del 2',
-            architecture='Arch 2',
+            spec_status=SpecStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_owner='Test Owner',
         )
 
         state_manager.store_spec(project_id, spec1)
@@ -231,31 +339,31 @@ class TestSpecOperations(TestInMemoryStateManager):
             state_manager.list_specs('non-existent-project')
 
     def test_delete_spec_returns_true_when_spec_exists(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap, sample_spec: InitialSpec
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: InitialSpec
     ) -> None:
         project_id = 'test-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
         state_manager.store_spec(project_id, sample_spec)
 
-        result = state_manager.delete_spec(project_id, sample_spec.name)
+        result = state_manager.delete_spec(project_id, sample_spec.phase_name)
 
         assert result is True
 
     def test_delete_spec_removes_spec_from_roadmap(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap, sample_spec: InitialSpec
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: InitialSpec
     ) -> None:
         project_id = 'test-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
         state_manager.store_spec(project_id, sample_spec)
 
-        state_manager.delete_spec(project_id, sample_spec.name)
+        state_manager.delete_spec(project_id, sample_spec.phase_name)
 
         # Should raise SpecNotFoundError now
         with pytest.raises(SpecNotFoundError):
-            state_manager.get_spec(project_id, sample_spec.name)
+            state_manager.get_spec(project_id, sample_spec.phase_name)
 
     def test_delete_spec_returns_false_when_spec_not_found(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap
     ) -> None:
         project_id = 'test-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
@@ -277,7 +385,7 @@ class TestSpecOperations(TestInMemoryStateManager):
         ],
     )
     def test_spec_operations_with_multiple_specs(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap, spec_names: list[str]
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, spec_names: list[str]
     ) -> None:
         project_id = 'multi-spec-test'
         state_manager.store_roadmap(project_id, sample_roadmap)
@@ -285,12 +393,15 @@ class TestSpecOperations(TestInMemoryStateManager):
         # Store all specs
         for spec_name in spec_names:
             spec = InitialSpec(
-                name=spec_name,
+                phase_name=spec_name,
                 objectives=f'Obj {spec_name}',
                 scope=f'Scope {spec_name}',
                 dependencies=f'Dep {spec_name}',
                 deliverables=f'Del {spec_name}',
-                architecture=f'Arch {spec_name}',
+                spec_status=SpecStatus.DRAFT,
+                creation_date=datetime.now().isoformat(),
+                last_updated=datetime.now().isoformat(),
+                spec_owner='Test Owner',
             )
             state_manager.store_spec(project_id, spec)
 
@@ -361,27 +472,79 @@ class TestLoopOperations(TestInMemoryStateManager):
 class TestCrossOperationIntegration(TestInMemoryStateManager):
     def test_multiple_projects_independent_state(self, state_manager: InMemoryStateManager) -> None:
         # Create two projects with different roadmaps and specs
-        project1_roadmap = RoadMap(name='Project 1 Roadmap')
-        project2_roadmap = RoadMap(name='Project 2 Roadmap')
+        project1_roadmap = Roadmap(
+            project_name='Project 1 Roadmap',
+            project_goal='Test goal',
+            total_duration='8 weeks',
+            team_size='4 developers',
+            roadmap_budget='$100,000',
+            specs=[],
+            critical_path_analysis='Test analysis',
+            key_risks='Test risks',
+            mitigation_plans='Test mitigation',
+            buffer_time='1 week',
+            development_resources='4 developers',
+            infrastructure_requirements='Cloud hosting',
+            external_dependencies='None',
+            quality_assurance_plan='Automated testing',
+            technical_milestones='MVP delivery',
+            business_milestones='User acceptance',
+            quality_gates='All tests pass',
+            performance_targets='Fast response',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_count=0,
+        )
+        project2_roadmap = Roadmap(
+            project_name='Project 2 Roadmap',
+            project_goal='Test goal',
+            total_duration='8 weeks',
+            team_size='4 developers',
+            roadmap_budget='$100,000',
+            specs=[],
+            critical_path_analysis='Test analysis',
+            key_risks='Test risks',
+            mitigation_plans='Test mitigation',
+            buffer_time='1 week',
+            development_resources='4 developers',
+            infrastructure_requirements='Cloud hosting',
+            external_dependencies='None',
+            quality_assurance_plan='Automated testing',
+            technical_milestones='MVP delivery',
+            business_milestones='User acceptance',
+            quality_gates='All tests pass',
+            performance_targets='Fast response',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_count=0,
+        )
 
         state_manager.store_roadmap('project-1', project1_roadmap)
         state_manager.store_roadmap('project-2', project2_roadmap)
 
         spec1 = InitialSpec(
-            name='P1 Spec',
+            phase_name='P1 Spec',
             objectives='P1 Obj',
             scope='P1 Scope',
             dependencies='P1 Dep',
             deliverables='P1 Del',
-            architecture='P1 Arch',
+            spec_status=SpecStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_owner='Test Owner',
         )
         spec2 = InitialSpec(
-            name='P2 Spec',
+            phase_name='P2 Spec',
             objectives='P2 Obj',
             scope='P2 Scope',
             dependencies='P2 Dep',
             deliverables='P2 Del',
-            architecture='P2 Arch',
+            spec_status=SpecStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_owner='Test Owner',
         )
 
         state_manager.store_spec('project-1', spec1)
@@ -397,7 +560,7 @@ class TestCrossOperationIntegration(TestInMemoryStateManager):
         assert 'P2 Spec' not in p1_specs
 
     def test_loops_and_roadmaps_coexist_independently(
-        self, state_manager: InMemoryStateManager, sample_roadmap: RoadMap, sample_loop: LoopState
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_loop: LoopState
     ) -> None:
         # Add both loop and roadmap data
         state_manager.add_loop(sample_loop)

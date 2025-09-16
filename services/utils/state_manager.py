@@ -2,7 +2,12 @@ from abc import ABC, abstractmethod
 from collections import deque
 
 from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError
-from services.utils.models import InitialSpec, LoopState, MCPResponse, RoadMap
+from services.utils.models import LoopState, MCPResponse
+from services.models.roadmap import Roadmap
+from services.models.initial_spec import InitialSpec
+
+
+from services.utils.errors import SpecNotFoundError
 
 
 class StateManager(ABC):
@@ -30,10 +35,10 @@ class StateManager(ABC):
 
     # Roadmap Management
     @abstractmethod
-    def store_roadmap(self, project_id: str, roadmap: RoadMap) -> str: ...
+    def store_roadmap(self, project_id: str, roadmap: Roadmap) -> str: ...
 
     @abstractmethod
-    def get_roadmap(self, project_id: str) -> RoadMap: ...
+    def get_roadmap(self, project_id: str) -> Roadmap: ...
 
     @abstractmethod
     def store_spec(self, project_id: str, spec: InitialSpec) -> str: ...
@@ -69,7 +74,8 @@ class InMemoryStateManager(StateManager):
         self._active_loops: dict[str, LoopState] = {}
         self._loop_history: Queue[str] = Queue(maxlen=max_history_size)
         self._objective_feedback: dict[str, str] = {}
-        self._roadmaps: dict[str, RoadMap] = {}
+        self._roadmaps: dict[str, Roadmap] = {}
+        self._specs: dict[str, dict[str, InitialSpec]] = {}  # project_id -> {spec_name -> InitialSpec}
 
     def add_loop(self, loop: LoopState) -> None:
         if loop.id in self._active_loops:
@@ -110,11 +116,11 @@ class InMemoryStateManager(StateManager):
             id=loop_id, status=loop_state.status, message=f'Objective feedback stored for loop {loop_id}'
         )
 
-    def store_roadmap(self, project_id: str, roadmap: RoadMap) -> str:
+    def store_roadmap(self, project_id: str, roadmap: Roadmap) -> str:
         self._roadmaps[project_id] = roadmap
         return project_id
 
-    def get_roadmap(self, project_id: str) -> RoadMap:
+    def get_roadmap(self, project_id: str) -> Roadmap:
         if project_id not in self._roadmaps:
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
         return self._roadmaps[project_id]
@@ -122,27 +128,47 @@ class InMemoryStateManager(StateManager):
     def store_spec(self, project_id: str, spec: InitialSpec) -> str:
         if project_id not in self._roadmaps:
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+
+        # Store the InitialSpec separately
+        if project_id not in self._specs:
+            self._specs[project_id] = {}
+        self._specs[project_id][spec.phase_name] = spec
+
+        # Add spec name to roadmap if not already there
         roadmap = self._roadmaps[project_id]
-        roadmap.add_spec(spec)
-        return spec.name
+        roadmap.add_spec_name(spec.phase_name)
+
+        return spec.phase_name
 
     def get_spec(self, project_id: str, spec_name: str) -> InitialSpec:
         if project_id not in self._roadmaps:
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
-        roadmap = self._roadmaps[project_id]
-        return roadmap.get_spec(spec_name)
+
+        if project_id not in self._specs or spec_name not in self._specs[project_id]:
+            raise SpecNotFoundError(f'Spec not found: {spec_name}')
+
+        return self._specs[project_id][spec_name]
 
     def list_specs(self, project_id: str) -> list[str]:
         if project_id not in self._roadmaps:
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
         roadmap = self._roadmaps[project_id]
-        return list(roadmap.specs.keys())
+        return roadmap.specs
 
     def delete_spec(self, project_id: str, spec_name: str) -> bool:
         if project_id not in self._roadmaps:
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+
+        # Remove from both the specs storage and roadmap
+        removed_from_specs = False
+        if project_id in self._specs and spec_name in self._specs[project_id]:
+            del self._specs[project_id][spec_name]
+            removed_from_specs = True
+
         roadmap = self._roadmaps[project_id]
         if spec_name in roadmap.specs:
-            del roadmap.specs[spec_name]
+            roadmap.specs.remove(spec_name)
+            roadmap.spec_count = len(roadmap.specs)
             return True
-        return False
+
+        return removed_from_specs

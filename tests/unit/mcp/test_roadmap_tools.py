@@ -4,8 +4,14 @@ import pytest
 from fastmcp.exceptions import ResourceError, ToolError
 
 from services.mcp.roadmap_tools import RoadmapTools
-from services.utils.models import InitialSpec, RoadMap
+from services.models.roadmap import Roadmap
+from services.models.initial_spec import InitialSpec
 from services.utils.state_manager import StateManager
+
+
+from services.models.enums import RoadmapStatus
+from datetime import datetime
+from services.models.enums import SpecStatus
 
 
 class TestRoadmapTools:
@@ -22,20 +28,16 @@ class TestRoadmapTools:
         return """# Technical Specification: User Authentication
 
 ## Overview
+- **Objectives**: Implement secure user authentication system
+- **Scope**: Login, logout, session management
+- **Dependencies**: Database setup, encryption library
+- **Deliverables**: User login/logout endpoints, session management middleware
 
-**Objectives**: `Implement secure user authentication system`
-**Scope**: `Login, logout, session management`
-**Dependencies**: `Database setup, encryption library`
-
-## Expected Deliverables
-
-- User login/logout endpoints
-- Session management middleware
-- Password encryption utilities
-
-## Technical Architecture
-
-REST API endpoints using FastAPI with JWT tokens for session management.
+## Metadata
+- **Status**: draft
+- **Created**: 2024-01-15
+- **Last Updated**: 2024-01-15
+- **Owner**: Test Team
 """
 
     @pytest.fixture
@@ -70,8 +72,8 @@ class TestCreateRoadmap(TestRoadmapTools):
         mock_state_manager.store_roadmap.assert_called_once()
         call_args = mock_state_manager.store_roadmap.call_args
         assert call_args[0][0] == 'project-123'  # project_id
-        assert isinstance(call_args[0][1], RoadMap)  # roadmap instance
-        assert call_args[0][1].name == 'My Roadmap'
+        assert isinstance(call_args[0][1], Roadmap)  # roadmap instance
+        assert call_args[0][1].project_name == 'My Roadmap'
 
     def test_create_roadmap_raises_error_for_empty_project_id(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
@@ -79,10 +81,10 @@ class TestCreateRoadmap(TestRoadmapTools):
         with pytest.raises(ToolError, match='Project ID cannot be empty'):
             roadmap_tools.create_roadmap('', 'Test Roadmap')
 
-    def test_create_roadmap_raises_error_for_empty_roadmap_name(
+    def test_create_roadmap_raises_error_for_empty_roadmap_data(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        with pytest.raises(ToolError, match='Roadmap name cannot be empty'):
+        with pytest.raises(ToolError, match='Roadmap data cannot be empty'):
             roadmap_tools.create_roadmap('test-project', '')
 
     @pytest.mark.parametrize(
@@ -108,8 +110,30 @@ class TestGetRoadmap(TestRoadmapTools):
     def test_get_roadmap_returns_success_with_spec_count(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        mock_roadmap = RoadMap(name='Test Roadmap')
-        mock_roadmap.specs = {'spec1': Mock(), 'spec2': Mock(), 'spec3': Mock()}
+        mock_roadmap = Roadmap(
+            project_name='Test Roadmap',
+            project_goal='Test goal',
+            total_duration='6 months',
+            team_size='5 developers',
+            roadmap_budget='$100k',
+            specs=['spec1', 'spec2', 'spec3'],  # Now a list of strings
+            critical_path_analysis='Test analysis',
+            key_risks='Test risks',
+            mitigation_plans='Test plans',
+            buffer_time='1 week',
+            development_resources='Test resources',
+            infrastructure_requirements='Test infrastructure',
+            external_dependencies='Test dependencies',
+            quality_assurance_plan='Test QA',
+            technical_milestones='Test milestones',
+            business_milestones='Test business',
+            quality_gates='Test gates',
+            performance_targets='Test performance',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_count=3,
+        )
         mock_state_manager.get_roadmap.return_value = mock_roadmap
 
         result = roadmap_tools.get_roadmap('test-project')
@@ -127,7 +151,30 @@ class TestGetRoadmap(TestRoadmapTools):
             roadmap_tools.get_roadmap('non-existent-project')
 
     def test_get_roadmap_handles_empty_roadmap(self, roadmap_tools: RoadmapTools, mock_state_manager: Mock) -> None:
-        mock_roadmap = RoadMap(name='Empty Roadmap')
+        mock_roadmap = Roadmap(
+            project_name='Empty Roadmap',
+            project_goal='Test goal',
+            total_duration='6 months',
+            team_size='5 developers',
+            roadmap_budget='$100k',
+            specs=[],  # Empty list
+            critical_path_analysis='Test analysis',
+            key_risks='Test risks',
+            mitigation_plans='Test plans',
+            buffer_time='1 week',
+            development_resources='Test resources',
+            infrastructure_requirements='Test infrastructure',
+            external_dependencies='Test dependencies',
+            quality_assurance_plan='Test QA',
+            technical_milestones='Test milestones',
+            business_milestones='Test business',
+            quality_gates='Test gates',
+            performance_targets='Test performance',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_count=0,
+        )
         mock_state_manager.get_roadmap.return_value = mock_roadmap
 
         result = roadmap_tools.get_roadmap('empty-project')
@@ -162,20 +209,15 @@ class TestAddSpec(TestRoadmapTools):
         assert isinstance(call_args[0][1], InitialSpec)
         # Check that markdown was parsed correctly
         parsed_spec = call_args[0][1]
-        assert parsed_spec.name == 'User Authentication'  # From markdown title
+        assert parsed_spec.phase_name == 'User Authentication'  # From markdown title
         assert 'Implement secure user authentication' in parsed_spec.objectives
 
     def test_add_spec_handles_malformed_markdown(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, malformed_spec_markdown: str
     ) -> None:
-        mock_state_manager.store_spec.return_value = 'Unnamed Spec'
-
-        result = roadmap_tools.add_spec('test-project', 'Bad Spec', malformed_spec_markdown)
-
-        # Should still succeed with fallback values
-        assert isinstance(result, str)
-        assert 'Added spec' in result
-        mock_state_manager.store_spec.assert_called_once()
+        # New parser requires proper format, so malformed markdown should raise error
+        with pytest.raises(ToolError, match='Failed to add spec'):
+            roadmap_tools.add_spec('test-project', 'Bad Spec', malformed_spec_markdown)
 
     def test_add_spec_raises_error_on_storage_failure(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
@@ -212,12 +254,15 @@ class TestAddSpec(TestRoadmapTools):
 class TestGetSpec(TestRoadmapTools):
     def test_get_spec_returns_success_message(self, roadmap_tools: RoadmapTools, mock_state_manager: Mock) -> None:
         mock_spec = InitialSpec(
-            name='Test Spec',
-            objectives='Test',
-            scope='Test',
-            dependencies='Test',
-            deliverables='Test',
-            architecture='Test',
+            phase_name='Test Spec',
+            objectives='Test objectives',
+            scope='Test scope',
+            dependencies='Test dependencies',
+            deliverables='Test deliverables',
+            spec_status=SpecStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_owner='Test Owner',
         )
         mock_state_manager.get_spec.return_value = mock_spec
 
@@ -249,8 +294,7 @@ class TestUpdateSpec(TestRoadmapTools):
     def test_update_spec_returns_success_message(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
     ) -> None:
-        mock_roadmap = RoadMap(name='Test Roadmap')
-        mock_state_manager.get_roadmap.return_value = mock_roadmap
+        mock_state_manager.store_spec.return_value = 'User Authentication'
 
         result = roadmap_tools.update_spec('test-project', 'Auth Spec', valid_spec_markdown)
 
@@ -259,25 +303,25 @@ class TestUpdateSpec(TestRoadmapTools):
         assert 'test-project' in result
         assert 'Updated spec' in result
 
-    def test_update_spec_parses_markdown_and_updates_roadmap(
+    def test_update_spec_parses_markdown_and_stores_spec(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
     ) -> None:
-        mock_roadmap = Mock()
-        mock_state_manager.get_roadmap.return_value = mock_roadmap
+        mock_state_manager.store_spec.return_value = 'User Authentication'
 
         roadmap_tools.update_spec('test-project', 'Update Spec', valid_spec_markdown)
 
-        # Should get roadmap and call add_spec with parsed InitialSpec
-        mock_state_manager.get_roadmap.assert_called_once_with('test-project')
-        mock_roadmap.add_spec.assert_called_once()
-        added_spec = mock_roadmap.add_spec.call_args[0][0]
-        assert isinstance(added_spec, InitialSpec)
-        assert added_spec.name == 'User Authentication'
+        # Should call store_spec with parsed InitialSpec
+        mock_state_manager.store_spec.assert_called_once()
+        call_args = mock_state_manager.store_spec.call_args
+        assert call_args[0][0] == 'test-project'
+        assert isinstance(call_args[0][1], InitialSpec)
+        stored_spec = call_args[0][1]
+        assert stored_spec.phase_name == 'User Authentication'
 
-    def test_update_spec_raises_error_on_roadmap_not_found(
+    def test_update_spec_raises_error_on_storage_failure(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
     ) -> None:
-        mock_state_manager.get_roadmap.side_effect = Exception('Not found')
+        mock_state_manager.store_spec.side_effect = Exception('Storage failed')
 
         with pytest.raises(ToolError, match='Failed to update spec'):
             roadmap_tools.update_spec('missing-project', 'Spec', valid_spec_markdown)
@@ -285,15 +329,9 @@ class TestUpdateSpec(TestRoadmapTools):
     def test_update_spec_handles_malformed_markdown(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, malformed_spec_markdown: str
     ) -> None:
-        mock_roadmap = Mock()
-        mock_state_manager.get_roadmap.return_value = mock_roadmap
-
-        result = roadmap_tools.update_spec('test-project', 'Bad Spec', malformed_spec_markdown)
-
-        # Should still succeed with fallback parsing
-        assert isinstance(result, str)
-        assert 'Updated spec' in result
-        mock_roadmap.add_spec.assert_called_once()
+        # New parser requires proper format, so malformed markdown should raise error
+        with pytest.raises(ToolError, match='Failed to update spec'):
+            roadmap_tools.update_spec('test-project', 'Bad Spec', malformed_spec_markdown)
 
 
 class TestListSpecs(TestRoadmapTools):
@@ -400,12 +438,15 @@ class TestRoadmapToolsIntegration(TestRoadmapTools):
         # Setup mock returns for complete workflow
         mock_roadmap = Mock()
         mock_spec = InitialSpec(
-            name='Workflow Spec',
-            objectives='Test',
-            scope='Test',
-            dependencies='Test',
-            deliverables='Test',
-            architecture='Test',
+            phase_name='Workflow Spec',
+            objectives='Test objectives',
+            scope='Test scope',
+            dependencies='Test dependencies',
+            deliverables='Test deliverables',
+            spec_status=SpecStatus.DRAFT,
+            creation_date=datetime.now().isoformat(),
+            last_updated=datetime.now().isoformat(),
+            spec_owner='Test Owner',
         )
 
         mock_state_manager.store_roadmap.return_value = 'workflow-project'
@@ -430,9 +471,9 @@ class TestRoadmapToolsIntegration(TestRoadmapTools):
 
         # Verify state manager was called appropriately
         mock_state_manager.store_roadmap.assert_called_once()
-        mock_state_manager.store_spec.assert_called_once()
+        # store_spec is called twice: once for add_spec and once for update_spec
+        assert mock_state_manager.store_spec.call_count == 2
         mock_state_manager.get_spec.assert_called_once()
-        mock_state_manager.get_roadmap.assert_called_once()
         mock_state_manager.delete_spec.assert_called_once()
 
     def test_error_scenarios_raise_appropriate_exceptions(

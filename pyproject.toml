@@ -11,6 +11,8 @@ dependencies = [
     "aiofiles >=24.1.0,<25.0.0",
     "fastmcp >=2.12.2,<3.0.0",
     "rich >=14.1.0,<15.0.0",
+    "markdown-it-py>=3.0.0",
+    "mdformat>=0.7.22",
 ]
 
 [dependency-groups]

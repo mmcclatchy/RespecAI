@@ -18,20 +18,16 @@ class TestRoadmapServerIntegration:
         return """# Technical Specification: Integration Test Spec
 
 ## Overview
+- **Objectives**: Test MCP server integration with roadmap tools
+- **Scope**: End-to-end testing of spec lifecycle
+- **Dependencies**: MCP server, FastAPI, state management
+- **Deliverables**: Complete CRUD operations through MCP interface
 
-**Objectives**: `Test MCP server integration with roadmap tools`
-**Scope**: `End-to-end testing of spec lifecycle`
-**Dependencies**: `MCP server, FastAPI, state management`
-
-## Expected Deliverables
-
-- Complete CRUD operations through MCP interface
-- Error handling verification
-- Response format validation
-
-## Technical Architecture
-
-Integration testing using FastMCP framework with in-memory state management.
+## Metadata
+- **Status**: draft
+- **Created**: 2024-01-01
+- **Last Updated**: 2024-01-01
+- **Owner**: Test Suite
 """
 
     def _get_tools_sync(self, server: FastMCP) -> dict:
@@ -321,14 +317,18 @@ Integration testing using FastMCP framework with in-memory state management.
 
         # Add specs to each project independently
         spec_markdown = """# Technical Specification: Test Spec
+
 ## Overview
-**Objectives**: `Consistency testing`
-**Scope**: `Integration validation`
-**Dependencies**: `None`
-## Expected Deliverables
-Consistent state validation
-## Technical Architecture
-In-memory state management
+- **Objectives**: Consistency testing
+- **Scope**: Integration validation
+- **Dependencies**: None
+- **Deliverables**: Consistent state validation
+
+## Metadata
+- **Status**: draft
+- **Created**: 2024-01-01
+- **Last Updated**: 2024-01-01
+- **Owner**: Test Suite
 """
 
         for project_id in project_ids:

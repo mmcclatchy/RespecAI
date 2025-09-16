@@ -1,10 +1,14 @@
-import re
 from datetime import datetime
 from typing import Self
 
+from markdown_it import MarkdownIt
+from markdown_it.tree import SyntaxTreeNode
 from pydantic import BaseModel, Field
 
 from .enums import RoadmapStatus
+
+
+from services.utils.errors import SpecNotFoundError
 
 
 class Roadmap(BaseModel):
@@ -13,30 +17,7 @@ class Roadmap(BaseModel):
     total_duration: str
     team_size: str
     roadmap_budget: str
-    phase_1_name: str
-    phase_1_duration: str
-    phase_1_objectives: str
-    phase_1_deliverables: str
-    phase_1_success_criteria: str
-    phase_1_dependencies: str
-    phase_1_team: str
-    phase_1_technical_focus: str
-    phase_2_name: str
-    phase_2_duration: str
-    phase_2_objectives: str
-    phase_2_deliverables: str
-    phase_2_success_criteria: str
-    phase_2_dependencies: str
-    phase_2_team: str
-    phase_2_technical_focus: str
-    phase_3_name: str
-    phase_3_duration: str
-    phase_3_objectives: str
-    phase_3_deliverables: str
-    phase_3_success_criteria: str
-    phase_3_dependencies: str
-    phase_3_team: str
-    phase_3_technical_focus: str
+    specs: list[str] = Field(default_factory=list)
     critical_path_analysis: str
     key_risks: str
     mitigation_plans: str
@@ -52,211 +33,180 @@ class Roadmap(BaseModel):
     roadmap_status: RoadmapStatus
     creation_date: str
     last_updated: str
-    phase_count: str
+    spec_count: int = Field(default=0)
     created_at: datetime = Field(default_factory=datetime.now)
 
     @classmethod
-    def parse_markdown(cls, markdown: str) -> Self:
-        """Parse roadmap_template.md format into structured fields.
+    def _find_nodes_by_type(cls, node: SyntaxTreeNode, node_type: str) -> list[SyntaxTreeNode]:
+        """Recursively find all nodes of a specific type in the tree."""
+        nodes = []
 
-        Implements regex parsing for roadmap variable extraction with phase-specific patterns.
-        """
+        if node.type == node_type:
+            nodes.append(node)
+
+        if hasattr(node, 'children') and node.children:
+            for child in node.children:
+                nodes.extend(cls._find_nodes_by_type(child, node_type))
+
+        return nodes
+
+    @classmethod
+    def _extract_text_content(cls, node: SyntaxTreeNode) -> str:
+        """Recursively extract all text content from a node."""
+        if not hasattr(node, 'children') or not node.children:
+            return getattr(node, 'content', '')
+
+        return ' '.join(cls._extract_text_content(child) for child in node.children)
+
+    @classmethod
+    def parse_markdown(cls, markdown: str) -> Self:
+        """Parse using markdown-it-py native list parsing."""
         if '# Project Roadmap:' not in markdown:
             raise ValueError('Invalid roadmap format: missing title')
 
-        sections = {
-            'project_goal': r'\*\*Project Goal\*\*:\s*`([^`]+)`',
-            'total_duration': r'\*\*Total Duration\*\*:\s*`([^`]+)`',
-            'team_size': r'\*\*Team Size\*\*:\s*`([^`]+)`',
-            'roadmap_budget': r'\*\*Budget\*\*:\s*`([^`]+)`',
-            'phase_1_name': r'### Phase 1:\s*(.+?)(?=\n|$)',
-            'phase_1_duration': r'### Phase 1:.*?\n\*\*Duration\*\*:\s*`([^`]+)`',
-            'phase_1_objectives': r'### Phase 1:.*?\n\*\*Objectives\*\*:\s*`([^`]+)`',
-            'phase_1_deliverables': r'### Phase 1:.*?\n\*\*Deliverables\*\*:\s*`([^`]+)`',
-            'phase_1_success_criteria': r'### Phase 1:.*?\n\*\*Success Criteria\*\*:\s*`([^`]+)`',
-            'phase_1_dependencies': r'### Phase 1:.*?\n\*\*Dependencies\*\*:\s*`([^`]+)`',
-            'phase_1_team': r'### Phase 1:.*?\n\*\*Team\*\*:\s*`([^`]+)`',
-            'phase_1_technical_focus': r'### Phase 1:.*?\n\*\*Technical Focus\*\*:\s*`([^`]+)`',
-            'phase_2_name': r'### Phase 2:\s*(.+?)(?=\n|$)',
-            'phase_2_duration': r'### Phase 2:.*?\n\*\*Duration\*\*:\s*`([^`]+)`',
-            'phase_2_objectives': r'### Phase 2:.*?\n\*\*Objectives\*\*:\s*`([^`]+)`',
-            'phase_2_deliverables': r'### Phase 2:.*?\n\*\*Deliverables\*\*:\s*`([^`]+)`',
-            'phase_2_success_criteria': r'### Phase 2:.*?\n\*\*Success Criteria\*\*:\s*`([^`]+)`',
-            'phase_2_dependencies': r'### Phase 2:.*?\n\*\*Dependencies\*\*:\s*`([^`]+)`',
-            'phase_2_team': r'### Phase 2:.*?\n\*\*Team\*\*:\s*`([^`]+)`',
-            'phase_2_technical_focus': r'### Phase 2:.*?\n\*\*Technical Focus\*\*:\s*`([^`]+)`',
-            'phase_3_name': r'### Phase 3:\s*(.+?)(?=\n|$)',
-            'phase_3_duration': r'### Phase 3:.*?\n\*\*Duration\*\*:\s*`([^`]+)`',
-            'phase_3_objectives': r'### Phase 3:.*?\n\*\*Objectives\*\*:\s*`([^`]+)`',
-            'phase_3_deliverables': r'### Phase 3:.*?\n\*\*Deliverables\*\*:\s*`([^`]+)`',
-            'phase_3_success_criteria': r'### Phase 3:.*?\n\*\*Success Criteria\*\*:\s*`([^`]+)`',
-            'phase_3_dependencies': r'### Phase 3:.*?\n\*\*Dependencies\*\*:\s*`([^`]+)`',
-            'phase_3_team': r'### Phase 3:.*?\n\*\*Team\*\*:\s*`([^`]+)`',
-            'phase_3_technical_focus': r'### Phase 3:.*?\n\*\*Technical Focus\*\*:\s*`([^`]+)`',
-            'critical_path_analysis': r'### Critical Path Analysis\s*\n`([^`]+)`',
-            'key_risks': r'### Key Risks\s*\n`([^`]+)`',
-            'mitigation_plans': r'### Mitigation Plans\s*\n`([^`]+)`',
-            'buffer_time': r'### Buffer Time\s*\n`([^`]+)`',
-            'development_resources': r'### Development Resources\s*\n`([^`]+)`',
-            'infrastructure_requirements': r'### Infrastructure Requirements\s*\n`([^`]+)`',
-            'external_dependencies': r'### External Dependencies\s*\n`([^`]+)`',
-            'quality_assurance_plan': r'### Quality Assurance\s*\n`([^`]+)`',
-            'technical_milestones': r'### Technical Milestones\s*\n`([^`]+)`',
-            'business_milestones': r'### Business Milestones\s*\n`([^`]+)`',
-            'quality_gates': r'### Quality Gates\s*\n`([^`]+)`',
-            'performance_targets': r'### Performance Targets\s*\n`([^`]+)`',
-            'roadmap_status': r'\*\*Status\*\*:\s*`([^`]+)`',
-            'creation_date': r'\*\*Created\*\*:\s*`([^`]+)`',
-            'last_updated': r'\*\*Last Updated\*\*:\s*`([^`]+)`',
-            'phase_count': r'\*\*Phase Count\*\*:\s*`([^`]+)`',
+        md = MarkdownIt('commonmark')
+        tree = SyntaxTreeNode(md.parse(markdown))
+
+        fields = {}
+        specs = []
+
+        # Extract title
+        for node in cls._find_nodes_by_type(tree, 'heading'):
+            if node.tag != 'h1':
+                continue
+            title_text = cls._extract_text_content(node)
+            if 'Project Roadmap:' not in title_text:
+                continue
+            fields['project_name'] = title_text.split(':', 1)[1].strip()
+            break
+
+        # Extract all field data from lists
+        for item in cls._find_nodes_by_type(tree, 'list_item'):
+            text = cls._extract_text_content(item).strip()
+            if ':' not in text:
+                continue
+            field_part, value_part = text.split(':', 1)
+            field_name = field_part.strip().lower().replace(' ', '_').replace('-', '_')
+            field_value = value_part.strip()
+
+            # Handle spec entries (only numbered specs like spec_1, spec_2, etc.)
+            if field_name.startswith('spec_') and field_name.replace('spec_', '').isdigit():
+                # Only store the spec name - don't create InitialSpec objects
+                # InitialSpec objects should only be created when we have actual content
+                specs.append(field_value)
+                continue
+
+            # Map field names to model field names
+            field_mapping = {'status': 'roadmap_status', 'created': 'creation_date', 'budget': 'roadmap_budget'}
+            model_field_name = field_mapping.get(field_name, field_name)
+            fields[model_field_name] = field_value
+
+        # Set defaults for missing fields
+        field_defaults = {
+            'project_name': 'Unnamed Project',
+            'project_goal': 'Project Goal not specified',
+            'total_duration': 'Total Duration not specified',
+            'team_size': 'Team Size not specified',
+            'roadmap_budget': 'Budget not specified',
+            'critical_path_analysis': 'Critical Path Analysis not specified',
+            'key_risks': 'Key Risks not specified',
+            'mitigation_plans': 'Mitigation Plans not specified',
+            'buffer_time': 'Buffer Time not specified',
+            'development_resources': 'Development Resources not specified',
+            'infrastructure_requirements': 'Infrastructure Requirements not specified',
+            'external_dependencies': 'External Dependencies not specified',
+            'quality_assurance_plan': 'Quality Assurance Plan not specified',
+            'technical_milestones': 'Technical Milestones not specified',
+            'business_milestones': 'Business Milestones not specified',
+            'quality_gates': 'Quality Gates not specified',
+            'performance_targets': 'Performance Targets not specified',
+            'roadmap_status': 'draft',
+            'creation_date': 'Creation Date not specified',
+            'last_updated': 'Last Updated not specified',
         }
 
-        name_match = re.search(r'# Project Roadmap:\s*(.+)', markdown)
-        project_name = name_match.group(1).strip() if name_match else 'Unnamed Project'
-
-        extracted = {}
-        for field, pattern in sections.items():
-            match = re.search(pattern, markdown, re.DOTALL | re.IGNORECASE)
-            if match:
-                extracted[field] = match.group(1).strip()
-            else:
-                if field == 'roadmap_status':
-                    extracted[field] = 'draft'
-                else:
-                    extracted[field] = f'{field.replace("_", " ").title()} not specified'
+        for field, default_value in field_defaults.items():
+            if field not in fields:
+                fields[field] = default_value
 
         return cls(
-            project_name=project_name,
-            project_goal=extracted['project_goal'],
-            total_duration=extracted['total_duration'],
-            team_size=extracted['team_size'],
-            roadmap_budget=extracted['roadmap_budget'],
-            phase_1_name=extracted['phase_1_name'],
-            phase_1_duration=extracted['phase_1_duration'],
-            phase_1_objectives=extracted['phase_1_objectives'],
-            phase_1_deliverables=extracted['phase_1_deliverables'],
-            phase_1_success_criteria=extracted['phase_1_success_criteria'],
-            phase_1_dependencies=extracted['phase_1_dependencies'],
-            phase_1_team=extracted['phase_1_team'],
-            phase_1_technical_focus=extracted['phase_1_technical_focus'],
-            phase_2_name=extracted['phase_2_name'],
-            phase_2_duration=extracted['phase_2_duration'],
-            phase_2_objectives=extracted['phase_2_objectives'],
-            phase_2_deliverables=extracted['phase_2_deliverables'],
-            phase_2_success_criteria=extracted['phase_2_success_criteria'],
-            phase_2_dependencies=extracted['phase_2_dependencies'],
-            phase_2_team=extracted['phase_2_team'],
-            phase_2_technical_focus=extracted['phase_2_technical_focus'],
-            phase_3_name=extracted['phase_3_name'],
-            phase_3_duration=extracted['phase_3_duration'],
-            phase_3_objectives=extracted['phase_3_objectives'],
-            phase_3_deliverables=extracted['phase_3_deliverables'],
-            phase_3_success_criteria=extracted['phase_3_success_criteria'],
-            phase_3_dependencies=extracted['phase_3_dependencies'],
-            phase_3_team=extracted['phase_3_team'],
-            phase_3_technical_focus=extracted['phase_3_technical_focus'],
-            critical_path_analysis=extracted['critical_path_analysis'],
-            key_risks=extracted['key_risks'],
-            mitigation_plans=extracted['mitigation_plans'],
-            buffer_time=extracted['buffer_time'],
-            development_resources=extracted['development_resources'],
-            infrastructure_requirements=extracted['infrastructure_requirements'],
-            external_dependencies=extracted['external_dependencies'],
-            quality_assurance_plan=extracted['quality_assurance_plan'],
-            technical_milestones=extracted['technical_milestones'],
-            business_milestones=extracted['business_milestones'],
-            quality_gates=extracted['quality_gates'],
-            performance_targets=extracted['performance_targets'],
-            roadmap_status=RoadmapStatus(extracted['roadmap_status']),
-            creation_date=extracted['creation_date'],
-            last_updated=extracted['last_updated'],
-            phase_count=extracted['phase_count'],
+            project_name=fields['project_name'],
+            project_goal=fields['project_goal'],
+            total_duration=fields['total_duration'],
+            team_size=fields['team_size'],
+            roadmap_budget=fields['roadmap_budget'],
+            specs=specs,
+            critical_path_analysis=fields['critical_path_analysis'],
+            key_risks=fields['key_risks'],
+            mitigation_plans=fields['mitigation_plans'],
+            buffer_time=fields['buffer_time'],
+            development_resources=fields['development_resources'],
+            infrastructure_requirements=fields['infrastructure_requirements'],
+            external_dependencies=fields['external_dependencies'],
+            quality_assurance_plan=fields['quality_assurance_plan'],
+            technical_milestones=fields['technical_milestones'],
+            business_milestones=fields['business_milestones'],
+            quality_gates=fields['quality_gates'],
+            performance_targets=fields['performance_targets'],
+            roadmap_status=RoadmapStatus(fields['roadmap_status']),
+            creation_date=fields['creation_date'],
+            last_updated=fields['last_updated'],
+            spec_count=len(specs),
         )
 
     def build_markdown(self) -> str:
+        # Generate specs list dynamically
+        specs_list = '\n'.join(f'- **Spec {i + 1}**: {spec}' for i, spec in enumerate(self.specs))
+
         return f"""# Project Roadmap: {self.project_name}
 
-## Roadmap Overview
+## Project Details
+- **Project Goal**: {self.project_goal}
+- **Total Duration**: {self.total_duration}
+- **Team Size**: {self.team_size}
+- **Budget**: {self.roadmap_budget}
 
-**Project Goal**: `{self.project_goal}`
-**Total Duration**: `{self.total_duration}`
-**Team Size**: `{self.team_size}`
-**Budget**: `{self.roadmap_budget}`
-
-## Phase Breakdown
-
-### Phase 1: {self.phase_1_name}
-**Duration**: `{self.phase_1_duration}`
-**Objectives**: `{self.phase_1_objectives}`
-**Deliverables**: `{self.phase_1_deliverables}`
-**Success Criteria**: `{self.phase_1_success_criteria}`
-**Dependencies**: `{self.phase_1_dependencies}`
-**Team**: `{self.phase_1_team}`
-**Technical Focus**: `{self.phase_1_technical_focus}`
-
-### Phase 2: {self.phase_2_name}
-**Duration**: `{self.phase_2_duration}`
-**Objectives**: `{self.phase_2_objectives}`
-**Deliverables**: `{self.phase_2_deliverables}`
-**Success Criteria**: `{self.phase_2_success_criteria}`
-**Dependencies**: `{self.phase_2_dependencies}`
-**Team**: `{self.phase_2_team}`
-**Technical Focus**: `{self.phase_2_technical_focus}`
-
-### Phase 3: {self.phase_3_name}
-**Duration**: `{self.phase_3_duration}`
-**Objectives**: `{self.phase_3_objectives}`
-**Deliverables**: `{self.phase_3_deliverables}`
-**Success Criteria**: `{self.phase_3_success_criteria}`
-**Dependencies**: `{self.phase_3_dependencies}`
-**Team**: `{self.phase_3_team}`
-**Technical Focus**: `{self.phase_3_technical_focus}`
+## Specifications
+{specs_list}
 
 ## Risk Assessment
-
-### Critical Path Analysis
-`{self.critical_path_analysis}`
-
-### Key Risks
-`{self.key_risks}`
-
-### Mitigation Plans
-`{self.mitigation_plans}`
-
-### Buffer Time
-`{self.buffer_time}`
+- **Critical Path Analysis**: {self.critical_path_analysis}
+- **Key Risks**: {self.key_risks}
+- **Mitigation Plans**: {self.mitigation_plans}
+- **Buffer Time**: {self.buffer_time}
 
 ## Resource Planning
-
-### Development Resources
-`{self.development_resources}`
-
-### Infrastructure Requirements
-`{self.infrastructure_requirements}`
-
-### External Dependencies
-`{self.external_dependencies}`
-
-### Quality Assurance
-`{self.quality_assurance_plan}`
+- **Development Resources**: {self.development_resources}
+- **Infrastructure Requirements**: {self.infrastructure_requirements}
+- **External Dependencies**: {self.external_dependencies}
+- **Quality Assurance Plan**: {self.quality_assurance_plan}
 
 ## Success Metrics
+- **Technical Milestones**: {self.technical_milestones}
+- **Business Milestones**: {self.business_milestones}
+- **Quality Gates**: {self.quality_gates}
+- **Performance Targets**: {self.performance_targets}
 
-### Technical Milestones
-`{self.technical_milestones}`
+## Metadata
+- **Status**: {self.roadmap_status.value}
+- **Created**: {self.creation_date}
+- **Last Updated**: {self.last_updated}
+- **Spec Count**: {self.spec_count}
+"""
 
-### Business Milestones
-`{self.business_milestones}`
+    def add_spec_name(self, spec_name: str) -> None:
+        """Add a spec name to the roadmap and update the count."""
+        # Remove existing spec with same name if it exists
+        if spec_name in self.specs:
+            return
 
-### Quality Gates
-`{self.quality_gates}`
+        # Add new spec name
+        self.specs.append(spec_name)
+        self.spec_count = len(self.specs)
 
-### Performance Targets
-`{self.performance_targets}`
+    def get_spec_name(self, spec_name: str) -> str:
+        """Get a spec name."""
+        if spec_name in self.specs:
+            return spec_name
 
----
-
-**Status**: `{self.roadmap_status.value}`
-**Created**: `{self.creation_date}`
-**Last Updated**: `{self.last_updated}`
-**Phase Count**: `{self.phase_count}`"""
+        raise SpecNotFoundError(f'Spec not found: {spec_name}')

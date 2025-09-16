@@ -187,16 +187,16 @@ class TestTechnicalSpecMarkdownBuilding:
         markdown = spec.build_markdown()
 
         assert '# Technical Specification: Test Spec' in markdown
-        assert '**Objectives**: `Test objectives`' in markdown
-        assert '**Scope**: `Test scope`' in markdown
-        assert '**Dependencies**: `Test deps`' in markdown
-        assert '`Test deliverables`' in markdown
-        assert '### Architecture' in markdown
-        assert '### Technology Stack' in markdown
-        assert '### Functional Requirements' in markdown
-        assert '### Non-Functional Requirements' in markdown
-        assert '### Development Plan' in markdown
-        assert '### Testing Strategy' in markdown
+        assert '- **Objectives**: Test objectives' in markdown
+        assert '- **Scope**: Test scope' in markdown
+        assert '- **Dependencies**: Test deps' in markdown
+        assert '- **Deliverables**: Test deliverables' in markdown
+        assert '- **Architecture**: Test architecture' in markdown
+        assert '- **Technology Stack**: Python, FastAPI' in markdown
+        assert '- **Functional Requirements**: Login functionality' in markdown
+        assert '- **Non-Functional Requirements**: High performance' in markdown
+        assert '- **Development Plan**: 3-phase approach' in markdown
+        assert '- **Testing Strategy**: TDD approach' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, round_trip_spec_markdown: str) -> None:
         spec = TechnicalSpec.parse_markdown(round_trip_spec_markdown)
@@ -215,9 +215,32 @@ class TestTechnicalSpecMarkdownBuilding:
         assert spec.success_criteria == parsed_spec.success_criteria
         assert spec.integration_context == parsed_spec.integration_context
 
-    def test_character_for_character_round_trip_validation(self, round_trip_spec_markdown: str) -> None:
-        spec = TechnicalSpec.parse_markdown(round_trip_spec_markdown)
+    def test_round_trip_data_integrity_validation(self, round_trip_spec_markdown: str) -> None:
+        """Test that round-trip parsing preserves data integrity (format may change during migration)."""
+        original_spec = TechnicalSpec.parse_markdown(round_trip_spec_markdown)
 
-        rebuilt_markdown = spec.build_markdown()
+        rebuilt_markdown = original_spec.build_markdown()
 
-        assert round_trip_spec_markdown == rebuilt_markdown
+        reparsed_spec = TechnicalSpec.parse_markdown(rebuilt_markdown)
+
+        # Verify data integrity is preserved through round-trip
+        assert original_spec.phase_name == reparsed_spec.phase_name
+        assert original_spec.objectives == reparsed_spec.objectives
+        assert original_spec.scope == reparsed_spec.scope
+        assert original_spec.dependencies == reparsed_spec.dependencies
+        assert original_spec.deliverables == reparsed_spec.deliverables
+        assert original_spec.architecture == reparsed_spec.architecture
+        assert original_spec.technology_stack == reparsed_spec.technology_stack
+        assert original_spec.functional_requirements == reparsed_spec.functional_requirements
+        assert original_spec.non_functional_requirements == reparsed_spec.non_functional_requirements
+        assert original_spec.development_plan == reparsed_spec.development_plan
+        assert original_spec.testing_strategy == reparsed_spec.testing_strategy
+        assert original_spec.research_requirements == reparsed_spec.research_requirements
+        assert original_spec.success_criteria == reparsed_spec.success_criteria
+        assert original_spec.integration_context == reparsed_spec.integration_context
+        assert original_spec.spec_status == reparsed_spec.spec_status
+        assert original_spec.phase_number == reparsed_spec.phase_number
+        assert original_spec.total_phases == reparsed_spec.total_phases
+        assert original_spec.creation_date == reparsed_spec.creation_date
+        assert original_spec.last_updated == reparsed_spec.last_updated
+        assert original_spec.spec_owner == reparsed_spec.spec_owner

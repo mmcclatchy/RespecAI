@@ -1,48 +1,30 @@
-# Technical Specification: ${PHASE_NAME}
+# Technical Specification: {phase_name}
+<!-- ID: {id} -->
 
 ## Overview
-**Objectives**: `${PHASE_OBJECTIVES}`
-**Scope**: `${PHASE_SCOPE}`
-**Dependencies**: `${PHASE_DEPENDENCIES}`
-
-## Deliverables
-`${PHASE_DELIVERABLES}`
+- **Objectives**: {objectives}
+- **Scope**: {scope}
+- **Dependencies**: {dependencies}
+- **Deliverables**: {deliverables}
 
 ## System Design
-
-### Architecture
-`${TECHNICAL_FOCUS_AREAS}`
-
-### Technology Stack
-`${TECHNOLOGY_STACK}`
+- **Architecture**: {architecture}
+- **Technology Stack**: {technology_stack}
 
 ## Implementation
+- **Functional Requirements**: {functional_requirements}
+- **Non-Functional Requirements**: {non_functional_requirements}
+- **Development Plan**: {development_plan}
+- **Testing Strategy**: {testing_strategy}
 
-### Functional Requirements
-`${FUNCTIONAL_REQUIREMENTS}`
+## Additional Details
+- **Research Requirements**: {research_requirements}
+- **Success Criteria**: {success_criteria}
+- **Integration Context**: {integration_context}
 
-### Non-Functional Requirements
-`${NON_FUNCTIONAL_REQUIREMENTS}`
-
-### Development Plan
-`${DEVELOPMENT_PLAN}`
-
-### Testing Strategy
-`${TESTING_STRATEGY}`
-
-## Research Requirements
-`${RESEARCH_REQUIREMENTS}`
-
-## Success Criteria
-`${SUCCESS_CRITERIA}`
-
-## Integration
-`${INTEGRATION_CONTEXT}`
-
----
-
-**Status**: `${SPEC_STATUS}`
-**Phase**: `${PHASE_NUMBER}` of `${TOTAL_PHASES}`
-**Created**: `${CREATION_DATE}`
-**Last Updated**: `${LAST_UPDATED}`
-**Owner**: `${SPEC_OWNER}`
+## Metadata
+- **Status**: {spec_status}
+- **Phase**: {phase_number} of {total_phases}
+- **Created**: {creation_date}
+- **Last Updated**: {last_updated}
+- **Owner**: {spec_owner}

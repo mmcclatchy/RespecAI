@@ -1,0 +1,251 @@
+import pytest
+
+from services.models.roadmap import Roadmap
+from services.models.initial_spec import InitialSpec
+from services.models.enums import RoadmapStatus, SpecStatus
+
+
+@pytest.fixture
+def sample_dynamic_roadmap_markdown() -> str:
+    """Sample markdown for dynamic Roadmap with specs list."""
+    return """# Project Roadmap: E-commerce Platform
+
+## Project Details
+- **Project Goal**: Build modern e-commerce platform
+- **Total Duration**: 12 weeks
+- **Team Size**: 6 developers
+- **Budget**: $150,000
+
+## Specifications
+- **Spec 1**: User Authentication System
+- **Spec 2**: Product Catalog Management
+- **Spec 3**: Shopping Cart & Checkout
+
+## Risk Assessment
+- **Critical Path Analysis**: Sequential development phases
+- **Key Risks**: Integration complexity
+- **Mitigation Plans**: Incremental delivery
+- **Buffer Time**: 2 weeks
+
+## Resource Planning
+- **Development Resources**: 6 developers full-time
+- **Infrastructure Requirements**: Cloud hosting
+- **External Dependencies**: Payment gateway
+- **Quality Assurance Plan**: Automated testing
+
+## Success Metrics
+- **Technical Milestones**: Working MVP
+- **Business Milestones**: User acceptance
+- **Quality Gates**: All tests pass
+- **Performance Targets**: Fast response times
+
+## Metadata
+- **Status**: draft
+- **Created**: 2024-01-01
+- **Last Updated**: 2024-01-02
+- **Spec Count**: 3
+"""
+
+
+@pytest.fixture
+def sample_specs_list() -> list[InitialSpec]:
+    """Sample list of InitialSpec objects."""
+    return [
+        InitialSpec(
+            phase_name='User Authentication System',
+            objectives='Implement secure login',
+            scope='Login, logout, registration',
+            dependencies='Database',
+            deliverables='Auth system',
+            spec_status=SpecStatus.DRAFT,
+            creation_date='2024-01-01',
+            last_updated='2024-01-01',
+            spec_owner='Backend Team',
+        ),
+        InitialSpec(
+            phase_name='Product Catalog Management',
+            objectives='Manage product inventory',
+            scope='CRUD operations for products',
+            dependencies='Auth system',
+            deliverables='Product management',
+            spec_status=SpecStatus.DRAFT,
+            creation_date='2024-01-01',
+            last_updated='2024-01-01',
+            spec_owner='Backend Team',
+        ),
+        InitialSpec(
+            phase_name='Shopping Cart & Checkout',
+            objectives='Enable purchase flow',
+            scope='Cart, checkout, payments',
+            dependencies='Product catalog',
+            deliverables='E-commerce flow',
+            spec_status=SpecStatus.DRAFT,
+            creation_date='2024-01-01',
+            last_updated='2024-01-01',
+            spec_owner='Frontend Team',
+        ),
+    ]
+
+
+class TestDynamicRoadmapParsing:
+    def test_parse_markdown_extracts_project_details(self, sample_dynamic_roadmap_markdown: str) -> None:
+        """Test that dynamic Roadmap can parse project details."""
+        roadmap = Roadmap.parse_markdown(sample_dynamic_roadmap_markdown)
+
+        assert roadmap.project_name == 'E-commerce Platform'
+        assert roadmap.project_goal == 'Build modern e-commerce platform'
+        assert roadmap.total_duration == '12 weeks'
+        assert roadmap.team_size == '6 developers'
+        assert roadmap.roadmap_budget == '$150,000'
+
+    def test_parse_markdown_extracts_specs_list(self, sample_dynamic_roadmap_markdown: str) -> None:
+        """Test that dynamic Roadmap can extract specs from Specifications section."""
+        roadmap = Roadmap.parse_markdown(sample_dynamic_roadmap_markdown)
+
+        assert len(roadmap.specs) == 3
+        assert roadmap.specs[0] == 'User Authentication System'
+        assert roadmap.specs[1] == 'Product Catalog Management'
+        assert roadmap.specs[2] == 'Shopping Cart & Checkout'
+
+    def test_parse_markdown_extracts_metadata(self, sample_dynamic_roadmap_markdown: str) -> None:
+        """Test that metadata fields are parsed correctly."""
+        roadmap = Roadmap.parse_markdown(sample_dynamic_roadmap_markdown)
+
+        assert roadmap.roadmap_status == RoadmapStatus.DRAFT
+        assert roadmap.creation_date == '2024-01-01'
+        assert roadmap.last_updated == '2024-01-02'
+        assert roadmap.spec_count == 3
+
+    def test_roadmap_with_specs_list_field(self) -> None:
+        """Test that Roadmap model has specs list field."""
+        spec_names = ['User Authentication System', 'Product Catalog Management', 'Shopping Cart & Checkout']
+        roadmap = Roadmap(
+            project_name='Test Project',
+            project_goal='Test goal',
+            total_duration='8 weeks',
+            team_size='4 developers',
+            roadmap_budget='$100,000',
+            specs=spec_names,
+            critical_path_analysis='Sequential phases',
+            key_risks='Technical complexity',
+            mitigation_plans='Incremental delivery',
+            buffer_time='1 week',
+            development_resources='4 developers',
+            infrastructure_requirements='Cloud hosting',
+            external_dependencies='None',
+            quality_assurance_plan='Automated testing',
+            technical_milestones='MVP delivery',
+            business_milestones='User acceptance',
+            quality_gates='All tests pass',
+            performance_targets='Fast response',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date='2024-01-01',
+            last_updated='2024-01-01',
+            spec_count=3,
+        )
+
+        assert len(roadmap.specs) == 3
+        assert roadmap.spec_count == 3
+        assert all(isinstance(spec, str) for spec in roadmap.specs)
+
+    def test_build_markdown_creates_dynamic_format(self) -> None:
+        """Test that build_markdown creates new MarkdownIt-native format."""
+        spec_names = ['User Authentication System', 'Product Catalog Management', 'Shopping Cart & Checkout']
+        roadmap = Roadmap(
+            project_name='Test Project',
+            project_goal='Test goal',
+            total_duration='8 weeks',
+            team_size='4 developers',
+            roadmap_budget='$100,000',
+            specs=spec_names,
+            critical_path_analysis='Sequential phases',
+            key_risks='Technical complexity',
+            mitigation_plans='Incremental delivery',
+            buffer_time='1 week',
+            development_resources='4 developers',
+            infrastructure_requirements='Cloud hosting',
+            external_dependencies='None',
+            quality_assurance_plan='Automated testing',
+            technical_milestones='MVP delivery',
+            business_milestones='User acceptance',
+            quality_gates='All tests pass',
+            performance_targets='Fast response',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date='2024-01-01',
+            last_updated='2024-01-01',
+            spec_count=3,
+        )
+
+        markdown = roadmap.build_markdown()
+
+        assert '# Project Roadmap: Test Project' in markdown
+        assert '## Project Details' in markdown
+        assert '- **Project Goal**: Test goal' in markdown
+        assert '- **Total Duration**: 8 weeks' in markdown
+        assert '- **Team Size**: 4 developers' in markdown
+        assert '- **Budget**: $100,000' in markdown
+        assert '## Specifications' in markdown
+        assert '- **Spec 1**: User Authentication System' in markdown
+        assert '- **Spec 2**: Product Catalog Management' in markdown
+        assert '- **Spec 3**: Shopping Cart & Checkout' in markdown
+        assert '## Metadata' in markdown
+        assert '- **Status**: draft' in markdown
+        assert '- **Spec Count**: 3' in markdown
+
+    def test_round_trip_parsing_maintains_data_integrity(self, sample_dynamic_roadmap_markdown: str) -> None:
+        """Test that parsing and rebuilding maintains complete data integrity."""
+        original_roadmap = Roadmap.parse_markdown(sample_dynamic_roadmap_markdown)
+
+        rebuilt_markdown = original_roadmap.build_markdown()
+
+        reparsed_roadmap = Roadmap.parse_markdown(rebuilt_markdown)
+
+        assert original_roadmap.project_name == reparsed_roadmap.project_name
+        assert original_roadmap.project_goal == reparsed_roadmap.project_goal
+        assert original_roadmap.total_duration == reparsed_roadmap.total_duration
+        assert original_roadmap.team_size == reparsed_roadmap.team_size
+        assert original_roadmap.roadmap_budget == reparsed_roadmap.roadmap_budget
+        assert len(original_roadmap.specs) == len(reparsed_roadmap.specs)
+        assert original_roadmap.spec_count == reparsed_roadmap.spec_count
+        assert original_roadmap.roadmap_status == reparsed_roadmap.roadmap_status
+
+        # Check first spec
+        assert original_roadmap.specs[0] == reparsed_roadmap.specs[0]
+
+
+class TestDynamicRoadmapUtilities:
+    def test_recursive_traversal_utilities_exist(self) -> None:
+        """Test that shared utilities exist."""
+        assert hasattr(Roadmap, '_find_nodes_by_type')
+        assert hasattr(Roadmap, '_extract_text_content')
+
+    def test_spec_count_property_matches_specs_length(self) -> None:
+        """Test that spec_count property matches actual specs list length."""
+        spec_names = ['User Authentication System', 'Product Catalog Management', 'Shopping Cart & Checkout']
+        roadmap = Roadmap(
+            project_name='Test Project',
+            project_goal='Test goal',
+            total_duration='8 weeks',
+            team_size='4 developers',
+            roadmap_budget='$100,000',
+            specs=spec_names,
+            critical_path_analysis='Sequential phases',
+            key_risks='Technical complexity',
+            mitigation_plans='Incremental delivery',
+            buffer_time='1 week',
+            development_resources='4 developers',
+            infrastructure_requirements='Cloud hosting',
+            external_dependencies='None',
+            quality_assurance_plan='Automated testing',
+            technical_milestones='MVP delivery',
+            business_milestones='User acceptance',
+            quality_gates='All tests pass',
+            performance_targets='Fast response',
+            roadmap_status=RoadmapStatus.DRAFT,
+            creation_date='2024-01-01',
+            last_updated='2024-01-01',
+            spec_count=len(spec_names),
+        )
+
+        assert roadmap.spec_count == len(roadmap.specs)
+        assert roadmap.spec_count == 3
