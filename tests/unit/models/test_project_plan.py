@@ -10,108 +10,115 @@ class TestProjectPlanParsing:
 
 ## Executive Summary
 
-**Vision**: `Transform customer experience through modern, intuitive portal design`
-**Mission**: `Deliver a user-friendly portal that increases customer satisfaction and reduces support tickets`
-**Timeline**: `8 months from project kickoff to production deployment`
-**Budget**: `$400,000 including development, design, and infrastructure costs`
+### Vision
+Transform customer experience through modern, intuitive portal design
+
+### Mission
+Deliver a user-friendly portal that increases customer satisfaction and reduces support tickets
+
+### Timeline
+8 months from project kickoff to production deployment
+
+### Budget
+$400,000 including development, design, and infrastructure costs
 
 ## Business Objectives
 
 ### Primary Objectives
-`Improve customer satisfaction scores by 30%, reduce support tickets by 25%, increase portal usage by 50%`
+Improve customer satisfaction scores by 30%, reduce support tickets by 25%, increase portal usage by 50%
 
 ### Success Metrics
-`Customer satisfaction score >4.5/5, support ticket reduction >25%, user engagement increase >50%`
+Customer satisfaction score >4.5/5, support ticket reduction >25%, user engagement increase >50%
 
 ### Key Performance Indicators
-`Daily active users, session duration, task completion rates, customer feedback scores`
+Daily active users, session duration, task completion rates, customer feedback scores
 
 ## Project Scope
 
 ### Included Features
-`User dashboard redesign, mobile responsive design, self-service features, account management tools`
+User dashboard redesign, mobile responsive design, self-service features, account management tools
 
 ### Excluded Features
-`Legacy system migration, third-party integrations, advanced analytics dashboard`
+Legacy system migration, third-party integrations, advanced analytics dashboard
 
 ### Assumptions
-`Existing infrastructure can support new portal, customers will adopt new design, no major security changes needed`
+Existing infrastructure can support new portal, customers will adopt new design, no major security changes needed
 
 ### Constraints
-`Must maintain 99.9% uptime during migration, limited to current technology stack, budget cap at $400k`
+Must maintain 99.9% uptime during migration, limited to current technology stack, budget cap at $400k
 
 ## Stakeholders
 
 ### Project Sponsor
-`Chief Technology Officer - Sarah Johnson, provides strategic direction and final approvals`
+Chief Technology Officer - Sarah Johnson, provides strategic direction and final approvals
 
 ### Key Stakeholders
-`Customer Success team, IT Operations, Security team, Executive leadership, Customer Advisory Board`
+Customer Success team, IT Operations, Security team, Executive leadership, Customer Advisory Board
 
 ### End Users
-`Existing customers (5000+ active users), customer support representatives, account managers`
+Existing customers (5000+ active users), customer support representatives, account managers
 
 ## Project Structure
 
 ### Work Breakdown
-`Phase 1: Research & Design (2 months), Phase 2: Development (4 months), Phase 3: Testing & Launch (2 months)`
+Phase 1: Research & Design (2 months), Phase 2: Development (4 months), Phase 3: Testing & Launch (2 months)
 
 ### Phases Overview
-`Discovery and user research, UI/UX design, frontend development, backend API updates, testing, deployment`
+Discovery and user research, UI/UX design, frontend development, backend API updates, testing, deployment
 
 ### Dependencies
-`Design system completion, API documentation updates, security review approval, infrastructure scaling`
+Design system completion, API documentation updates, security review approval, infrastructure scaling
 
 ## Resource Requirements
 
 ### Team Structure
-`1 Project Manager, 2 Frontend Developers, 1 Backend Developer, 1 UI/UX Designer, 1 QA Engineer`
+1 Project Manager, 2 Frontend Developers, 1 Backend Developer, 1 UI/UX Designer, 1 QA Engineer
 
-### Technology Stack
-`React.js frontend, Node.js backend, PostgreSQL database, AWS cloud infrastructure, Docker containers`
+### Technology Requirements
+React.js frontend, Node.js backend, PostgreSQL database, AWS cloud infrastructure, Docker containers
 
 ### Infrastructure Needs
-`Additional AWS instances, CDN setup, staging environment, monitoring tools, backup systems`
+Additional AWS instances, CDN setup, staging environment, monitoring tools, backup systems
 
 ## Risk Management
 
 ### Identified Risks
-`Timeline delays due to design complexity, integration challenges with legacy systems, user adoption resistance`
+Timeline delays due to design complexity, integration challenges with legacy systems, user adoption resistance
 
 ### Mitigation Strategies
-`Regular design reviews, early integration testing, comprehensive user training program, phased rollout`
+Regular design reviews, early integration testing, comprehensive user training program, phased rollout
 
 ### Contingency Plans
-`Simplified design fallback, manual processes for critical features, extended support period post-launch`
+Simplified design fallback, manual processes for critical features, extended support period post-launch
 
 ## Quality Assurance
 
 ### Quality Standards
-`WCAG 2.1 AA accessibility compliance, mobile-first responsive design, 99.9% uptime requirement`
+WCAG 2.1 AA accessibility compliance, mobile-first responsive design, 99.9% uptime requirement
 
 ### Testing Strategy
-`Unit testing (90% coverage), integration testing, user acceptance testing, performance testing, security testing`
+Unit testing (90% coverage), integration testing, user acceptance testing, performance testing, security testing
 
 ### Acceptance Criteria
-`All user stories complete, performance benchmarks met, security scan passed, stakeholder sign-off received`
+All user stories complete, performance benchmarks met, security scan passed, stakeholder sign-off received
 
 ## Communication Plan
 
 ### Reporting Structure
-`Weekly status reports to sponsor, bi-weekly stakeholder updates, monthly executive briefings`
+Weekly status reports to sponsor, bi-weekly stakeholder updates, monthly executive briefings
 
 ### Meeting Schedule
-`Daily standups, weekly team meetings, bi-weekly stakeholder reviews, monthly steering committee`
+Daily standups, weekly team meetings, bi-weekly stakeholder reviews, monthly steering committee
 
 ### Documentation Standards
-`Confluence for project docs, Jira for task tracking, GitHub for code documentation, shared drive for assets`
+Confluence for project docs, Jira for task tracking, GitHub for code documentation, shared drive for assets
 
----
-
-**Status**: `approved`
-**Created**: `2024-01-15`
-**Last Updated**: `2024-02-01`
-**Version**: `2.1`"""
+## Metadata
+- **Status**: approved
+- **Created**: 2024-01-15
+- **Last Updated**: 2024-02-01
+- **Version**: 2.1
+"""
 
         project_plan = ProjectPlan.parse_markdown(markdown)
 
@@ -176,17 +183,24 @@ class TestProjectPlanParsing:
 
 ## Executive Summary
 
-**Vision**: `Create a simple business website`
-**Mission**: `Provide online presence for small business`
-**Timeline**: `3 months`
-**Budget**: `$50,000`
+### Vision
+Create a simple business website
 
----
+### Mission
+Provide online presence for small business
 
-**Status**: `draft`
-**Created**: `2024-01-01`
-**Last Updated**: `2024-01-01`
-**Version**: `1.0`"""
+### Timeline
+3 months
+
+### Budget
+$50,000
+
+## Metadata
+- **Status**: draft
+- **Created**: 2024-01-01
+- **Last Updated**: 2024-01-01
+- **Version**: 1.0
+"""
 
         project_plan = ProjectPlan.parse_markdown(markdown)
 
@@ -248,14 +262,19 @@ class TestProjectPlanMarkdownBuilding:
         markdown = sample_project_plan.build_markdown()
 
         assert '# Project Plan: E-Learning Platform' in markdown
-        assert '**Vision**: `Create an accessible online learning platform for professional development`' in markdown
+        assert '## Executive Summary' in markdown
+        assert '### Vision' in markdown
+        assert 'Create an accessible online learning platform for professional development' in markdown
+        assert '## Business Objectives' in markdown
         assert '### Primary Objectives' in markdown
-        assert '`Launch platform with 100+ courses, achieve 1000+ active learners, 90% completion rate`' in markdown
+        assert 'Launch platform with 100+ courses, achieve 1000+ active learners, 90% completion rate' in markdown
+        assert '## Resource Requirements' in markdown
         assert '### Team Structure' in markdown
-        assert '`1 PM, 3 Developers, 1 Designer, 2 QA, 1 DevOps, 2 Content specialists`' in markdown
+        assert '1 PM, 3 Developers, 1 Designer, 2 QA, 1 DevOps, 2 Content specialists' in markdown
+        assert '## Quality Assurance' in markdown
         assert '### Quality Standards' in markdown
-        assert '**Status**: `active`' in markdown
-        assert '**Version**: `1.5`' in markdown
+        assert '- **Status**: active' in markdown
+        assert '- **Version**: 1.5' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, sample_project_plan: ProjectPlan) -> None:
         # Build markdown from the model

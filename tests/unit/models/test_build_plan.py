@@ -8,58 +8,69 @@ class TestBuildPlanParsing:
     def test_parse_markdown_extracts_all_fields(self) -> None:
         markdown = """# Build Plan: E-Commerce Platform
 
-## Development Overview
+## Project Overview
 
-**Project Goal**: `Build a scalable e-commerce platform`
-**Total Duration**: `6 months`
-**Team Size**: `5 developers`
+### Goal
+Build a scalable e-commerce platform
 
-## Technical Foundation
+### Duration
+6 months
 
-**Primary Language**: `Python`
-**Framework**: `FastAPI`
-**Database**: `PostgreSQL`
+### Team Size
+5 developers
 
-## Implementation Plan
+## Technology Stack
 
-### Development Environment Setup
-`Docker-based development with automated testing pipeline`
+### Primary Language
+Python
 
-### Database Schema Design
-`User tables, product catalog, order management with proper indexing`
+### Framework
+FastAPI
+
+### Database
+PostgreSQL
+
+## Architecture
+
+### Development Environment
+Docker-based development with automated testing pipeline
+
+### Database Schema
+User tables, product catalog, order management with proper indexing
 
 ### API Architecture
-`RESTful API with authentication and rate limiting`
+RESTful API with authentication and rate limiting
 
 ### Frontend Architecture
-`React SPA with TypeScript and state management`
+React SPA with TypeScript and state management
 
-### Core Features Implementation
-`User auth, product catalog, shopping cart, payment processing`
+## Implementation
+
+### Core Features
+User auth, product catalog, shopping cart, payment processing
 
 ### Integration Points
-`Payment gateway, shipping APIs, inventory management`
+Payment gateway, shipping APIs, inventory management
+
+## Quality Management
 
 ### Testing Strategy
-`Unit tests, integration tests, E2E testing with Playwright`
-
-## Code Quality
+Unit tests, integration tests, E2E testing with Playwright
 
 ### Code Standards
-`PEP 8 for Python, ESLint for TypeScript, pre-commit hooks`
+PEP 8 for Python, ESLint for TypeScript, pre-commit hooks
 
 ### Performance Requirements
-`Sub-2s page loads, 1000+ concurrent users, 99.9% uptime`
+Sub-2s page loads, 1000+ concurrent users, 99.9% uptime
 
 ### Security Implementation
-`HTTPS, JWT tokens, input validation, SQL injection prevention`
+HTTPS, JWT tokens, input validation, SQL injection prevention
 
----
-
-**Status**: `in-progress`
-**Created**: `2024-01-15`
-**Last Updated**: `2024-01-20`
-**Owner**: `Development Team`
+## Metadata
+- **Status**: in-progress
+- **Created**: 2024-01-15
+- **Last Updated**: 2024-01-20
+- **Owner**: Development Team
 """
 
         build_plan = BuildPlan.parse_markdown(markdown)
@@ -89,29 +100,38 @@ class TestBuildPlanParsing:
     def test_parse_markdown_handles_missing_sections(self) -> None:
         markdown = """# Build Plan: Minimal Project
 
-## Development Overview
+## Project Overview
 
-**Project Goal**: `Simple project`
-**Total Duration**: `3 months`
-**Team Size**: `2 developers`
+### Goal
+Simple project
 
-## Technical Foundation
+### Duration
+3 months
 
-**Primary Language**: `JavaScript`
-**Framework**: `Express`
-**Database**: `MongoDB`
+### Team Size
+2 developers
 
-## Implementation Plan
+## Technology Stack
 
-### Development Environment Setup
-`Basic Node.js setup`
+### Primary Language
+JavaScript
 
----
+### Framework
+Express
 
-**Status**: `planning`
-**Created**: `2024-01-01`
-**Last Updated**: `2024-01-01`
-**Owner**: `Solo Developer`
+### Database
+MongoDB
+
+## Architecture
+
+### Development Environment
+Basic Node.js setup
+
+## Metadata
+- **Status**: planning
+- **Created**: 2024-01-01
+- **Last Updated**: 2024-01-01
+- **Owner**: Solo Developer
 """
 
         build_plan = BuildPlan.parse_markdown(markdown)
@@ -161,12 +181,17 @@ class TestBuildPlanMarkdownBuilding:
         markdown = sample_build_plan.build_markdown()
 
         assert '# Build Plan: Test Project' in markdown
-        assert '**Project Goal**: `Build a test application`' in markdown
-        assert '**Primary Language**: `Python`' in markdown
-        assert '### Development Environment Setup' in markdown
-        assert '`Local development with virtual env`' in markdown
-        assert '**Status**: `planning`' in markdown
-        assert '**Owner**: `Test Team`' in markdown
+        assert '## Project Overview' in markdown
+        assert '### Goal' in markdown
+        assert 'Build a test application' in markdown
+        assert '## Technology Stack' in markdown
+        assert '### Primary Language' in markdown
+        assert 'Python' in markdown
+        assert '## Architecture' in markdown
+        assert '### Development Environment' in markdown
+        assert 'Local development with virtual env' in markdown
+        assert '- **Status**: planning' in markdown
+        assert '- **Owner**: Test Team' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, sample_build_plan: BuildPlan) -> None:
         # Build markdown from the model

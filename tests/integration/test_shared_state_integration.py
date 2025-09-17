@@ -9,6 +9,44 @@ from services.utils.errors import LoopStateError
 from services.utils.state_manager import InMemoryStateManager
 
 
+def create_test_roadmap_markdown(project_name: str) -> str:
+    return f"""# Project Roadmap: {project_name}
+
+## Project Details
+- **Project Goal**: Build and deploy {project_name}
+- **Total Duration**: 6 months
+- **Team Size**: 5 developers
+- **Budget**: $100,000
+
+## Specifications
+
+
+## Risk Assessment
+- **Critical Path Analysis**: Critical path analysis pending
+- **Key Risks**: Standard development risks
+- **Mitigation Plans**: Standard mitigation strategies
+- **Buffer Time**: 2 weeks
+
+## Resource Planning
+- **Development Resources**: 5 developers, 1 PM
+- **Infrastructure Requirements**: AWS cloud infrastructure
+- **External Dependencies**: None identified
+- **Quality Assurance Plan**: Automated testing and manual QA
+
+## Success Metrics
+- **Technical Milestones**: Alpha, Beta, Production release
+- **Business Milestones**: User adoption targets
+- **Quality Gates**: Code review, testing, security review
+- **Performance Targets**: Sub-2s response times
+
+## Metadata
+- **Status**: draft
+- **Created**: 2024-01-01
+- **Last Updated**: 2024-01-01
+- **Spec Count**: 0
+"""
+
+
 class TestSharedStateIntegration:
     @pytest.fixture
     def loop_tools(self) -> LoopTools:
@@ -54,7 +92,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
         loop_id = loop_result.id
 
         # Create roadmap and spec
-        roadmap_result = roadmap_tools.create_roadmap('test-project', 'Test Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Test Roadmap')
+        roadmap_result = roadmap_tools.create_roadmap('test-project', roadmap_markdown)
         assert isinstance(roadmap_result, str)
         assert 'Created roadmap' in roadmap_result
 
@@ -78,7 +117,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
         # Interleave operations between both tool sets
 
         # Step 1: Create roadmap
-        roadmap_tools.create_roadmap(project_id, 'Concurrent Test Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Concurrent Test Roadmap')
+        roadmap_tools.create_roadmap(project_id, roadmap_markdown)
 
         # Step 2: Initialize loop
         loop_result = loop_tools.initialize_refinement_loop('plan')
@@ -104,7 +144,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
         self, loop_tools: LoopTools, roadmap_tools: RoadmapTools, sample_spec_markdown: str
     ) -> None:
         # Create roadmap and specs (no limits here)
-        roadmap_tools.create_roadmap('memory-test', 'Memory Test Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Memory Test Roadmap')
+        roadmap_tools.create_roadmap('memory-test', roadmap_markdown)
 
         # Add multiple specs
         for i in range(10):
@@ -134,7 +175,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
         initial_loop_tools = LoopTools(state_manager)
 
         # Add data through initial instances
-        initial_roadmap_tools.create_roadmap('persistence-test', 'Persistence Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Persistence Roadmap')
+        initial_roadmap_tools.create_roadmap('persistence-test', roadmap_markdown)
         initial_roadmap_tools.add_spec('persistence-test', 'Persistence Spec', sample_spec_markdown)
 
         loop_result = initial_loop_tools.initialize_refinement_loop('build_plan')
@@ -154,7 +196,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
 
     def test_cross_domain_error_isolation(self, loop_tools: LoopTools, roadmap_tools: RoadmapTools) -> None:
         # Create valid data in both domains
-        roadmap_tools.create_roadmap('isolation-test', 'Isolation Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Isolation Roadmap')
+        roadmap_tools.create_roadmap('isolation-test', roadmap_markdown)
         loop_result = loop_tools.initialize_refinement_loop('analyst')
         loop_id = loop_result.id
 
@@ -195,7 +238,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
         assert loop2_status.status == LoopStatus.INITIALIZED
 
         # But roadmap operations should be unaffected by loop history limits
-        custom_roadmap_tools.create_roadmap('custom-test', 'Custom Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Custom Roadmap')
+        custom_roadmap_tools.create_roadmap('custom-test', roadmap_markdown)
         result = custom_roadmap_tools.get_roadmap('custom-test')
         assert isinstance(result, str)
         assert 'Custom Roadmap' in result
@@ -206,7 +250,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
         project_id = 'mixed-workflow'
 
         # 1. Create project roadmap
-        roadmap_tools.create_roadmap(project_id, 'Mixed Workflow Project')
+        roadmap_markdown = create_test_roadmap_markdown('Mixed Workflow Project')
+        roadmap_tools.create_roadmap(project_id, roadmap_markdown)
 
         # 2. Initialize spec refinement loop
         loop_result = loop_tools.initialize_refinement_loop('spec')
@@ -262,7 +307,8 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
             results.append(('loop', loop_result.status == LoopStatus.INITIALIZED))
 
             # Roadmap operation
-            roadmap_result = test_roadmap_tools.create_roadmap(f'concurrent-{i}', f'Roadmap {i}')
+            roadmap_markdown = create_test_roadmap_markdown(f'Roadmap {i}')
+            roadmap_result = test_roadmap_tools.create_roadmap(f'concurrent-{i}', roadmap_markdown)
             results.append(('roadmap', isinstance(roadmap_result, str) and 'Created roadmap' in roadmap_result))
 
             # Mixed operation

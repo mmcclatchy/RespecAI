@@ -1,12 +1,14 @@
-import re
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from markdown_it import MarkdownIt
+from markdown_it.tree import SyntaxTreeNode
+from pydantic import Field, field_validator
 
+from .base import MCPModel
 from .enums import CriticAgent
 
 
-class CriticFeedback(BaseModel):
+class CriticFeedback(MCPModel):
     loop_id: str
     critic_agent: CriticAgent
     iteration: int
@@ -30,43 +32,64 @@ class CriticFeedback(BaseModel):
 
     @classmethod
     def parse_markdown(cls, markdown: str) -> 'CriticFeedback':
-        # Define regex patterns for template sections
-        sections = {
-            'loop_id': r'\*\*Loop ID\*\*:\s*`([^`]+)`',
-            'iteration': r'\*\*Iteration\*\*:\s*`([^`]+)`',
-            'overall_score': r'\*\*Overall Score\*\*:\s*`([^`]+)`',
-            'assessment_summary': r'## Assessment Summary\s*\n`([^`]+)`',
-            'detailed_feedback': r'## Detailed Analysis\s*\n\n(.*?)(?=\n## |$)',
-            'key_issues': r'## Key Issues\s*\n\n(.*?)(?=\n## |$)',
-            'recommendations': r'## Recommendations\s*\n\n(.*?)(?=\n## |\n---|$)',
-            'critic_agent': r'\*\*Critic\*\*:\s*`([^`]+)`',
-        }
+        md = MarkdownIt('commonmark')
+        tree = SyntaxTreeNode(md.parse(markdown))
 
-        # Extract critic agent from title if available
-        title_match = re.search(r'# Critic Feedback:\s*(.+)', markdown)
-        critic_name = title_match.group(1).strip() if title_match else 'ANALYST'
+        fields = {}
+        critic_name = 'ANALYST'
 
-        # Extract sections using regex
-        extracted = {}
-        for field, pattern in sections.items():
-            match = re.search(pattern, markdown, re.DOTALL | re.IGNORECASE)
-            if match:
-                extracted[field] = match.group(1).strip()
-            else:
-                # Set defaults for missing fields
-                if field == 'loop_id':
-                    extracted[field] = 'unknown'
-                elif field == 'iteration':
-                    extracted[field] = '1'
-                elif field == 'overall_score':
-                    extracted[field] = '0'
-                elif field == 'critic_agent':
-                    extracted[field] = critic_name
-                else:
-                    extracted[field] = f'{field.replace("_", " ").title()} not provided'
+        # Extract title
+        for node in cls._find_nodes_by_type(tree, 'heading'):
+            if node.tag != 'h1':
+                continue
+            title_text = cls._extract_text_content(node)
+            if 'Critic Feedback:' in title_text:
+                critic_name = title_text.split(':', 1)[1].strip()
+                break
+
+        # Extract all field data from lists
+        for item in cls._find_nodes_by_type(tree, 'list_item'):
+            text = cls._extract_text_content(item).strip()
+            if ':' not in text:
+                continue
+            field_part, value_part = text.split(':', 1)
+            field_name = field_part.strip().lower().replace(' ', '_').replace('-', '_')
+            field_value = value_part.strip()
+
+            # Map field names to model field names
+            field_mapping = {'critic': 'critic_agent', 'timestamp': 'timestamp', 'status': 'status'}
+            model_field_name = field_mapping.get(field_name, field_name)
+            fields[model_field_name] = field_value
+
+        # Extract detailed feedback
+        detailed_feedback = cls._extract_content_by_header_path(tree, ['Analysis'])
+
+        # Extract key issues and recommendations
+        key_issues = []
+        recommendations = []
+
+        # Extract issues and recommendations using a special list extraction method
+        key_issues = cls._extract_list_items_by_header_path(tree, ['Issues and Recommendations', 'Key Issues'])
+        recommendations = cls._extract_list_items_by_header_path(
+            tree, ['Issues and Recommendations', 'Recommendations']
+        )
+
+        # Set defaults for missing fields
+        if 'loop_id' not in fields:
+            fields['loop_id'] = 'unknown'
+        if 'iteration' not in fields:
+            fields['iteration'] = '1'
+        if 'overall_score' not in fields:
+            fields['overall_score'] = '0'
+        if 'assessment_summary' not in fields:
+            fields['assessment_summary'] = 'Assessment Summary not provided'
+        if not detailed_feedback:
+            detailed_feedback = 'Detailed Feedback not provided'
+        if 'critic_agent' not in fields:
+            fields['critic_agent'] = critic_name
 
         # Parse critic agent enum - map common names to actual enum values
-        agent_name = extracted['critic_agent'].upper()
+        agent_name = fields['critic_agent'].upper()
         agent_mapping = {
             'ANALYST': CriticAgent.ANALYST_CRITIC,
             'ANALYST-CRITIC': CriticAgent.ANALYST_CRITIC,
@@ -86,72 +109,56 @@ class CriticFeedback(BaseModel):
 
         # Parse iteration and score
         try:
-            iteration = int(extracted['iteration'])
+            iteration = int(fields['iteration'])
         except ValueError:
             iteration = 1
 
         try:
-            overall_score = int(extracted['overall_score'])
+            overall_score = int(fields['overall_score'])
         except ValueError:
             overall_score = 0
 
-        # Parse list fields from markdown bullet points
-        key_issues = []
-        if extracted['key_issues'] and extracted['key_issues'] != 'Key Issues not provided':
-            for line in extracted['key_issues'].split('\n'):
-                line = line.strip()
-                if line.startswith('- ') or line.startswith('* '):
-                    key_issues.append(line[2:].strip())
-
-        recommendations = []
-        if extracted['recommendations'] and extracted['recommendations'] != 'Recommendations not provided':
-            for line in extracted['recommendations'].split('\n'):
-                line = line.strip()
-                if line.startswith('- ') or line.startswith('* '):
-                    recommendations.append(line[2:].strip())
-
         return cls(
-            loop_id=extracted['loop_id'],
+            loop_id=fields['loop_id'],
             critic_agent=critic_agent,
             iteration=iteration,
             overall_score=overall_score,
-            assessment_summary=extracted['assessment_summary'],
-            detailed_feedback=extracted['detailed_feedback'],
+            assessment_summary=fields['assessment_summary'],
+            detailed_feedback=detailed_feedback,
             key_issues=key_issues,
             recommendations=recommendations,
         )
 
     def build_markdown(self) -> str:
-        # Format list items
-        issues_md = '\n'.join([f'- {issue}' for issue in self.key_issues]) if self.key_issues else 'None identified'
+        issues_md = '\n'.join([f'- {issue}' for issue in self.key_issues]) if self.key_issues else '- None identified'
         recommendations_md = (
-            '\n'.join([f'- {rec}' for rec in self.recommendations]) if self.recommendations else 'None provided'
+            '\n'.join([f'- {rec}' for rec in self.recommendations]) if self.recommendations else '- None provided'
         )
 
         return f"""# Critic Feedback: {self.critic_agent.value.upper()}
 
-**Loop ID**: `{self.loop_id}`
-**Iteration**: `{self.iteration}`
-**Overall Score**: `{self.overall_score}`
-
 ## Assessment Summary
+- **Loop ID**: {self.loop_id}
+- **Iteration**: {self.iteration}
+- **Overall Score**: {self.overall_score}
+- **Assessment Summary**: {self.assessment_summary}
 
-`{self.assessment_summary}`
-
-## Detailed Analysis
+## Analysis
 
 {self.detailed_feedback}
 
-## Key Issues
+## Issues and Recommendations
+
+### Key Issues
 
 {issues_md}
 
-## Recommendations
+### Recommendations
 
 {recommendations_md}
 
----
-
-**Critic**: `{self.critic_agent.value.upper()}`
-**Timestamp**: `{self.timestamp.isoformat()}`
-**Status**: `completed`"""
+## Metadata
+- **Critic**: {self.critic_agent.value.upper()}
+- **Timestamp**: {self.timestamp.isoformat()}
+- **Status**: completed
+"""

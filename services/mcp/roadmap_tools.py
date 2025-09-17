@@ -6,10 +6,6 @@ from services.models.initial_spec import InitialSpec
 from services.utils.state_manager import StateManager
 
 
-from services.models.enums import RoadmapStatus
-from datetime import datetime
-
-
 class RoadmapTools:
     def __init__(self, state: StateManager) -> None:
         self.state = state
@@ -21,36 +17,7 @@ class RoadmapTools:
             raise ToolError('Roadmap data cannot be empty')
 
         try:
-            # Check if this is markdown (contains '# Project Roadmap:') or just a name
-            if '# Project Roadmap:' in roadmap_data:
-                # New format: full markdown
-                roadmap = Roadmap.parse_markdown(roadmap_data)
-            else:
-                # Legacy format: just a name - create minimal roadmap
-                roadmap = Roadmap(
-                    project_name=roadmap_data,
-                    project_goal='Project Goal not specified',
-                    total_duration='Total Duration not specified',
-                    team_size='Team Size not specified',
-                    roadmap_budget='Budget not specified',
-                    specs=[],
-                    critical_path_analysis='Critical Path Analysis not specified',
-                    key_risks='Key Risks not specified',
-                    mitigation_plans='Mitigation Plans not specified',
-                    buffer_time='Buffer Time not specified',
-                    development_resources='Development Resources not specified',
-                    infrastructure_requirements='Infrastructure Requirements not specified',
-                    external_dependencies='External Dependencies not specified',
-                    quality_assurance_plan='Quality Assurance Plan not specified',
-                    technical_milestones='Technical Milestones not specified',
-                    business_milestones='Business Milestones not specified',
-                    quality_gates='Quality Gates not specified',
-                    performance_targets='Performance Targets not specified',
-                    roadmap_status=RoadmapStatus.DRAFT,
-                    creation_date=datetime.now().isoformat(),
-                    last_updated=datetime.now().isoformat(),
-                    spec_count=0,
-                )
+            roadmap = Roadmap.parse_markdown(roadmap_data)
 
             self.state.store_roadmap(project_id, roadmap)
             return f'Created roadmap "{roadmap.project_name}" for project {project_id}'

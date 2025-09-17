@@ -8,66 +8,72 @@ class TestFeatureRequirementsParsing:
     def test_parse_markdown_extracts_all_fields(self) -> None:
         markdown = """# Feature Requirements: User Authentication System
 
-## Feature Purpose
+## Overview
 
-**Feature Description**: `Secure user authentication with multi-factor support`
-**Problem Statement**: `Users need secure access to the platform with protection against unauthorized access`
-**Target Users**: `All platform users including administrators and end-users`
-**Business Value**: `Increased security compliance and user trust leading to higher retention`
+### Feature Description
+Secure user authentication with multi-factor support
 
-## User Requirements
+### Problem Statement
+Users need secure access to the platform with protection against unauthorized access
+
+### Target Users
+All platform users including administrators and end-users
+
+### Business Value
+Increased security compliance and user trust leading to higher retention
+
+## Requirements
 
 ### User Stories
-`As a user, I want to log in securely so that my account is protected from unauthorized access`
+As a user, I want to log in securely so that my account is protected from unauthorized access
 
 ### Acceptance Criteria
-`User can login with email/password, MFA is required for admin accounts, password reset functionality works`
+User can login with email/password, MFA is required for admin accounts, password reset functionality works
 
 ### User Experience Goals
-`Simple login process, clear error messages, quick authentication under 2 seconds`
+Simple login process, clear error messages, quick authentication under 2 seconds
 
-## Technical Requirements
+## Technical Specifications
 
 ### Functional Requirements
-`JWT token-based authentication, password hashing with bcrypt, session management`
+JWT token-based authentication, password hashing with bcrypt, session management
 
 ### Non-Functional Requirements
-`99.9% uptime, sub-1s login response time, support for 10,000 concurrent users`
+99.9% uptime, sub-1s login response time, support for 10,000 concurrent users
 
 ### Integration Requirements
-`OAuth providers (Google, GitHub), LDAP integration, audit logging system`
+OAuth providers (Google, GitHub), LDAP integration, audit logging system
 
-## Success Metrics
+## Metrics
 
 ### User Metrics
-`User login success rate >95%, password reset completion rate >90%`
+User login success rate >95%, password reset completion rate >90%
 
 ### Performance Metrics
-`Average login time <1s, token refresh time <200ms, system availability >99.9%`
+Average login time <1s, token refresh time <200ms, system availability >99.9%
 
 ### Technical Metrics
-`Failed authentication attempts <5%, security incidents = 0, API response time <500ms`
+Failed authentication attempts <5%, security incidents = 0, API response time <500ms
 
-## Implementation Scope
+## Feature Prioritization
 
-### Must Have Features
-`Email/password login, secure session management, password reset via email`
+### Must Have
+Email/password login, secure session management, password reset via email
 
-### Should Have Features
-`Two-factor authentication, OAuth integration, remember me functionality`
+### Should Have
+Two-factor authentication, OAuth integration, remember me functionality
 
-### Could Have Features
-`Biometric authentication, single sign-on, social media integration`
+### Could Have
+Biometric authentication, single sign-on, social media integration
 
-### Won't Have Features
-`SMS-based authentication (privacy concerns), password sharing features`
+### Won't Have
+SMS-based authentication (privacy concerns), password sharing features
 
----
-
-**Status**: `approved`
-**Created**: `2024-01-10`
-**Last Updated**: `2024-01-15`
-**Owner**: `Security Team`
+## Metadata
+- **Status**: approved
+- **Created**: 2024-01-10
+- **Last Updated**: 2024-01-15
+- **Owner**: Security Team
 """
 
         requirements = FeatureRequirements.parse_markdown(markdown)
@@ -101,19 +107,25 @@ class TestFeatureRequirementsParsing:
     def test_parse_markdown_handles_missing_sections(self) -> None:
         markdown = """# Feature Requirements: Basic Feature
 
-## Feature Purpose
+## Overview
 
-**Feature Description**: `Simple feature implementation`
-**Problem Statement**: `Need basic functionality`
-**Target Users**: `End users`
-**Business Value**: `Improved user experience`
+### Feature Description
+Simple feature implementation
 
----
+### Problem Statement
+Need basic functionality
 
-**Status**: `draft`
-**Created**: `2024-01-01`
-**Last Updated**: `2024-01-01`
-**Owner**: `Development Team`
+### Target Users
+End users
+
+### Business Value
+Improved user experience
+
+## Metadata
+- **Status**: draft
+- **Created**: 2024-01-01
+- **Last Updated**: 2024-01-01
+- **Owner**: Development Team
 """
 
         requirements = FeatureRequirements.parse_markdown(markdown)
@@ -164,13 +176,17 @@ class TestFeatureRequirementsMarkdownBuilding:
         markdown = sample_requirements.build_markdown()
 
         assert '# Feature Requirements: Shopping Cart Feature' in markdown
-        assert '**Feature Description**: `Add items to cart for later purchase`' in markdown
+        assert '## Overview' in markdown
+        assert '### Feature Description' in markdown
+        assert 'Add items to cart for later purchase' in markdown
+        assert '## Requirements' in markdown
         assert '### User Stories' in markdown
-        assert '`As a customer, I want to add items to my cart so I can purchase multiple items at once`' in markdown
-        assert '### Must Have Features' in markdown
-        assert '`Add items, remove items, view total price`' in markdown
-        assert '**Status**: `in-review`' in markdown
-        assert '**Owner**: `Product Team`' in markdown
+        assert 'As a customer, I want to add items to my cart so I can purchase multiple items at once' in markdown
+        assert '## Feature Prioritization' in markdown
+        assert '### Must Have' in markdown
+        assert 'Add items, remove items, view total price' in markdown
+        assert '- **Status**: in-review' in markdown
+        assert '- **Owner**: Product Team' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, sample_requirements: FeatureRequirements) -> None:
         # Build markdown from the model

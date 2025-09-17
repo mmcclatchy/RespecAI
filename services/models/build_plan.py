@@ -1,7 +1,8 @@
-import re
 from datetime import datetime
 from typing import Self
 
+from markdown_it import MarkdownIt
+from markdown_it.tree import SyntaxTreeNode
 from pydantic import BaseModel, Field
 
 from .enums import BuildStatus
@@ -32,124 +33,252 @@ class BuildPlan(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
 
     @classmethod
+    def _find_nodes_by_type(cls, node: SyntaxTreeNode, node_type: str) -> list[SyntaxTreeNode]:
+        nodes = []
+
+        if node.type == node_type:
+            nodes.append(node)
+
+        if hasattr(node, 'children') and node.children:
+            for child in node.children:
+                nodes.extend(cls._find_nodes_by_type(child, node_type))
+
+        return nodes
+
+    @classmethod
+    def _extract_text_content(cls, node: SyntaxTreeNode) -> str:
+        if not hasattr(node, 'children') or not node.children:
+            return getattr(node, 'content', '')
+
+        return ' '.join(cls._extract_text_content(child) for child in node.children)
+
+    @classmethod
+    def _extract_content_by_header_path(cls, tree: SyntaxTreeNode, path: list[str]) -> str:
+        h2_header = path[0]
+        h3_header = path[1] if len(path) > 1 else None
+
+        nodes = tree.children if hasattr(tree, 'children') else []
+        h2_start_idx = None
+
+        for i, node in enumerate(nodes):
+            if node.type == 'heading' and node.tag == 'h2':
+                header_text = cls._extract_text_content(node).strip()
+                if header_text == h2_header:
+                    h2_start_idx = i
+                    break
+
+        if h2_start_idx is None:
+            return ''
+
+        if h3_header is None:
+            content_parts = []
+            for j in range(h2_start_idx + 1, len(nodes)):
+                next_node = nodes[j]
+                if next_node.type == 'heading' and next_node.tag == 'h2':
+                    break
+                if next_node.type in ['paragraph', 'list', 'blockquote', 'code_block']:
+                    content_parts.append(cls._extract_text_content(next_node).strip())
+            return '\n\n'.join(content_parts).strip()
+
+        h3_start_idx = None
+        for j in range(h2_start_idx + 1, len(nodes)):
+            next_node = nodes[j]
+            if next_node.type == 'heading' and next_node.tag == 'h2':
+                break
+            if next_node.type == 'heading' and next_node.tag == 'h3':
+                header_text = cls._extract_text_content(next_node).strip()
+                if header_text == h3_header:
+                    h3_start_idx = j
+                    break
+
+        if h3_start_idx is None:
+            return ''
+
+        content_parts = []
+        for j in range(h3_start_idx + 1, len(nodes)):
+            next_node = nodes[j]
+            if next_node.type == 'heading' and next_node.tag in ['h2', 'h3']:
+                break
+            if next_node.type in ['paragraph', 'list', 'blockquote', 'code_block']:
+                content_parts.append(cls._extract_text_content(next_node).strip())
+
+        return '\n\n'.join(content_parts).strip()
+
+    @classmethod
     def parse_markdown(cls, markdown: str) -> Self:
         if '# Build Plan:' not in markdown:
             raise ValueError('Invalid build plan format: missing title')
 
-        sections = {
-            'project_goal': r'\*\*Project Goal\*\*:\s*`([^`]+)`',
-            'total_duration': r'\*\*Total Duration\*\*:\s*`([^`]+)`',
-            'team_size': r'\*\*Team Size\*\*:\s*`([^`]+)`',
-            'primary_language': r'\*\*Primary Language\*\*:\s*`([^`]+)`',
-            'framework': r'\*\*Framework\*\*:\s*`([^`]+)`',
-            'database': r'\*\*Database\*\*:\s*`([^`]+)`',
-            'development_environment': r'### Development Environment Setup\s*\n`([^`]+)`',
-            'database_schema': r'### Database Schema Design\s*\n`([^`]+)`',
-            'api_architecture': r'### API Architecture\s*\n`([^`]+)`',
-            'frontend_architecture': r'### Frontend Architecture\s*\n`([^`]+)`',
-            'core_features': r'### Core Features Implementation\s*\n`([^`]+)`',
-            'integration_points': r'### Integration Points\s*\n`([^`]+)`',
-            'testing_strategy': r'### Testing Strategy\s*\n`([^`]+)`',
-            'code_standards': r'### Code Standards\s*\n`([^`]+)`',
-            'performance_requirements': r'### Performance Requirements\s*\n`([^`]+)`',
-            'security_implementation': r'### Security Implementation\s*\n`([^`]+)`',
-            'build_status': r'\*\*Status\*\*:\s*`([^`]+)`',
-            'creation_date': r'\*\*Created\*\*:\s*`([^`]+)`',
-            'last_updated': r'\*\*Last Updated\*\*:\s*`([^`]+)`',
-            'build_owner': r'\*\*Owner\*\*:\s*`([^`]+)`',
+        md = MarkdownIt('commonmark')
+        tree = SyntaxTreeNode(md.parse(markdown))
+
+        fields = {}
+
+        # Extract title
+        for node in cls._find_nodes_by_type(tree, 'heading'):
+            if node.tag != 'h1':
+                continue
+            title_text = cls._extract_text_content(node)
+            if 'Build Plan:' not in title_text:
+                continue
+            fields['project_name'] = title_text.split(':', 1)[1].strip()
+            break
+
+        # Extract content by header paths
+        header_path_mapping = {
+            'project_goal': ['Project Overview', 'Goal'],
+            'total_duration': ['Project Overview', 'Duration'],
+            'team_size': ['Project Overview', 'Team Size'],
+            'primary_language': ['Technology Stack', 'Primary Language'],
+            'framework': ['Technology Stack', 'Framework'],
+            'database': ['Technology Stack', 'Database'],
+            'development_environment': ['Architecture', 'Development Environment'],
+            'database_schema': ['Architecture', 'Database Schema'],
+            'api_architecture': ['Architecture', 'API Architecture'],
+            'frontend_architecture': ['Architecture', 'Frontend Architecture'],
+            'core_features': ['Implementation', 'Core Features'],
+            'integration_points': ['Implementation', 'Integration Points'],
+            'testing_strategy': ['Quality Management', 'Testing Strategy'],
+            'code_standards': ['Quality Management', 'Code Standards'],
+            'performance_requirements': ['Quality Management', 'Performance Requirements'],
+            'security_implementation': ['Quality Management', 'Security Implementation'],
         }
 
-        name_match = re.search(r'# Build Plan:\s*(.+)', markdown)
-        project_name = name_match.group(1).strip() if name_match else 'Unnamed Project'
+        for field_name, header_path in header_path_mapping.items():
+            content = cls._extract_content_by_header_path(tree, header_path)
+            if content:
+                fields[field_name] = content
 
-        extracted: dict[str, str] = {}
-        for field, pattern in sections.items():
-            match = re.search(pattern, markdown, re.DOTALL | re.IGNORECASE)
-            if match:
-                extracted[field] = match.group(1).strip()
-            else:
-                if field == 'build_status':
-                    extracted[field] = 'planning'
-                else:
-                    extracted[field] = f'{field.replace("_", " ").title()} not specified'
+        # Handle metadata section separately
+        for item in cls._find_nodes_by_type(tree, 'list_item'):
+            text = cls._extract_text_content(item).strip()
+            if ':' not in text:
+                continue
+            field_part, value_part = text.split(':', 1)
+            field_name = field_part.strip().lower().replace(' ', '_').replace('-', '_')
+            field_value = value_part.strip()
+
+            field_mapping = {'status': 'build_status', 'created': 'creation_date', 'owner': 'build_owner'}
+            model_field_name = field_mapping.get(field_name, field_name)
+            fields[model_field_name] = field_value
+
+        # Set defaults for missing fields
+        field_defaults = {
+            'project_name': 'Unnamed Project',
+            'project_goal': 'Project Goal not specified',
+            'total_duration': 'Total Duration not specified',
+            'team_size': 'Team Size not specified',
+            'primary_language': 'Primary Language not specified',
+            'framework': 'Framework not specified',
+            'database': 'Database not specified',
+            'development_environment': 'Development Environment not specified',
+            'database_schema': 'Database Schema not specified',
+            'api_architecture': 'Api Architecture not specified',
+            'frontend_architecture': 'Frontend Architecture not specified',
+            'core_features': 'Core Features not specified',
+            'integration_points': 'Integration Points not specified',
+            'testing_strategy': 'Testing Strategy not specified',
+            'code_standards': 'Code Standards not specified',
+            'performance_requirements': 'Performance Requirements not specified',
+            'security_implementation': 'Security Implementation not specified',
+            'build_status': 'planning',
+            'creation_date': 'Creation Date not specified',
+            'last_updated': 'Last Updated not specified',
+            'build_owner': 'Build Owner not specified',
+        }
+
+        for field, default_value in field_defaults.items():
+            if field not in fields:
+                fields[field] = default_value
 
         return cls(
-            project_name=project_name,
-            project_goal=extracted['project_goal'],
-            total_duration=extracted['total_duration'],
-            team_size=extracted['team_size'],
-            primary_language=extracted['primary_language'],
-            framework=extracted['framework'],
-            database=extracted['database'],
-            development_environment=extracted['development_environment'],
-            database_schema=extracted['database_schema'],
-            api_architecture=extracted['api_architecture'],
-            frontend_architecture=extracted['frontend_architecture'],
-            core_features=extracted['core_features'],
-            integration_points=extracted['integration_points'],
-            testing_strategy=extracted['testing_strategy'],
-            code_standards=extracted['code_standards'],
-            performance_requirements=extracted['performance_requirements'],
-            security_implementation=extracted['security_implementation'],
-            build_status=BuildStatus(extracted['build_status']),
-            creation_date=extracted['creation_date'],
-            last_updated=extracted['last_updated'],
-            build_owner=extracted['build_owner'],
+            project_name=fields['project_name'],
+            project_goal=fields['project_goal'],
+            total_duration=fields['total_duration'],
+            team_size=fields['team_size'],
+            primary_language=fields['primary_language'],
+            framework=fields['framework'],
+            database=fields['database'],
+            development_environment=fields['development_environment'],
+            database_schema=fields['database_schema'],
+            api_architecture=fields['api_architecture'],
+            frontend_architecture=fields['frontend_architecture'],
+            core_features=fields['core_features'],
+            integration_points=fields['integration_points'],
+            testing_strategy=fields['testing_strategy'],
+            code_standards=fields['code_standards'],
+            performance_requirements=fields['performance_requirements'],
+            security_implementation=fields['security_implementation'],
+            build_status=BuildStatus(fields['build_status']),
+            creation_date=fields['creation_date'],
+            last_updated=fields['last_updated'],
+            build_owner=fields['build_owner'],
         )
 
     def build_markdown(self) -> str:
         return f"""# Build Plan: {self.project_name}
 
-## Development Overview
+## Project Overview
 
-**Project Goal**: `{self.project_goal}`
-**Total Duration**: `{self.total_duration}`
-**Team Size**: `{self.team_size}`
+### Goal
+{self.project_goal}
 
-## Technical Foundation
+### Duration
+{self.total_duration}
 
-**Primary Language**: `{self.primary_language}`
-**Framework**: `{self.framework}`
-**Database**: `{self.database}`
+### Team Size
+{self.team_size}
 
-## Implementation Plan
+## Technology Stack
 
-### Development Environment Setup
-`{self.development_environment}`
+### Primary Language
+{self.primary_language}
 
-### Database Schema Design
-`{self.database_schema}`
+### Framework
+{self.framework}
+
+### Database
+{self.database}
+
+## Architecture
+
+### Development Environment
+{self.development_environment}
+
+### Database Schema
+{self.database_schema}
 
 ### API Architecture
-`{self.api_architecture}`
+{self.api_architecture}
 
 ### Frontend Architecture
-`{self.frontend_architecture}`
+{self.frontend_architecture}
 
-### Core Features Implementation
-`{self.core_features}`
+## Implementation
+
+### Core Features
+{self.core_features}
 
 ### Integration Points
-`{self.integration_points}`
+{self.integration_points}
+
+## Quality Management
 
 ### Testing Strategy
-`{self.testing_strategy}`
-
-## Code Quality
+{self.testing_strategy}
 
 ### Code Standards
-`{self.code_standards}`
+{self.code_standards}
 
 ### Performance Requirements
-`{self.performance_requirements}`
+{self.performance_requirements}
 
 ### Security Implementation
-`{self.security_implementation}`
+{self.security_implementation}
 
----
-
-**Status**: `{self.build_status.value}`
-**Created**: `{self.creation_date}`
-**Last Updated**: `{self.last_updated}`
-**Owner**: `{self.build_owner}`
+## Metadata
+- **Status**: {self.build_status.value}
+- **Created**: {self.creation_date}
+- **Last Updated**: {self.last_updated}
+- **Owner**: {self.build_owner}
 """

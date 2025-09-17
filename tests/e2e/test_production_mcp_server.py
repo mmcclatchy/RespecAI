@@ -8,8 +8,48 @@ import pytest
 from services.mcp.loop_tools import loop_tools
 from services.mcp.roadmap_tools import roadmap_tools
 from services.mcp.server import create_mcp_server, health_check
+
+
 from services.utils.enums import HealthState, LoopStatus
 from services.utils.setting_configs import MCPSettings
+
+
+def create_test_roadmap_markdown(project_name: str) -> str:
+    return f"""# Project Roadmap: {project_name}
+
+## Project Details
+- **Project Goal**: Build and deploy {project_name}
+- **Total Duration**: 6 months
+- **Team Size**: 5 developers
+- **Budget**: $100,000
+
+## Specifications
+
+
+## Risk Assessment
+- **Critical Path Analysis**: Critical path analysis pending
+- **Key Risks**: Standard development risks
+- **Mitigation Plans**: Standard mitigation strategies
+- **Buffer Time**: 2 weeks
+
+## Resource Planning
+- **Development Resources**: 5 developers, 1 PM
+- **Infrastructure Requirements**: AWS cloud infrastructure
+- **External Dependencies**: None identified
+- **Quality Assurance Plan**: Automated testing and manual QA
+
+## Success Metrics
+- **Technical Milestones**: Alpha, Beta, Production release
+- **Business Milestones**: User adoption targets
+- **Quality Gates**: Code review, testing, security review
+- **Performance Targets**: Sub-2s response times
+
+## Metadata
+- **Status**: draft
+- **Created**: 2024-01-01
+- **Last Updated**: 2024-01-01
+- **Spec Count**: 0
+"""
 
 
 class TestProductionMCPServer:
@@ -370,7 +410,8 @@ and comprehensive error recovery mechanisms.
 """
 
         # Phase 1: Project Initialization
-        roadmap_result = roadmap_tools.create_roadmap(project_id, 'Production Workflow Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Production Workflow Roadmap')
+        roadmap_result = roadmap_tools.create_roadmap(project_id, roadmap_markdown)
         assert isinstance(roadmap_result, str)
         assert 'Created roadmap' in roadmap_result
 
@@ -454,7 +495,8 @@ and comprehensive error recovery mechanisms.
         # Test concurrent roadmap creation operations
         roadmap_results = []
         for i in range(3):
-            roadmap_result = roadmap_tools.create_roadmap(f'concurrent-project-{i}', f'Concurrent Roadmap {i}')
+            roadmap_markdown = create_test_roadmap_markdown(f'Concurrent Roadmap {i}')
+            roadmap_result = roadmap_tools.create_roadmap(f'concurrent-project-{i}', roadmap_markdown)
             roadmap_results.append(roadmap_result)
             assert isinstance(roadmap_result, str)
             assert 'Created roadmap' in roadmap_result

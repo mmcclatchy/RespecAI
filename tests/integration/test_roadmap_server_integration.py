@@ -8,6 +8,44 @@ from services.mcp.roadmap_tools import roadmap_tools
 from services.mcp.server import create_mcp_server
 
 
+def create_test_roadmap_markdown(project_name: str) -> str:
+    return f"""# Project Roadmap: {project_name}
+
+## Project Details
+- **Project Goal**: Build and deploy {project_name}
+- **Total Duration**: 6 months
+- **Team Size**: 5 developers
+- **Budget**: $100,000
+
+## Specifications
+
+
+## Risk Assessment
+- **Critical Path Analysis**: Critical path analysis pending
+- **Key Risks**: Standard development risks
+- **Mitigation Plans**: Standard mitigation strategies
+- **Buffer Time**: 2 weeks
+
+## Resource Planning
+- **Development Resources**: 5 developers, 1 PM
+- **Infrastructure Requirements**: AWS cloud infrastructure
+- **External Dependencies**: None identified
+- **Quality Assurance Plan**: Automated testing and manual QA
+
+## Success Metrics
+- **Technical Milestones**: Alpha, Beta, Production release
+- **Business Milestones**: User adoption targets
+- **Quality Gates**: Code review, testing, security review
+- **Performance Targets**: Sub-2s response times
+
+## Metadata
+- **Status**: draft
+- **Created**: 2024-01-01
+- **Last Updated**: 2024-01-01
+- **Spec Count**: 0
+"""
+
+
 class TestRoadmapServerIntegration:
     @pytest.fixture
     def server(self) -> FastMCP:
@@ -59,7 +97,8 @@ class TestRoadmapServerIntegration:
         assert 'create_roadmap' in tools
 
         # Test tool functionality through direct call
-        result = roadmap_tools.create_roadmap('integration-test-1', 'Integration Test Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Integration Test Roadmap')
+        result = roadmap_tools.create_roadmap('integration-test-1', roadmap_markdown)
 
         assert isinstance(result, str)
         assert 'Integration Test Roadmap' in result
@@ -68,7 +107,8 @@ class TestRoadmapServerIntegration:
 
     def test_get_roadmap_integration(self, server: FastMCP) -> None:
         # Setup: create a roadmap first
-        roadmap_tools.create_roadmap('integration-test-2', 'Test Roadmap for Get')
+        roadmap_markdown = create_test_roadmap_markdown('Test Roadmap for Get')
+        roadmap_tools.create_roadmap('integration-test-2', roadmap_markdown)
 
         # Test that tool is registered
         tools = self._get_tools_sync(server)
@@ -85,7 +125,8 @@ class TestRoadmapServerIntegration:
         project_id = 'spec-test-project'
 
         # Setup: create roadmap first
-        roadmap_tools.create_roadmap(project_id, 'Spec Test Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Spec Test Roadmap')
+        roadmap_tools.create_roadmap(project_id, roadmap_markdown)
 
         # Test that tool is registered
         tools = self._get_tools_sync(server)
@@ -102,7 +143,8 @@ class TestRoadmapServerIntegration:
         project_id = 'get-spec-project'
 
         # Setup: create roadmap and add spec
-        roadmap_tools.create_roadmap(project_id, 'Get Spec Test')
+        roadmap_markdown = create_test_roadmap_markdown('Get Spec Test')
+        roadmap_tools.create_roadmap(project_id, roadmap_markdown)
         roadmap_tools.add_spec(project_id, 'Retrievable Spec', valid_spec_markdown)
 
         # Test that tool is registered
@@ -120,7 +162,8 @@ class TestRoadmapServerIntegration:
         project_id = 'update-spec-project'
 
         # Setup: create roadmap and add spec
-        roadmap_tools.create_roadmap(project_id, 'Update Spec Test')
+        roadmap_markdown = create_test_roadmap_markdown('Update Spec Test')
+        roadmap_tools.create_roadmap(project_id, roadmap_markdown)
         roadmap_tools.add_spec(project_id, 'Original Spec', valid_spec_markdown)
 
         # Test that tool is registered
@@ -140,7 +183,8 @@ class TestRoadmapServerIntegration:
         project_id = 'list-specs-project'
 
         # Setup: create roadmap and add multiple specs
-        roadmap_tools.create_roadmap(project_id, 'Multi Spec Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Multi Spec Roadmap')
+        roadmap_tools.create_roadmap(project_id, roadmap_markdown)
 
         # Add first spec
         roadmap_tools.add_spec(project_id, 'First Spec', valid_spec_markdown)
@@ -165,7 +209,8 @@ class TestRoadmapServerIntegration:
         project_id = 'delete-spec-project'
 
         # Setup: create roadmap and add spec
-        roadmap_tools.create_roadmap(project_id, 'Delete Test Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Delete Test Roadmap')
+        roadmap_tools.create_roadmap(project_id, roadmap_markdown)
         roadmap_tools.add_spec(project_id, 'Deletable Spec', valid_spec_markdown)
 
         # Test that tool is registered
@@ -198,7 +243,8 @@ class TestRoadmapServerIntegration:
             assert tool_name in tools
 
         # Step 1: Create roadmap
-        create_result = roadmap_tools.create_roadmap(project_id, 'Complete Workflow Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Complete Workflow Roadmap')
+        create_result = roadmap_tools.create_roadmap(project_id, roadmap_markdown)
         assert isinstance(create_result, str)
         assert 'Created roadmap' in create_result
 
@@ -257,7 +303,8 @@ class TestRoadmapServerIntegration:
             roadmap_tools.add_spec('missing-project', 'Test Spec', '# Test\n\nSome content')
 
         # Test getting non-existent spec
-        roadmap_tools.create_roadmap('error-test-project', 'Error Test Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Error Test Roadmap')
+        roadmap_tools.create_roadmap('error-test-project', roadmap_markdown)
         with pytest.raises(ResourceError):
             roadmap_tools.get_spec('error-test-project', 'non-existent-spec')
 
@@ -305,7 +352,8 @@ class TestRoadmapServerIntegration:
 
         # Create multiple projects
         for i, project_id in enumerate(project_ids):
-            result = roadmap_tools.create_roadmap(project_id, f'Consistency Test Roadmap {i}')
+            roadmap_markdown = create_test_roadmap_markdown(f'Consistency Test Roadmap {i}')
+            result = roadmap_tools.create_roadmap(project_id, roadmap_markdown)
             assert isinstance(result, str)
             assert 'Created roadmap' in result
 

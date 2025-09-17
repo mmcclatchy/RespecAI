@@ -153,7 +153,32 @@ This document captures advanced features and capabilities that were deferred fro
 - Implement recovery strategies based on most common error patterns
 - Consider circuit breaker patterns for external service integration
 
-### 8. Complex Testing Infrastructure
+### 8. Dynamic Template Generation from Models
+
+**Description**: Generate document templates dynamically from Pydantic models to ensure single source of truth.
+
+**Original Scope**:
+- Parse existing markdown templates to generate Pydantic models
+- Generate markdown templates from Pydantic model definitions
+- Automatic template synchronization when models change
+- Template inheritance and composition from base model structures
+- Validation that templates match model field requirements
+
+**Why Deferred**:
+- Static templates sufficient for initial implementation
+- Dynamic generation adds complexity without immediate benefit
+- Model-first approach already established with manual template updates
+- Template parsing to models requires sophisticated markdown analysis
+- Current manual sync manageable with small number of models
+
+**Future Implementation Notes**:
+- Implement template generation from models first (easier direction)
+- Consider using Jinja2 or similar templating engine with model introspection
+- Add CI/CD checks to ensure templates stay synchronized with models
+- Evaluate whether template → model parsing is needed or if model → template is sufficient
+- Consider using model docstrings and field metadata to generate template comments
+
+### 9. Complex Testing Infrastructure
 
 **Description**: Comprehensive testing infrastructure with advanced scenarios and performance testing.
 

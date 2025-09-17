@@ -99,34 +99,33 @@ class TestCriticFeedback:
     def test_parse_markdown_creates_valid_feedback(self) -> None:
         markdown = """# Critic Feedback: SPEC-CRITIC
 
-**Loop ID**: `test-loop-789`
-**Iteration**: `2`
-**Overall Score**: `88`
-
 ## Assessment Summary
+- **Loop ID**: test-loop-789
+- **Iteration**: 2
+- **Overall Score**: 88
+- **Assessment Summary**: Comprehensive specification with solid architecture and clear implementation path.
 
-`Comprehensive specification with solid architecture and clear implementation path.`
-
-## Detailed Analysis
+## Analysis
 
 The specification demonstrates thorough understanding of requirements and provides detailed implementation guidance. Security considerations are well-addressed.
 
-## Key Issues
+## Issues and Recommendations
+
+### Key Issues
 
 - Missing performance benchmarks
 - API versioning strategy unclear
 
-## Recommendations
+### Recommendations
 
 - Add performance requirements section
 - Define API versioning strategy
 - Include monitoring and alerting specifications
 
----
-
-**Critic**: `SPEC-CRITIC`
-**Timestamp**: `2024-01-15T14:30:00Z`
-**Status**: `completed`
+## Metadata
+- **Critic**: SPEC-CRITIC
+- **Timestamp**: 2024-01-15T14:30:00Z
+- **Status**: completed
 """
 
         feedback = CriticFeedback.parse_markdown(markdown)
@@ -161,10 +160,15 @@ The specification demonstrates thorough understanding of requirements and provid
         markdown = feedback.build_markdown()
 
         assert '# Critic Feedback: ANALYST-CRITIC' in markdown
-        assert '**Loop ID**: `test-loop-456`' in markdown
-        assert '**Overall Score**: `78`' in markdown
-        assert '`Good analysis with room for improvement`' in markdown
+        assert '## Assessment Summary' in markdown
+        assert '- **Loop ID**: test-loop-456' in markdown
+        assert '- **Overall Score**: 78' in markdown
+        assert '- **Assessment Summary**: Good analysis with room for improvement' in markdown
+        assert '## Analysis' in markdown
+        assert '## Issues and Recommendations' in markdown
+        assert '### Key Issues' in markdown
         assert '- Missing data validation' in markdown
+        assert '### Recommendations' in markdown
         assert '- Add comprehensive data validation' in markdown
 
     def test_round_trip_parse_and_build_markdown(self) -> None:

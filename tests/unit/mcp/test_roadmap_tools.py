@@ -14,6 +14,44 @@ from datetime import datetime
 from services.models.enums import SpecStatus
 
 
+def create_test_roadmap_markdown(project_name: str) -> str:
+    return f"""# Project Roadmap: {project_name}
+
+## Project Details
+- **Project Goal**: Build and deploy {project_name}
+- **Total Duration**: 6 months
+- **Team Size**: 5 developers
+- **Budget**: $100,000
+
+## Specifications
+
+
+## Risk Assessment
+- **Critical Path Analysis**: Critical path analysis pending
+- **Key Risks**: Standard development risks
+- **Mitigation Plans**: Standard mitigation strategies
+- **Buffer Time**: 2 weeks
+
+## Resource Planning
+- **Development Resources**: 5 developers, 1 PM
+- **Infrastructure Requirements**: AWS cloud infrastructure
+- **External Dependencies**: None identified
+- **Quality Assurance Plan**: Automated testing and manual QA
+
+## Success Metrics
+- **Technical Milestones**: Alpha, Beta, Production release
+- **Business Milestones**: User adoption targets
+- **Quality Gates**: Code review, testing, security review
+- **Performance Targets**: Sub-2s response times
+
+## Metadata
+- **Status**: draft
+- **Created**: 2024-01-01
+- **Last Updated**: 2024-01-01
+- **Spec Count**: 0
+"""
+
+
 class TestRoadmapTools:
     @pytest.fixture
     def mock_state_manager(self) -> Mock:
@@ -54,8 +92,9 @@ class TestCreateRoadmap(TestRoadmapTools):
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
         mock_state_manager.store_roadmap.return_value = 'test-project'
+        roadmap_markdown = create_test_roadmap_markdown('Test Roadmap')
 
-        result = roadmap_tools.create_roadmap('test-project', 'Test Roadmap')
+        result = roadmap_tools.create_roadmap('test-project', roadmap_markdown)
 
         assert isinstance(result, str)
         assert 'Test Roadmap' in result
@@ -66,8 +105,9 @@ class TestCreateRoadmap(TestRoadmapTools):
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
         mock_state_manager.store_roadmap.return_value = 'project-123'
+        roadmap_markdown = create_test_roadmap_markdown('My Roadmap')
 
-        roadmap_tools.create_roadmap('project-123', 'My Roadmap')
+        roadmap_tools.create_roadmap('project-123', roadmap_markdown)
 
         mock_state_manager.store_roadmap.assert_called_once()
         call_args = mock_state_manager.store_roadmap.call_args
@@ -99,8 +139,9 @@ class TestCreateRoadmap(TestRoadmapTools):
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, project_id: str, roadmap_name: str
     ) -> None:
         mock_state_manager.store_roadmap.return_value = project_id
+        roadmap_markdown = create_test_roadmap_markdown(roadmap_name)
 
-        result = roadmap_tools.create_roadmap(project_id, roadmap_name)
+        result = roadmap_tools.create_roadmap(project_id, roadmap_markdown)
 
         assert isinstance(result, str)
         assert roadmap_name in result
@@ -456,7 +497,8 @@ class TestRoadmapToolsIntegration(TestRoadmapTools):
         mock_state_manager.delete_spec.return_value = True
 
         # Execute workflow
-        create_result = roadmap_tools.create_roadmap('workflow-project', 'Workflow Roadmap')
+        roadmap_markdown = create_test_roadmap_markdown('Workflow Roadmap')
+        create_result = roadmap_tools.create_roadmap('workflow-project', roadmap_markdown)
         add_result = roadmap_tools.add_spec('workflow-project', 'Workflow Spec', valid_spec_markdown)
         get_result = roadmap_tools.get_spec('workflow-project', 'Workflow Spec')
         update_result = roadmap_tools.update_spec('workflow-project', 'Workflow Spec', valid_spec_markdown)
