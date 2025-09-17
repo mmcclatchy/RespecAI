@@ -3,12 +3,13 @@ from typing import Self
 
 from markdown_it import MarkdownIt
 from markdown_it.tree import SyntaxTreeNode
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from .base import MCPModel
 from .enums import BuildStatus
 
 
-class BuildPlan(BaseModel):
+class BuildPlan(MCPModel):
     project_name: str
     project_goal: str
     total_duration: str
@@ -31,78 +32,6 @@ class BuildPlan(BaseModel):
     last_updated: str
     build_owner: str
     created_at: datetime = Field(default_factory=datetime.now)
-
-    @classmethod
-    def _find_nodes_by_type(cls, node: SyntaxTreeNode, node_type: str) -> list[SyntaxTreeNode]:
-        nodes = []
-
-        if node.type == node_type:
-            nodes.append(node)
-
-        if hasattr(node, 'children') and node.children:
-            for child in node.children:
-                nodes.extend(cls._find_nodes_by_type(child, node_type))
-
-        return nodes
-
-    @classmethod
-    def _extract_text_content(cls, node: SyntaxTreeNode) -> str:
-        if not hasattr(node, 'children') or not node.children:
-            return getattr(node, 'content', '')
-
-        return ' '.join(cls._extract_text_content(child) for child in node.children)
-
-    @classmethod
-    def _extract_content_by_header_path(cls, tree: SyntaxTreeNode, path: list[str]) -> str:
-        h2_header = path[0]
-        h3_header = path[1] if len(path) > 1 else None
-
-        nodes = tree.children if hasattr(tree, 'children') else []
-        h2_start_idx = None
-
-        for i, node in enumerate(nodes):
-            if node.type == 'heading' and node.tag == 'h2':
-                header_text = cls._extract_text_content(node).strip()
-                if header_text == h2_header:
-                    h2_start_idx = i
-                    break
-
-        if h2_start_idx is None:
-            return ''
-
-        if h3_header is None:
-            content_parts = []
-            for j in range(h2_start_idx + 1, len(nodes)):
-                next_node = nodes[j]
-                if next_node.type == 'heading' and next_node.tag == 'h2':
-                    break
-                if next_node.type in ['paragraph', 'list', 'blockquote', 'code_block']:
-                    content_parts.append(cls._extract_text_content(next_node).strip())
-            return '\n\n'.join(content_parts).strip()
-
-        h3_start_idx = None
-        for j in range(h2_start_idx + 1, len(nodes)):
-            next_node = nodes[j]
-            if next_node.type == 'heading' and next_node.tag == 'h2':
-                break
-            if next_node.type == 'heading' and next_node.tag == 'h3':
-                header_text = cls._extract_text_content(next_node).strip()
-                if header_text == h3_header:
-                    h3_start_idx = j
-                    break
-
-        if h3_start_idx is None:
-            return ''
-
-        content_parts = []
-        for j in range(h3_start_idx + 1, len(nodes)):
-            next_node = nodes[j]
-            if next_node.type == 'heading' and next_node.tag in ['h2', 'h3']:
-                break
-            if next_node.type in ['paragraph', 'list', 'blockquote', 'code_block']:
-                content_parts.append(cls._extract_text_content(next_node).strip())
-
-        return '\n\n'.join(content_parts).strip()
 
     @classmethod
     def parse_markdown(cls, markdown: str) -> Self:

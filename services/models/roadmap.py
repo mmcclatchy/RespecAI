@@ -3,15 +3,14 @@ from typing import Self
 
 from markdown_it import MarkdownIt
 from markdown_it.tree import SyntaxTreeNode
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from .base import MCPModel
 from .enums import RoadmapStatus
-
-
 from services.utils.errors import SpecNotFoundError
 
 
-class Roadmap(BaseModel):
+class Roadmap(MCPModel):
     project_name: str
     project_goal: str
     total_duration: str
@@ -35,28 +34,6 @@ class Roadmap(BaseModel):
     last_updated: str
     spec_count: int = Field(default=0)
     created_at: datetime = Field(default_factory=datetime.now)
-
-    @classmethod
-    def _find_nodes_by_type(cls, node: SyntaxTreeNode, node_type: str) -> list[SyntaxTreeNode]:
-        """Recursively find all nodes of a specific type in the tree."""
-        nodes = []
-
-        if node.type == node_type:
-            nodes.append(node)
-
-        if hasattr(node, 'children') and node.children:
-            for child in node.children:
-                nodes.extend(cls._find_nodes_by_type(child, node_type))
-
-        return nodes
-
-    @classmethod
-    def _extract_text_content(cls, node: SyntaxTreeNode) -> str:
-        """Recursively extract all text content from a node."""
-        if not hasattr(node, 'children') or not node.children:
-            return getattr(node, 'content', '')
-
-        return ' '.join(cls._extract_text_content(child) for child in node.children)
 
     @classmethod
     def parse_markdown(cls, markdown: str) -> Self:
