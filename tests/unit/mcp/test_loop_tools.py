@@ -1,6 +1,6 @@
 import pytest
 
-from services.mcp.loop_tools import LoopTools, loop_tools
+from services.mcp.tools.loop_tools import LoopTools, loop_tools
 from services.models.enums import CriticAgent
 from services.models.feedback import CriticFeedback
 from services.utils.enums import LoopStatus, LoopType

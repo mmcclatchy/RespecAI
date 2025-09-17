@@ -131,7 +131,6 @@ class Roadmap(MCPModel):
 """
 
     def get_spec_name(self, spec_name: str) -> str:
-        """Get a spec name."""
         for spec in self.specs:
             if spec.phase_name == spec_name:
                 return spec.phase_name
@@ -139,7 +138,6 @@ class Roadmap(MCPModel):
         raise SpecNotFoundError(f'Spec not found: {spec_name}')
 
     def add_spec(self, spec: InitialSpec) -> None:
-        """Add an InitialSpec object to the roadmap and update the count."""
         # Remove existing spec with same name if it exists
         for i, existing_spec in enumerate(self.specs):
             if existing_spec.phase_name == spec.phase_name:

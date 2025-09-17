@@ -3,8 +3,8 @@ from unittest.mock import patch
 
 import pytest
 
-from services.mcp.loop_tools import LoopTools
-from services.mcp.roadmap_tools import RoadmapTools
+from services.mcp.tools.loop_tools import LoopTools
+from services.mcp.tools.roadmap_tools import RoadmapTools
 from services.utils.state_manager import InMemoryStateManager
 
 
@@ -27,6 +27,6 @@ def isolated_loop_tools(isolated_state_manager: InMemoryStateManager) -> LoopToo
 def mock_shared_state(isolated_state_manager: InMemoryStateManager) -> Generator[InMemoryStateManager, None, None]:
     with patch('services.shared.state_manager', isolated_state_manager):
         # Also patch the imported instances in the tool modules
-        with patch('services.mcp.roadmap_tools.state_manager', isolated_state_manager):
-            with patch('services.mcp.loop_tools.state_manager', isolated_state_manager):
+        with patch('services.mcp.tools.roadmap_tools.state_manager', isolated_state_manager):
+            with patch('services.mcp.tools.loop_tools.state_manager', isolated_state_manager):
                 yield isolated_state_manager

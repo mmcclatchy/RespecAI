@@ -6,7 +6,6 @@ from services.models.spec import TechnicalSpec
 
 @pytest.fixture
 def markdownit_native_spec_markdown() -> str:
-    """New MarkdownIt-native list format template."""
     return """# Technical Specification: User Authentication System
 <!-- ID: abc12345 -->
 
@@ -65,7 +64,6 @@ in-development"""
 
 class TestMarkdownItNativeParsing:
     def test_parse_markdownit_native_format_extracts_all_fields(self, markdownit_native_spec_markdown: str) -> None:
-        """Test that new list-based format can be parsed correctly."""
         spec = TechnicalSpec.parse_markdown(markdownit_native_spec_markdown)
 
         assert spec.phase_name == 'User Authentication System'
@@ -85,7 +83,6 @@ class TestMarkdownItNativeParsing:
         assert spec.spec_status == SpecStatus.IN_DEVELOPMENT
 
     def test_build_markdown_creates_markdownit_native_format(self) -> None:
-        """Test that build_markdown creates the new list-based format."""
         spec = TechnicalSpec(
             phase_name='Test Spec',
             objectives='Test objectives',
@@ -129,7 +126,6 @@ class TestMarkdownItNativeParsing:
         assert '### Status\napproved' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, markdownit_native_spec_markdown: str) -> None:
-        """Test that parsing and rebuilding maintains complete data integrity."""
         original_spec = TechnicalSpec.parse_markdown(markdownit_native_spec_markdown)
 
         rebuilt_markdown = original_spec.build_markdown()
@@ -155,11 +151,9 @@ class TestMarkdownItNativeParsing:
 
 class TestRecursiveTraversalUtilities:
     def test_find_nodes_by_type_utility_exists(self) -> None:
-        """Test that _find_nodes_by_type utility method exists."""
         # This will fail until we implement the utility
         assert hasattr(TechnicalSpec, '_find_nodes_by_type')
 
     def test_extract_text_content_utility_exists(self) -> None:
-        """Test that _extract_text_content utility method exists."""
         # This will fail until we implement the utility
         assert hasattr(TechnicalSpec, '_extract_text_content')

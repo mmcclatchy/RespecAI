@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 from fastmcp.exceptions import ResourceError, ToolError
 
-from services.mcp.roadmap_tools import RoadmapTools
+from services.mcp.tools.roadmap_tools import RoadmapTools
 from services.models.roadmap import Roadmap
 from services.models.initial_spec import InitialSpec
 from services.utils.state_manager import StateManager

@@ -1,8 +1,9 @@
+from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ResourceError, ToolError
 
-from services.shared import state_manager
-from services.models.roadmap import Roadmap
 from services.models.initial_spec import InitialSpec
+from services.models.roadmap import Roadmap
+from services.shared import state_manager
 from services.utils.state_manager import StateManager
 
 
@@ -103,6 +104,57 @@ class RoadmapTools:
                 raise ResourceError(f'Spec "{spec_name}" not found in project {project_id}')
         except Exception as e:
             raise ToolError(f'Failed to delete spec: {str(e)}')
+
+
+def register_roadmap_tools(mcp: FastMCP) -> None:
+    @mcp.tool()
+    async def create_roadmap(project_id: str, roadmap_name: str, ctx: Context) -> str:
+        await ctx.info(f'Creating roadmap for project {project_id}')
+        result = roadmap_tools.create_roadmap(project_id, roadmap_name)
+        await ctx.info(f'Created roadmap for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def get_roadmap(project_id: str, ctx: Context) -> str:
+        await ctx.info(f'Getting roadmap for project {project_id}')
+        result = roadmap_tools.get_roadmap(project_id)
+        await ctx.info(f'Got roadmap for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def add_spec(project_id: str, spec_name: str, spec_markdown: str, ctx: Context) -> str:
+        await ctx.info(f'Storing spec {spec_name} for project {project_id}')
+        result = roadmap_tools.add_spec(project_id, spec_name, spec_markdown)
+        await ctx.info(f'Stored spec {spec_name} for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def get_spec(project_id: str, spec_name: str, ctx: Context) -> str:
+        await ctx.info(f'Getting spec {spec_name} for project {project_id}')
+        result = roadmap_tools.get_spec(project_id, spec_name)
+        await ctx.info(f'Got spec {spec_name} for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def update_spec(project_id: str, spec_name: str, spec_markdown: str, ctx: Context) -> str:
+        await ctx.info(f'Updating spec {spec_name} for project {project_id}')
+        result = roadmap_tools.update_spec(project_id, spec_name, spec_markdown)
+        await ctx.info(f'Updated spec {spec_name} for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def list_specs(project_id: str, ctx: Context) -> str:
+        await ctx.info(f'Listing specs for project {project_id}')
+        result = roadmap_tools.list_specs(project_id)
+        await ctx.info(f'Listed specs for project {project_id}')
+        return result
+
+    @mcp.tool()
+    async def delete_spec(project_id: str, spec_name: str, ctx: Context) -> str:
+        await ctx.info(f'Deleting spec {spec_name} for project {project_id}')
+        result = roadmap_tools.delete_spec(project_id, spec_name)
+        await ctx.info(f'Deleted spec {spec_name} for project {project_id}')
+        return result
 
 
 roadmap_tools = RoadmapTools(state_manager)

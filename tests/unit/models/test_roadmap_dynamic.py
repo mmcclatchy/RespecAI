@@ -7,7 +7,6 @@ from services.models.enums import RoadmapStatus, SpecStatus
 
 @pytest.fixture
 def sample_dynamic_roadmap_markdown() -> str:
-    """Sample markdown for dynamic Roadmap with specs list."""
     return """# Project Roadmap: E-commerce Platform
 
 ## Project Details
@@ -83,7 +82,6 @@ draft
 
 @pytest.fixture
 def sample_specs_list() -> list[InitialSpec]:
-    """Sample list of InitialSpec objects."""
     return [
         InitialSpec(
             phase_name='User Authentication System',
@@ -123,7 +121,6 @@ def sample_specs_list() -> list[InitialSpec]:
 
 class TestDynamicRoadmapParsing:
     def test_parse_markdown_extracts_project_details(self, sample_dynamic_roadmap_markdown: str) -> None:
-        """Test that dynamic Roadmap can parse project details."""
         roadmap = Roadmap.parse_markdown(sample_dynamic_roadmap_markdown)
 
         assert roadmap.project_name == 'E-commerce Platform'
@@ -133,7 +130,6 @@ class TestDynamicRoadmapParsing:
         assert roadmap.roadmap_budget == '$150,000'
 
     def test_parse_markdown_extracts_specs_list(self, sample_dynamic_roadmap_markdown: str) -> None:
-        """Test that dynamic Roadmap starts with empty specs (specs not parsed from markdown)."""
         roadmap = Roadmap.parse_markdown(sample_dynamic_roadmap_markdown)
 
         # Specs are not parsed from markdown - they're managed programmatically
@@ -142,14 +138,12 @@ class TestDynamicRoadmapParsing:
         assert roadmap.spec_count == 3
 
     def test_parse_markdown_extracts_metadata(self, sample_dynamic_roadmap_markdown: str) -> None:
-        """Test that metadata fields are parsed correctly."""
         roadmap = Roadmap.parse_markdown(sample_dynamic_roadmap_markdown)
 
         assert roadmap.roadmap_status == RoadmapStatus.DRAFT
         assert roadmap.spec_count == 3
 
     def test_roadmap_with_specs_list_field(self, sample_specs_list: list[InitialSpec]) -> None:
-        """Test that Roadmap model has specs list field."""
         roadmap = Roadmap(
             project_name='Test Project',
             project_goal='Test goal',
@@ -178,7 +172,6 @@ class TestDynamicRoadmapParsing:
         assert all(isinstance(spec, InitialSpec) for spec in roadmap.specs)
 
     def test_build_markdown_creates_dynamic_format(self, sample_specs_list: list[InitialSpec]) -> None:
-        """Test that build_markdown creates new MarkdownIt-native format."""
         roadmap = Roadmap(
             project_name='Test Project',
             project_goal='Test goal',
@@ -219,7 +212,6 @@ class TestDynamicRoadmapParsing:
         assert '### Spec Count\n3' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, sample_dynamic_roadmap_markdown: str) -> None:
-        """Test that parsing and rebuilding maintains complete data integrity."""
         original_roadmap = Roadmap.parse_markdown(sample_dynamic_roadmap_markdown)
 
         rebuilt_markdown = original_roadmap.build_markdown()
@@ -241,12 +233,10 @@ class TestDynamicRoadmapParsing:
 
 class TestDynamicRoadmapUtilities:
     def test_recursive_traversal_utilities_exist(self) -> None:
-        """Test that shared utilities exist."""
         assert hasattr(Roadmap, '_find_nodes_by_type')
         assert hasattr(Roadmap, '_extract_text_content')
 
     def test_spec_count_property_matches_specs_length(self, sample_specs_list: list[InitialSpec]) -> None:
-        """Test that spec_count property matches actual specs list length."""
         roadmap = Roadmap(
             project_name='Test Project',
             project_goal='Test goal',

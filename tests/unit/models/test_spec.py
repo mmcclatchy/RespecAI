@@ -212,7 +212,6 @@ class TestTechnicalSpecMarkdownBuilding:
         assert spec.integration_context == parsed_spec.integration_context
 
     def test_round_trip_data_integrity_validation(self, round_trip_spec_markdown: str) -> None:
-        """Test that round-trip parsing preserves data integrity (format may change during migration)."""
         original_spec = TechnicalSpec.parse_markdown(round_trip_spec_markdown)
 
         rebuilt_markdown = original_spec.build_markdown()

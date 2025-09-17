@@ -1,8 +1,8 @@
 import pytest
 from fastmcp.exceptions import ResourceError
 
-from services.mcp.loop_tools import LoopTools
-from services.mcp.roadmap_tools import RoadmapTools
+from services.mcp.tools.loop_tools import LoopTools
+from services.mcp.tools.roadmap_tools import RoadmapTools
 from services.shared import state_manager
 from services.utils.enums import LoopStatus
 from services.utils.errors import LoopStateError

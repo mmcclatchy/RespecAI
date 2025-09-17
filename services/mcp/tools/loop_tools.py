@@ -1,6 +1,8 @@
+from fastmcp import Context, FastMCP
+
 from services.shared import state_manager
-from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, LoopStateError, LoopValidationError
 from services.utils.enums import LoopType
+from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, LoopStateError, LoopValidationError
 from services.utils.models import LoopState, MCPResponse
 from services.utils.state_manager import StateManager
 
@@ -177,6 +179,156 @@ class LoopTools:
             return 'declining'
         else:
             return 'stable'
+
+
+def register_loop_tools(mcp: FastMCP) -> None:
+    @mcp.tool()
+    async def decide_loop_next_action(loop_id: str, current_score: int, ctx: Context) -> MCPResponse:
+        """Decide next action for refinement loop progression.
+
+        This MCP tool implements the core decision logic for quality-driven
+        refinement loops. It analyzes current quality scores, improvement trends,
+        and iteration counts to determine whether to continue refining content,
+        complete the loop, or escalate to human input.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop to process
+        - current_score: Quality score from 0-100 for current iteration
+
+        Returns:
+        - MCPResponse: Contains loop_id and status ('completed', 'refine', 'user_input')
+        """
+        await ctx.info(f'Processing decision for loop {loop_id} with score {current_score}')
+        result = loop_tools.decide_loop_next_action(loop_id, current_score)
+        await ctx.info(f'Decision result for loop {loop_id}: {result.status}')
+        return result
+
+    @mcp.tool()
+    async def initialize_refinement_loop(loop_type: str, ctx: Context) -> MCPResponse:
+        """Initialize a new refinement loop.
+
+        Creates a new refinement loop session.
+        Returns loop ID for tracking and managing the loop state throughout
+        the refinement process.
+
+        Parameters:
+        - loop_type: One of 'plan', 'spec', 'build_plan', 'build_code'
+
+        Returns:
+        - MCPResponse: Contains loop_id and status ('initialized')
+        """
+        await ctx.info(f'Initializing new {loop_type} loop')
+        result = loop_tools.initialize_refinement_loop(loop_type)
+        await ctx.info(f'Created {loop_type} loop with ID: {result.id}')
+        return result
+
+    @mcp.tool()
+    async def get_loop_status(loop_id: str, ctx: Context) -> MCPResponse:
+        """Get current status and history of a loop.
+
+        Returns complete loop information including current status,
+        iteration count, score history, and metadata.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Complete loop state with all metadata and history
+        """
+        await ctx.info(f'Retrieving status for loop {loop_id}')
+        result = loop_tools.get_loop_status(loop_id)
+        await ctx.info(f'Retrieved status for loop {loop_id}: {result.status}')
+        return result
+
+    @mcp.tool()
+    async def list_active_loops(ctx: Context) -> list[MCPResponse]:
+        """List all currently active refinement loops.
+
+        Returns summary information for all active loops in the current
+        session. Useful for managing multiple concurrent refinement processes.
+
+        Returns:
+        - list[MCPResponse]: List of active loops with their current status
+        """
+        await ctx.info('Retrieving list of active loops')
+        result = loop_tools.list_active_loops()
+        await ctx.info(f'Found {len(result)} active loops')
+        return result
+
+    @mcp.tool()
+    async def get_previous_objective_feedback(loop_id: str, ctx: Context) -> MCPResponse:
+        """Retrieve previous objective validation feedback for analyst-critic.
+
+        Returns stored feedback from previous validation cycles to enable
+        iterative improvement tracking and consistency assessment.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Contains previous feedback data with dimension scores and recommendations
+        """
+        await ctx.info(f'Retrieving previous objective feedback for loop {loop_id}')
+        result = loop_tools.get_previous_objective_feedback(loop_id)
+        await ctx.info(f'Retrieved objective feedback for loop {loop_id}')
+        return result
+
+    @mcp.tool()
+    async def store_current_objective_feedback(loop_id: str, feedback: str, ctx: Context) -> MCPResponse:
+        """Store current objective validation feedback for analyst-critic.
+
+        Persists validation feedback including dimension scores, specific findings,
+        and improvement recommendations for future refinement cycles.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+        - feedback: Complete validation feedback with scores and recommendations
+
+        Returns:
+        - MCPResponse: Confirmation of successful storage
+        """
+        await ctx.info(f'Storing objective feedback for loop {loop_id}')
+        result = loop_tools.store_current_objective_feedback(loop_id, feedback)
+        await ctx.info(f'Stored objective feedback for loop {loop_id}')
+        return result
+
+    @mcp.tool()
+    async def get_loop_feedback_summary(loop_id: str, ctx: Context) -> MCPResponse:
+        """Get structured feedback summary for loop decision making.
+
+        Provides feedback metrics and trends to support intelligent
+        loop progression decisions. Returns score progression,
+        feedback count, and recent assessment summaries.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Contains feedback summary with metrics and trends
+        """
+        await ctx.info(f'Retrieving feedback summary for loop {loop_id}')
+        result = loop_tools.get_loop_feedback_summary(loop_id)
+        await ctx.info(f'Retrieved feedback summary for loop {loop_id}')
+        return result
+
+    @mcp.tool()
+    async def get_loop_improvement_analysis(loop_id: str, ctx: Context) -> MCPResponse:
+        """Analyze improvement patterns from structured feedback.
+
+        Examines feedback history to identify improvement trends,
+        recurring issues, and recommendation patterns. Supports
+        intelligent refinement strategy decisions.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Contains improvement analysis with trends and patterns
+        """
+        await ctx.info(f'Retrieving improvement analysis for loop {loop_id}')
+        result = loop_tools.get_loop_improvement_analysis(loop_id)
+        await ctx.info(f'Retrieved improvement analysis for loop {loop_id}')
+        return result
 
 
 loop_tools = LoopTools(state_manager)

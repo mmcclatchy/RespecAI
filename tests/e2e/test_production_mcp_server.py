@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 import pytest
 
-from services.mcp.loop_tools import loop_tools
-from services.mcp.roadmap_tools import roadmap_tools
+from services.mcp.tools.loop_tools import loop_tools
+from services.mcp.tools.roadmap_tools import roadmap_tools
 from services.mcp.server import create_mcp_server, health_check
 
 

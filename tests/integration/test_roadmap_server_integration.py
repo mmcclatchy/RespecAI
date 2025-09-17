@@ -4,7 +4,7 @@ import pytest
 from fastmcp import FastMCP
 from fastmcp.exceptions import ResourceError, ToolError
 
-from services.mcp.roadmap_tools import roadmap_tools
+from services.mcp.tools.roadmap_tools import roadmap_tools
 from services.mcp.server import create_mcp_server
 
 

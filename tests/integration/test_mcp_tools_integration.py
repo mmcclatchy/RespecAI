@@ -6,10 +6,10 @@ without any mocking, following TDD Red-Green-Refactor methodology.
 
 from datetime import datetime
 
-from services.mcp.feedback_tools import FeedbackTools
-from services.mcp.project_plan_tools import ProjectPlanTools
-from services.mcp.loop_tools import LoopTools
-from services.mcp.roadmap_tools import RoadmapTools
+from services.mcp.tools.feedback_tools import FeedbackTools
+from services.mcp.tools.project_plan_tools import ProjectPlanTools
+from services.mcp.tools.loop_tools import LoopTools
+from services.mcp.tools.roadmap_tools import RoadmapTools
 from services.models.feedback import CriticFeedback
 from services.models.project_plan import ProjectPlan
 from services.models.enums import CriticAgent, ProjectStatus
@@ -19,7 +19,6 @@ from services.utils.state_manager import InMemoryStateManager
 
 class TestFeedbackToolsIntegration:
     def test_store_critic_feedback_end_to_end(self) -> None:
-        """Test storing critic feedback through complete integration stack."""
         state_manager = InMemoryStateManager()
         feedback_tools = FeedbackTools(state_manager)
         loop_tools = LoopTools(state_manager)
@@ -55,7 +54,6 @@ class TestFeedbackToolsIntegration:
         assert loop_state.current_score == 68  # Based on manual calculation
 
     def test_get_feedback_history_integration(self) -> None:
-        """Test retrieving feedback history through integration stack."""
         state_manager = InMemoryStateManager()
         feedback_tools = FeedbackTools(state_manager)
         loop_tools = LoopTools(state_manager)
@@ -88,7 +86,6 @@ class TestFeedbackToolsIntegration:
 
 class TestProjectPlanToolsIntegration:
     def test_store_project_plan_with_loop_integration(self) -> None:
-        """Test storing project plan with loop state integration."""
         state_manager = InMemoryStateManager()
         project_plan_tools = ProjectPlanTools(state_manager)
 
@@ -130,8 +127,8 @@ class TestProjectPlanToolsIntegration:
             version='1.0',
         )
 
-        # Store without loop_id - should create new loop
-        result = project_plan_tools.store_project_plan(project_plan)
+        # Create new project plan - should create new loop
+        result = project_plan_tools.create_project_plan(project_plan)
 
         # Verify loop was created and project plan stored
         assert result.id is not None
@@ -141,7 +138,6 @@ class TestProjectPlanToolsIntegration:
 
 class TestLoopToolsIntegration:
     def test_complete_loop_lifecycle(self) -> None:
-        """Test complete loop lifecycle through integration."""
         state_manager = InMemoryStateManager()
         loop_tools = LoopTools(state_manager)
 
@@ -172,7 +168,6 @@ class TestLoopToolsIntegration:
 
 class TestRoadmapToolsIntegration:
     def test_roadmap_crud_operations(self) -> None:
-        """Test roadmap CRUD operations through state manager."""
         state_manager = InMemoryStateManager()
         roadmap_tools = RoadmapTools(state_manager)
 
@@ -279,7 +274,6 @@ draft
 
 class TestCrossToolIntegration:
     def test_feedback_and_loop_tools_together(self) -> None:
-        """Test feedback tools and loop tools working together."""
         state_manager = InMemoryStateManager()
         feedback_tools = FeedbackTools(state_manager)
         loop_tools = LoopTools(state_manager)

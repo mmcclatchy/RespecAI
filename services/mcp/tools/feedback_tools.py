@@ -1,3 +1,4 @@
+from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ResourceError, ToolError
 from pydantic import ValidationError
 
@@ -5,6 +6,9 @@ from services.models.feedback import CriticFeedback
 from services.utils.errors import LoopNotFoundError
 from services.utils.models import MCPResponse
 from services.utils.state_manager import StateManager
+
+
+from services.shared import state_manager
 
 
 class FeedbackTools:
@@ -60,3 +64,64 @@ class FeedbackTools:
         return f'Retrieved {feedback_count} feedback item{"s" if feedback_count != 1 else ""}: ' + '; '.join(
             feedback_summaries
         )
+
+
+def register_feedback_tools(mcp: FastMCP) -> None:
+    feedback_tools = FeedbackTools(state_manager)
+
+    @mcp.tool()
+    async def store_critic_feedback(
+        loop_id: str,
+        feedback_markdown: str,
+        ctx: Context,
+    ) -> MCPResponse:
+        """Store structured critic feedback for any loop type from markdown.
+
+        Parses markdown feedback into structured CriticFeedback and stores it.
+        This universal tool works with ALL 5 workflow types and integrates
+        with the existing sophisticated LoopState management system.
+
+        Parameters:
+        - feedback_markdown: Complete critic feedback in markdown format
+        - loop_id: Unique identifier of the loop
+
+        Returns:
+        - MCPResponse: Contains loop_id, status, and storage confirmation
+        """
+        await ctx.info(f'Parsing and storing critic feedback for loop {loop_id}')
+        try:
+            # Parse markdown into structured feedback using the model's parse method
+            feedback = CriticFeedback.parse_markdown(feedback_markdown)
+
+            # Update loop_id to match the provided loop_id
+            feedback.loop_id = loop_id
+
+            result = feedback_tools.store_critic_feedback(feedback)
+            await ctx.info(f'Stored feedback for loop {loop_id}')
+            return result
+        except Exception as e:
+            await ctx.error(f'Failed to store critic feedback: {str(e)}')
+            raise ToolError(f'Failed to store critic feedback: {str(e)}')
+
+    @mcp.tool()
+    async def get_feedback_history(loop_id: str, count: int, ctx: Context) -> MCPResponse:
+        """Retrieve recent feedback history for any loop type.
+
+        Returns structured feedback history that critics can use for context
+        and consistency across iterations. Works with ALL loop types.
+
+        Parameters:
+        - loop_id: Unique identifier of the loop
+        - count: Number of recent feedback items to retrieve
+
+        Returns:
+        - MCPResponse: Contains loop_id, status, and feedback history
+        """
+        await ctx.info(f'Retrieving feedback history for loop {loop_id}')
+        try:
+            result = feedback_tools.get_feedback_history(loop_id, count)
+            await ctx.info(f'Retrieved {count} feedback items for loop {loop_id}')
+            return result
+        except Exception as e:
+            await ctx.error(f'Failed to retrieve feedback history: {str(e)}')
+            raise ResourceError(f'Feedback history unavailable for loop {loop_id}: {str(e)}')

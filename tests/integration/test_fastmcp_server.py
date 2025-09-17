@@ -1,7 +1,7 @@
 import pytest
 from fastmcp import FastMCP
 
-from services.mcp.loop_tools import loop_tools
+from services.mcp.tools.loop_tools import loop_tools
 from services.mcp.server import create_mcp_server, health_check
 from services.utils.enums import HealthState, LoopStatus
 from services.utils.models import HealthStatus

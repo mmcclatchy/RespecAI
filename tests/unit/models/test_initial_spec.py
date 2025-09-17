@@ -6,7 +6,6 @@ from services.models.enums import SpecStatus
 
 @pytest.fixture
 def sample_initial_spec_markdown() -> str:
-    """Sample markdown for InitialSpec parsing tests."""
     return """# Technical Specification: User Authentication System
 
 ## Overview
@@ -33,7 +32,6 @@ draft
 
 class TestInitialSpecParsing:
     def test_parse_markdown_extracts_basic_fields(self, sample_initial_spec_markdown: str) -> None:
-        """Test that InitialSpec can parse basic fields from markdown."""
         spec = InitialSpec.parse_markdown(sample_initial_spec_markdown)
 
         assert spec.phase_name == 'User Authentication System'
@@ -44,7 +42,6 @@ class TestInitialSpecParsing:
         assert spec.spec_status == SpecStatus.DRAFT
 
     def test_initial_spec_generates_8_char_id(self) -> None:
-        """Test that InitialSpec generates 8-character UUID."""
         spec = InitialSpec(
             phase_name='Test Spec',
             objectives='Test objectives',
@@ -58,7 +55,6 @@ class TestInitialSpecParsing:
         assert spec.id.isalnum()
 
     def test_build_markdown_creates_initial_spec_format(self) -> None:
-        """Test that build_markdown creates proper InitialSpec format."""
         spec = InitialSpec(
             phase_name='Test Spec',
             objectives='Test objectives',
@@ -78,7 +74,6 @@ class TestInitialSpecParsing:
         assert '### Status\ndraft' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, sample_initial_spec_markdown: str) -> None:
-        """Test that parsing and rebuilding maintains complete data integrity."""
         original_spec = InitialSpec.parse_markdown(sample_initial_spec_markdown)
 
         rebuilt_markdown = original_spec.build_markdown()
@@ -95,6 +90,5 @@ class TestInitialSpecParsing:
 
 class TestInitialSpecUtilities:
     def test_recursive_traversal_utilities_exist(self) -> None:
-        """Test that shared utilities exist."""
         assert hasattr(InitialSpec, '_find_nodes_by_type')
         assert hasattr(InitialSpec, '_extract_text_content')

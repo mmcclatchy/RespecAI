@@ -1,7 +1,7 @@
 import pytest
 from fastmcp.exceptions import ResourceError, ToolError
 
-from services.mcp.project_plan_tools import ProjectPlanTools
+from services.mcp.tools.project_plan_tools import ProjectPlanTools
 from services.models.enums import ProjectStatus
 from services.models.project_plan import ProjectPlan
 from services.utils.enums import LoopStatus, LoopType
@@ -67,21 +67,31 @@ class TestProjectPlanTools:
     pass
 
 
-class TestStoreProjectPlan:
-    def test_store_project_plan_creates_new_loop_state(
+class TestCreateProjectPlan:
+    def test_create_project_plan_creates_new_loop_state(
         self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
     ) -> None:
-        response = project_plan_tools.store_project_plan(sample_project_plan)
+        response = project_plan_tools.create_project_plan(sample_project_plan)
 
         assert isinstance(response, MCPResponse)
         assert response.status == LoopStatus.INITIALIZED
-        assert 'Stored project plan' in response.message
+        assert 'Created project plan' in response.message
 
         # Verify loop state was created
         loop_state = project_plan_tools.state.get_loop(response.id)
         assert loop_state is not None
         assert loop_state.loop_type.value == 'plan'
         assert loop_state.status == LoopStatus.INITIALIZED
+
+    def test_create_project_plan_validates_project_plan_model(self, project_plan_tools: ProjectPlanTools) -> None:
+        with pytest.raises(ToolError):
+            project_plan_tools.create_project_plan(None)  # type: ignore[arg-type]
+
+
+class TestStoreProjectPlan:
+    def test_store_project_plan_validates_project_plan_model(self, project_plan_tools: ProjectPlanTools) -> None:
+        with pytest.raises(ToolError, match='Invalid project plan: cannot be None'):
+            project_plan_tools.store_project_plan(None, 'some-loop-id')  # type: ignore[arg-type]
 
     def test_store_project_plan_updates_existing_loop_state(
         self,
@@ -97,12 +107,19 @@ class TestStoreProjectPlan:
 
         assert response.id == existing_loop.id
         assert response.status == LoopStatus.INITIALIZED
-        assert 'Updated project plan' in response.message
+        assert 'Stored project plan' in response.message
 
     def test_store_project_plan_stores_structured_data(
-        self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
+        self,
+        project_plan_tools: ProjectPlanTools,
+        sample_project_plan: ProjectPlan,
+        state_manager: InMemoryStateManager,
     ) -> None:
-        response = project_plan_tools.store_project_plan(sample_project_plan)
+        # Create existing loop first
+        existing_loop = LoopState(loop_type=LoopType.PLAN)
+        state_manager.add_loop(existing_loop)
+
+        response = project_plan_tools.store_project_plan(sample_project_plan, existing_loop.id)
 
         # Verify structured data is stored (not just markdown)
         stored_plan = project_plan_tools.get_project_plan_data(response.id)
@@ -110,23 +127,13 @@ class TestStoreProjectPlan:
         assert stored_plan.project_vision == sample_project_plan.project_vision
         assert stored_plan.primary_objectives == sample_project_plan.primary_objectives
 
-    def test_store_project_plan_validates_project_plan_model(self, project_plan_tools: ProjectPlanTools) -> None:
-        # Test validation will be handled by the tool implementation
-        # This test expects the tool to catch and translate ValidationError
-        # We'll use a mock or invalid data that causes validation to fail
-
-        # Test validation will be handled by the tool implementation
-        # This test expects the tool to catch and translate ValidationError
-        with pytest.raises(ToolError):
-            project_plan_tools.store_project_plan(None)  # type: ignore[arg-type]  # Intentionally testing None
-
 
 class TestGetProjectPlan:
     def test_get_project_plan_returns_structured_data(
         self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
     ) -> None:
-        # Store plan first
-        response = project_plan_tools.store_project_plan(sample_project_plan)
+        # Create plan first
+        response = project_plan_tools.create_project_plan(sample_project_plan)
 
         # Retrieve plan
         retrieved_plan = project_plan_tools.get_project_plan_data(response.id)
@@ -159,7 +166,7 @@ class TestGetProjectPlanMarkdown:
     def test_get_project_plan_markdown_generates_platform_output(
         self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
     ) -> None:
-        response = project_plan_tools.store_project_plan(sample_project_plan)
+        response = project_plan_tools.create_project_plan(sample_project_plan)
 
         markdown_response = project_plan_tools.get_project_plan_markdown(response.id)
 
@@ -173,7 +180,7 @@ class TestGetProjectPlanMarkdown:
     def test_get_project_plan_markdown_platform_agnostic(
         self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
     ) -> None:
-        response = project_plan_tools.store_project_plan(sample_project_plan)
+        response = project_plan_tools.create_project_plan(sample_project_plan)
 
         markdown_response = project_plan_tools.get_project_plan_markdown(response.id)
         assert isinstance(markdown_response, MCPResponse)
@@ -200,7 +207,7 @@ class TestListProjectPlans:
         self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
     ) -> None:
         # Store multiple plans
-        plan1_response = project_plan_tools.store_project_plan(sample_project_plan)
+        plan1_response = project_plan_tools.create_project_plan(sample_project_plan)
 
         plan2 = ProjectPlan(
             project_name='E-commerce Analytics Platform',
@@ -238,7 +245,7 @@ class TestListProjectPlans:
             last_updated='2024-01-15',
             version='1.0',
         )
-        plan2_response = project_plan_tools.store_project_plan(plan2)
+        plan2_response = project_plan_tools.create_project_plan(plan2)
 
         # List all plans
         response = project_plan_tools.list_project_plans()
@@ -255,7 +262,7 @@ class TestListProjectPlans:
         # Store 3 plans
         for i in range(3):
             plan = create_project_plan(f'Project {i + 1}')
-            project_plan_tools.store_project_plan(plan)
+            project_plan_tools.create_project_plan(plan)
 
         # List with limit
         response = project_plan_tools.list_project_plans(count=2)
@@ -271,7 +278,7 @@ class TestDeleteProjectPlan:
         self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
     ) -> None:
         # Store plan first
-        response = project_plan_tools.store_project_plan(sample_project_plan)
+        response = project_plan_tools.create_project_plan(sample_project_plan)
 
         # Delete plan
         delete_response = project_plan_tools.delete_project_plan(response.id)

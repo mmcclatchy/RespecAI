@@ -1,7 +1,7 @@
 import pytest
 from fastmcp.exceptions import ResourceError
 
-from services.mcp.feedback_tools import FeedbackTools
+from services.mcp.tools.feedback_tools import FeedbackTools
 from services.models.enums import CriticAgent
 from services.models.feedback import CriticFeedback
 from services.utils.enums import LoopStatus, LoopType

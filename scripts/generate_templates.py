@@ -17,7 +17,6 @@ from services.models.enums import RoadmapStatus, BuildStatus, RequirementsStatus
 
 
 def generate_roadmap_template() -> str:
-    """Generate roadmap template from model."""
     roadmap = Roadmap(
         project_name='[Project Name]',
         project_goal='[Brief description of the main project goal]',
@@ -46,7 +45,6 @@ def generate_roadmap_template() -> str:
 
 
 def generate_build_plan_template() -> str:
-    """Generate build plan template from model."""
     build_plan = BuildPlan(
         project_name='[Project Name]',
         project_goal='[Main project goal and objectives]',
@@ -74,7 +72,6 @@ def generate_build_plan_template() -> str:
 
 
 def generate_feature_requirements_template() -> str:
-    """Generate feature requirements template from model."""
     requirements = FeatureRequirements(
         project_name='[Feature Name]',
         feature_description='[Detailed feature description]',
@@ -103,7 +100,6 @@ def generate_feature_requirements_template() -> str:
 
 
 def generate_project_plan_template() -> str:
-    """Generate project plan template from model."""
     project_plan = ProjectPlan(
         project_name='[Project Name]',
         project_vision='[High-level vision statement]',
@@ -144,7 +140,6 @@ def generate_project_plan_template() -> str:
 
 
 def generate_critic_feedback_template() -> str:
-    """Generate critic feedback template from model."""
     feedback = CriticFeedback(
         loop_id='[Loop identifier]',
         critic_agent=CriticAgent.ANALYST_CRITIC,
@@ -159,7 +154,6 @@ def generate_critic_feedback_template() -> str:
 
 
 def main() -> None:
-    """Generate all templates."""
     templates = {
         'roadmap_template.md': generate_roadmap_template(),
         'build_plan_template.md': generate_build_plan_template(),

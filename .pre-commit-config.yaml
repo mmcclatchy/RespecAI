@@ -10,7 +10,7 @@ repos:
     hooks:
       - id: move-inline-imports
         name: Move inline imports to top of file
-        entry: /Users/markmcclatchy/coding/projects/move-inline-imports.sh
+        entry: scripts/move-inline-imports.sh
         language: system
         types: [python]
 
@@ -18,7 +18,7 @@ repos:
     hooks:
       - id: remove-single-line-docstrings
         name: Remove single-line docstrings from Python files
-        entry: /Users/markmcclatchy/coding/projects/remove-useless-docstrings.sh
+        entry: uv run scripts/remove_single_line_docstrings.py
         language: system
         types: [python]
 
