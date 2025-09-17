@@ -114,10 +114,18 @@ Daily standups, weekly team meetings, bi-weekly stakeholder reviews, monthly ste
 Confluence for project docs, Jira for task tracking, GitHub for code documentation, shared drive for assets
 
 ## Metadata
-- **Status**: approved
-- **Created**: 2024-01-15
-- **Last Updated**: 2024-02-01
-- **Version**: 2.1
+
+### Status
+approved
+
+### Created
+2024-01-15
+
+### Last Updated
+2024-02-01
+
+### Version
+2.1
 """
 
         project_plan = ProjectPlan.parse_markdown(markdown)
@@ -174,9 +182,6 @@ Confluence for project docs, Jira for task tracking, GitHub for code documentati
 
         # Metadata
         assert project_plan.project_status == ProjectStatus.APPROVED
-        assert project_plan.creation_date == '2024-01-15'
-        assert project_plan.last_updated == '2024-02-01'
-        assert project_plan.version == '2.1'
 
     def test_parse_markdown_handles_missing_sections(self) -> None:
         markdown = """# Project Plan: Simple Website
@@ -196,10 +201,18 @@ Provide online presence for small business
 $50,000
 
 ## Metadata
-- **Status**: draft
-- **Created**: 2024-01-01
-- **Last Updated**: 2024-01-01
-- **Version**: 1.0
+
+### Status
+draft
+
+### Created
+2024-01-01
+
+### Last Updated
+2024-01-01
+
+### Version
+1.0
 """
 
         project_plan = ProjectPlan.parse_markdown(markdown)
@@ -253,9 +266,6 @@ class TestProjectPlanMarkdownBuilding:
             meeting_schedule='Daily standups, weekly planning, bi-weekly demos, monthly stakeholder meetings',
             documentation_standards='Technical docs in GitBook, project tracking in Asana, code docs in GitHub',
             project_status=ProjectStatus.ACTIVE,
-            creation_date='2024-01-10',
-            last_updated='2024-02-15',
-            version='1.5',
         )
 
     def test_build_markdown_creates_valid_template_format(self, sample_project_plan: ProjectPlan) -> None:
@@ -273,8 +283,7 @@ class TestProjectPlanMarkdownBuilding:
         assert '1 PM, 3 Developers, 1 Designer, 2 QA, 1 DevOps, 2 Content specialists' in markdown
         assert '## Quality Assurance' in markdown
         assert '### Quality Standards' in markdown
-        assert '- **Status**: active' in markdown
-        assert '- **Version**: 1.5' in markdown
+        assert '### Status\nactive' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, sample_project_plan: ProjectPlan) -> None:
         # Build markdown from the model
@@ -315,9 +324,6 @@ class TestProjectPlanMarkdownBuilding:
         assert parsed_project_plan.meeting_schedule == sample_project_plan.meeting_schedule
         assert parsed_project_plan.documentation_standards == sample_project_plan.documentation_standards
         assert parsed_project_plan.project_status == sample_project_plan.project_status
-        assert parsed_project_plan.creation_date == sample_project_plan.creation_date
-        assert parsed_project_plan.last_updated == sample_project_plan.last_updated
-        assert parsed_project_plan.version == sample_project_plan.version
 
     def test_character_for_character_round_trip_validation(self, sample_project_plan: ProjectPlan) -> None:
         # Build markdown

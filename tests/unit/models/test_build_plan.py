@@ -67,10 +67,10 @@ Sub-2s page loads, 1000+ concurrent users, 99.9% uptime
 HTTPS, JWT tokens, input validation, SQL injection prevention
 
 ## Metadata
-- **Status**: in-progress
-- **Created**: 2024-01-15
-- **Last Updated**: 2024-01-20
-- **Owner**: Development Team
+
+### Status
+in-progress
+
 """
 
         build_plan = BuildPlan.parse_markdown(markdown)
@@ -93,9 +93,6 @@ HTTPS, JWT tokens, input validation, SQL injection prevention
         assert build_plan.performance_requirements == 'Sub-2s page loads, 1000+ concurrent users, 99.9% uptime'
         assert build_plan.security_implementation == 'HTTPS, JWT tokens, input validation, SQL injection prevention'
         assert build_plan.build_status == BuildStatus.IN_PROGRESS
-        assert build_plan.creation_date == '2024-01-15'
-        assert build_plan.last_updated == '2024-01-20'
-        assert build_plan.build_owner == 'Development Team'
 
     def test_parse_markdown_handles_missing_sections(self) -> None:
         markdown = """# Build Plan: Minimal Project
@@ -128,10 +125,10 @@ MongoDB
 Basic Node.js setup
 
 ## Metadata
-- **Status**: planning
-- **Created**: 2024-01-01
-- **Last Updated**: 2024-01-01
-- **Owner**: Solo Developer
+
+### Status
+planning
+
 """
 
         build_plan = BuildPlan.parse_markdown(markdown)
@@ -172,9 +169,6 @@ class TestBuildPlanMarkdownBuilding:
             performance_requirements='Handle 100 concurrent users',
             security_implementation='Django security middleware, CSRF protection',
             build_status=BuildStatus.PLANNING,
-            creation_date='2024-01-10',
-            last_updated='2024-01-15',
-            build_owner='Test Team',
         )
 
     def test_build_markdown_creates_valid_template_format(self, sample_build_plan: BuildPlan) -> None:
@@ -190,8 +184,7 @@ class TestBuildPlanMarkdownBuilding:
         assert '## Architecture' in markdown
         assert '### Development Environment' in markdown
         assert 'Local development with virtual env' in markdown
-        assert '- **Status**: planning' in markdown
-        assert '- **Owner**: Test Team' in markdown
+        assert '### Status\nplanning' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, sample_build_plan: BuildPlan) -> None:
         # Build markdown from the model
@@ -219,9 +212,6 @@ class TestBuildPlanMarkdownBuilding:
         assert parsed_build_plan.performance_requirements == sample_build_plan.performance_requirements
         assert parsed_build_plan.security_implementation == sample_build_plan.security_implementation
         assert parsed_build_plan.build_status == sample_build_plan.build_status
-        assert parsed_build_plan.creation_date == sample_build_plan.creation_date
-        assert parsed_build_plan.last_updated == sample_build_plan.last_updated
-        assert parsed_build_plan.build_owner == sample_build_plan.build_owner
 
     def test_character_for_character_round_trip_validation(self, sample_build_plan: BuildPlan) -> None:
         # Build markdown

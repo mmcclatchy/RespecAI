@@ -8,19 +8,26 @@ from services.models.enums import SpecStatus
 def sample_initial_spec_markdown() -> str:
     """Sample markdown for InitialSpec parsing tests."""
     return """# Technical Specification: User Authentication System
-<!-- ID: abc12345 -->
 
 ## Overview
-- **Objectives**: Implement secure user login and registration
-- **Scope**: Login, logout, password reset functionality
-- **Dependencies**: Database, encryption library
-- **Deliverables**: Working authentication system
+
+### Objectives
+Implement secure user login and registration
+
+### Scope
+Login, logout, password reset functionality
+
+### Dependencies
+Database, encryption library
+
+### Deliverables
+Working authentication system
 
 ## Metadata
-- **Status**: draft
-- **Created**: 2024-01-01
-- **Last Updated**: 2024-01-02
-- **Owner**: Development Team
+
+### Status
+draft
+
 """
 
 
@@ -35,9 +42,6 @@ class TestInitialSpecParsing:
         assert spec.dependencies == 'Database, encryption library'
         assert spec.deliverables == 'Working authentication system'
         assert spec.spec_status == SpecStatus.DRAFT
-        assert spec.creation_date == '2024-01-01'
-        assert spec.last_updated == '2024-01-02'
-        assert spec.spec_owner == 'Development Team'
 
     def test_initial_spec_generates_8_char_id(self) -> None:
         """Test that InitialSpec generates 8-character UUID."""
@@ -48,9 +52,6 @@ class TestInitialSpecParsing:
             dependencies='None',
             deliverables='Test deliverables',
             spec_status=SpecStatus.DRAFT,
-            creation_date='2024-01-01',
-            last_updated='2024-01-01',
-            spec_owner='Test Owner',
         )
 
         assert len(spec.id) == 8
@@ -65,23 +66,16 @@ class TestInitialSpecParsing:
             dependencies='Test dependencies',
             deliverables='Test deliverables',
             spec_status=SpecStatus.DRAFT,
-            creation_date='2024-01-15',
-            last_updated='2024-01-15',
-            spec_owner='Test Owner',
         )
 
         markdown = spec.build_markdown()
 
         assert '# Technical Specification: Test Spec' in markdown
-        assert '<!-- ID:' in markdown
-        assert '- **Objectives**: Test objectives' in markdown
-        assert '- **Scope**: Test scope' in markdown
-        assert '- **Dependencies**: Test dependencies' in markdown
-        assert '- **Deliverables**: Test deliverables' in markdown
-        assert '- **Status**: draft' in markdown
-        assert '- **Created**: 2024-01-15' in markdown
-        assert '- **Last Updated**: 2024-01-15' in markdown
-        assert '- **Owner**: Test Owner' in markdown
+        assert '### Objectives\nTest objectives' in markdown
+        assert '### Scope\nTest scope' in markdown
+        assert '### Dependencies\nTest dependencies' in markdown
+        assert '### Deliverables\nTest deliverables' in markdown
+        assert '### Status\ndraft' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, sample_initial_spec_markdown: str) -> None:
         """Test that parsing and rebuilding maintains complete data integrity."""
@@ -97,9 +91,6 @@ class TestInitialSpecParsing:
         assert original_spec.dependencies == reparsed_spec.dependencies
         assert original_spec.deliverables == reparsed_spec.deliverables
         assert original_spec.spec_status == reparsed_spec.spec_status
-        assert original_spec.creation_date == reparsed_spec.creation_date
-        assert original_spec.last_updated == reparsed_spec.last_updated
-        assert original_spec.spec_owner == reparsed_spec.spec_owner
 
 
 class TestInitialSpecUtilities:

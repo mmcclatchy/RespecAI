@@ -70,10 +70,10 @@ Biometric authentication, single sign-on, social media integration
 SMS-based authentication (privacy concerns), password sharing features
 
 ## Metadata
-- **Status**: approved
-- **Created**: 2024-01-10
-- **Last Updated**: 2024-01-15
-- **Owner**: Security Team
+
+### Status
+approved
+
 """
 
         requirements = FeatureRequirements.parse_markdown(markdown)
@@ -100,9 +100,6 @@ SMS-based authentication (privacy concerns), password sharing features
         assert 'Biometric authentication' in requirements.could_have_features
         assert 'SMS-based authentication' in requirements.wont_have_features
         assert requirements.requirements_status == RequirementsStatus.APPROVED
-        assert requirements.creation_date == '2024-01-10'
-        assert requirements.last_updated == '2024-01-15'
-        assert requirements.feature_owner == 'Security Team'
 
     def test_parse_markdown_handles_missing_sections(self) -> None:
         markdown = """# Feature Requirements: Basic Feature
@@ -122,10 +119,10 @@ End users
 Improved user experience
 
 ## Metadata
-- **Status**: draft
-- **Created**: 2024-01-01
-- **Last Updated**: 2024-01-01
-- **Owner**: Development Team
+
+### Status
+draft
+
 """
 
         requirements = FeatureRequirements.parse_markdown(markdown)
@@ -167,9 +164,6 @@ class TestFeatureRequirementsMarkdownBuilding:
             could_have_features='Wishlist integration, product recommendations',
             wont_have_features='Shared carts between users, complex discounting rules',
             requirements_status=RequirementsStatus.IN_REVIEW,
-            creation_date='2024-01-05',
-            last_updated='2024-01-12',
-            feature_owner='Product Team',
         )
 
     def test_build_markdown_creates_valid_template_format(self, sample_requirements: FeatureRequirements) -> None:
@@ -185,8 +179,7 @@ class TestFeatureRequirementsMarkdownBuilding:
         assert '## Feature Prioritization' in markdown
         assert '### Must Have' in markdown
         assert 'Add items, remove items, view total price' in markdown
-        assert '- **Status**: in-review' in markdown
-        assert '- **Owner**: Product Team' in markdown
+        assert '### Status\nin-review' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, sample_requirements: FeatureRequirements) -> None:
         # Build markdown from the model
@@ -215,9 +208,6 @@ class TestFeatureRequirementsMarkdownBuilding:
         assert parsed_requirements.could_have_features == sample_requirements.could_have_features
         assert parsed_requirements.wont_have_features == sample_requirements.wont_have_features
         assert parsed_requirements.requirements_status == sample_requirements.requirements_status
-        assert parsed_requirements.creation_date == sample_requirements.creation_date
-        assert parsed_requirements.last_updated == sample_requirements.last_updated
-        assert parsed_requirements.feature_owner == sample_requirements.feature_owner
 
     def test_character_for_character_round_trip_validation(self, sample_requirements: FeatureRequirements) -> None:
         # Build markdown

@@ -10,7 +10,7 @@ class MCPModel(BaseModel, ABC):
     # Class variables - won't be treated as model fields
     TITLE_PATTERN: ClassVar[str] = ''
     TITLE_FIELD: ClassVar[str] = ''
-    HEADER_FIELD_MAPPING: ClassVar[dict[str, list[str]]] = {}
+    HEADER_FIELD_MAPPING: ClassVar[dict[str, tuple[str, ...]]] = {}
 
     @classmethod
     def _find_nodes_by_type(cls, node: SyntaxTreeNode, node_type: str) -> list[SyntaxTreeNode]:
@@ -33,7 +33,7 @@ class MCPModel(BaseModel, ABC):
         return ' '.join(cls._extract_text_content(child) for child in node.children)
 
     @classmethod
-    def _extract_content_by_header_path(cls, tree: SyntaxTreeNode, path: list[str]) -> str:
+    def _extract_content_by_header_path(cls, tree: SyntaxTreeNode, path: tuple[str, ...]) -> str:
         h2_header = path[0]
         h3_header = path[1] if len(path) > 1 else None
 
@@ -85,7 +85,7 @@ class MCPModel(BaseModel, ABC):
         return '\n\n'.join(content_parts).strip()
 
     @classmethod
-    def _extract_list_items_by_header_path(cls, tree: SyntaxTreeNode, path: list[str]) -> list[str]:
+    def _extract_list_items_by_header_path(cls, tree: SyntaxTreeNode, path: tuple[str, ...]) -> list[str]:
         h2_header = path[0]
         h3_header = path[1] if len(path) > 1 else None
 
@@ -185,40 +185,6 @@ class MCPModel(BaseModel, ABC):
                 extracted_content = cls._extract_content_by_header_path(tree, header_path)
                 if extracted_content:  # Only set if we found actual content
                     fields[field_name] = extracted_content
-
-        # Backward compatibility: Extract metadata from bullet points (- **Field**: value)
-        for item in cls._find_nodes_by_type(tree, 'list_item'):
-            text = cls._extract_text_content(item).strip()
-
-            # Check for bullet point format with bold text (- **Field**: value)
-            # The text content might not include ** due to markdown parsing
-            if ':' not in text:
-                continue
-
-            # Check if this looks like a metadata field
-            field_part, value_part = text.split(':', 1)
-            potential_field = field_part.strip().lower().replace(' ', '_').replace('-', '_')
-
-            # Look for common metadata fields even without ** formatting
-            metadata_fields = ['status', 'created', 'last_updated', 'version']
-            if potential_field not in metadata_fields:
-                continue
-
-            field_name = field_part.replace('**', '').strip().lower().replace(' ', '_').replace('-', '_')
-            field_value = value_part.strip()
-
-            # Map common field names - ensure all enum fields are properly mapped
-            field_mapping = {
-                'status': 'project_status',
-                'created': 'creation_date',
-                'version': 'version',
-                'last_updated': 'last_updated',
-            }
-            model_field_name = field_mapping.get(field_name, field_name)
-
-            # Only set if not already extracted from hierarchical headers
-            if model_field_name not in fields or not fields[model_field_name]:
-                fields[model_field_name] = field_value
 
         return cls(**fields)
 

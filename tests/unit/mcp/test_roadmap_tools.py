@@ -66,16 +66,32 @@ class TestRoadmapTools:
         return """# Technical Specification: User Authentication
 
 ## Overview
-- **Objectives**: Implement secure user authentication system
-- **Scope**: Login, logout, session management
-- **Dependencies**: Database setup, encryption library
-- **Deliverables**: User login/logout endpoints, session management middleware
+
+### Objectives
+Implement secure user authentication system
+
+### Scope
+Login, logout, session management
+
+### Dependencies
+Database setup, encryption library
+
+### Deliverables
+User login/logout endpoints, session management middleware
 
 ## Metadata
-- **Status**: draft
-- **Created**: 2024-01-15
-- **Last Updated**: 2024-01-15
-- **Owner**: Test Team
+
+### Status
+draft
+
+### Created
+2024-01-15
+
+### Last Updated
+2024-01-15
+
+### Owner
+Test Team
 """
 
     @pytest.fixture
@@ -157,7 +173,29 @@ class TestGetRoadmap(TestRoadmapTools):
             total_duration='6 months',
             team_size='5 developers',
             roadmap_budget='$100k',
-            specs=['spec1', 'spec2', 'spec3'],  # Now a list of strings
+            specs=[
+                InitialSpec(
+                    phase_name='spec1',
+                    objectives='Test objectives 1',
+                    scope='Test scope 1',
+                    dependencies='Test deps 1',
+                    deliverables='Test deliverables 1',
+                ),
+                InitialSpec(
+                    phase_name='spec2',
+                    objectives='Test objectives 2',
+                    scope='Test scope 2',
+                    dependencies='Test deps 2',
+                    deliverables='Test deliverables 2',
+                ),
+                InitialSpec(
+                    phase_name='spec3',
+                    objectives='Test objectives 3',
+                    scope='Test scope 3',
+                    dependencies='Test deps 3',
+                    deliverables='Test deliverables 3',
+                ),
+            ],
             critical_path_analysis='Test analysis',
             key_risks='Test risks',
             mitigation_plans='Test plans',

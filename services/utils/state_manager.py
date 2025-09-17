@@ -1,13 +1,10 @@
 from abc import ABC, abstractmethod
 from collections import deque
 
-from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError
-from services.utils.models import LoopState, MCPResponse
-from services.models.roadmap import Roadmap
 from services.models.initial_spec import InitialSpec
-
-
-from services.utils.errors import SpecNotFoundError
+from services.models.roadmap import Roadmap
+from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError, SpecNotFoundError
+from services.utils.models import LoopState, MCPResponse
 
 
 class StateManager(ABC):
@@ -134,9 +131,9 @@ class InMemoryStateManager(StateManager):
             self._specs[project_id] = {}
         self._specs[project_id][spec.phase_name] = spec
 
-        # Add spec name to roadmap if not already there
+        # Add spec to roadmap if not already there
         roadmap = self._roadmaps[project_id]
-        roadmap.add_spec_name(spec.phase_name)
+        roadmap.add_spec(spec)
 
         return spec.phase_name
 
@@ -153,7 +150,7 @@ class InMemoryStateManager(StateManager):
         if project_id not in self._roadmaps:
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
         roadmap = self._roadmaps[project_id]
-        return roadmap.specs
+        return [spec.phase_name for spec in roadmap.specs]
 
     def delete_spec(self, project_id: str, spec_name: str) -> bool:
         if project_id not in self._roadmaps:
@@ -166,9 +163,11 @@ class InMemoryStateManager(StateManager):
             removed_from_specs = True
 
         roadmap = self._roadmaps[project_id]
-        if spec_name in roadmap.specs:
-            roadmap.specs.remove(spec_name)
-            roadmap.spec_count = len(roadmap.specs)
-            return True
+        # Find and remove spec by phase_name
+        for i, spec in enumerate(roadmap.specs):
+            if spec.phase_name == spec_name:
+                roadmap.specs.pop(i)
+                roadmap.spec_count = len(roadmap.specs)
+                return True
 
         return removed_from_specs

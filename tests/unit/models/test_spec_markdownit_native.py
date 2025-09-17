@@ -11,32 +11,56 @@ def markdownit_native_spec_markdown() -> str:
 <!-- ID: abc12345 -->
 
 ## Overview
-- **Objectives**: Implement secure user login and registration
-- **Scope**: Login, logout, password reset functionality
-- **Dependencies**: Database, encryption library
-- **Deliverables**: Working authentication system
+
+### Objectives
+Implement secure user login and registration
+
+### Scope
+Login, logout, password reset functionality
+
+### Dependencies
+Database, encryption library
+
+### Deliverables
+Working authentication system
 
 ## System Design
-- **Architecture**: Microservices architecture with API gateway
-- **Technology Stack**: Python FastAPI, PostgreSQL, JWT
+
+### Architecture
+Microservices architecture with API gateway
+
+### Technology Stack
+Python FastAPI, PostgreSQL, JWT
 
 ## Implementation
-- **Functional Requirements**: User registration, login, logout, password reset
-- **Non-Functional Requirements**: Response time < 200ms, 99.9% uptime
-- **Development Plan**: Phase 1: Backend, Phase 2: Frontend integration
-- **Testing Strategy**: Unit tests, integration tests, security testing
+
+### Functional Requirements
+User registration, login, logout, password reset
+
+### Non-Functional Requirements
+Response time < 200ms, 99.9% uptime
+
+### Development Plan
+Phase 1: Backend, Phase 2: Frontend integration
+
+### Testing Strategy
+Unit tests, integration tests, security testing
 
 ## Additional Details
-- **Research Requirements**: OAuth integration patterns, JWT best practices
-- **Success Criteria**: 100% test coverage, security audit passed
-- **Integration Context**: Connects to user service, notification service
+
+### Research Requirements
+OAuth integration patterns, JWT best practices
+
+### Success Criteria
+100% test coverage, security audit passed
+
+### Integration Context
+Connects to user service, notification service
 
 ## Metadata
-- **Status**: in-development
-- **Phase**: 1 of 3
-- **Created**: 2024-01-01
-- **Last Updated**: 2024-01-02
-- **Owner**: Development Team"""
+
+### Status
+in-development"""
 
 
 class TestMarkdownItNativeParsing:
@@ -59,11 +83,6 @@ class TestMarkdownItNativeParsing:
         assert spec.success_criteria == '100% test coverage, security audit passed'
         assert spec.integration_context == 'Connects to user service, notification service'
         assert spec.spec_status == SpecStatus.IN_DEVELOPMENT
-        assert spec.phase_number == '1'
-        assert spec.total_phases == '3'
-        assert spec.creation_date == '2024-01-01'
-        assert spec.last_updated == '2024-01-02'
-        assert spec.spec_owner == 'Development Team'
 
     def test_build_markdown_creates_markdownit_native_format(self) -> None:
         """Test that build_markdown creates the new list-based format."""
@@ -83,11 +102,6 @@ class TestMarkdownItNativeParsing:
             success_criteria='All tests pass',
             integration_context='API integration',
             spec_status=SpecStatus.APPROVED,
-            phase_number='1',
-            total_phases='3',
-            creation_date='2024-01-15',
-            last_updated='2024-01-15',
-            spec_owner='Test Owner',
         )
 
         markdown = spec.build_markdown()
@@ -95,28 +109,24 @@ class TestMarkdownItNativeParsing:
         # Should use new list format
         assert '# Technical Specification: Test Spec' in markdown
         assert '## Overview' in markdown
-        assert '- **Objectives**: Test objectives' in markdown
-        assert '- **Scope**: Test scope' in markdown
-        assert '- **Dependencies**: Test dependencies' in markdown
-        assert '- **Deliverables**: Test deliverables' in markdown
+        assert '### Objectives\nTest objectives' in markdown
+        assert '### Scope\nTest scope' in markdown
+        assert '### Dependencies\nTest dependencies' in markdown
+        assert '### Deliverables\nTest deliverables' in markdown
         assert '## System Design' in markdown
-        assert '- **Architecture**: Test architecture' in markdown
-        assert '- **Technology Stack**: Python, FastAPI' in markdown
+        assert '### Architecture\nTest architecture' in markdown
+        assert '### Technology Stack\nPython, FastAPI' in markdown
         assert '## Implementation' in markdown
-        assert '- **Functional Requirements**: Login functionality' in markdown
-        assert '- **Non-Functional Requirements**: High performance' in markdown
-        assert '- **Development Plan**: 3-phase approach' in markdown
-        assert '- **Testing Strategy**: TDD approach' in markdown
+        assert '### Functional Requirements\nLogin functionality' in markdown
+        assert '### Non-Functional Requirements\nHigh performance' in markdown
+        assert '### Development Plan\n3-phase approach' in markdown
+        assert '### Testing Strategy\nTDD approach' in markdown
         assert '## Additional Details' in markdown
-        assert '- **Research Requirements**: Security patterns' in markdown
-        assert '- **Success Criteria**: All tests pass' in markdown
-        assert '- **Integration Context**: API integration' in markdown
+        assert '### Research Requirements\nSecurity patterns' in markdown
+        assert '### Success Criteria\nAll tests pass' in markdown
+        assert '### Integration Context\nAPI integration' in markdown
         assert '## Metadata' in markdown
-        assert '- **Status**: approved' in markdown
-        assert '- **Phase**: 1 of 3' in markdown
-        assert '- **Created**: 2024-01-15' in markdown
-        assert '- **Last Updated**: 2024-01-15' in markdown
-        assert '- **Owner**: Test Owner' in markdown
+        assert '### Status\napproved' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, markdownit_native_spec_markdown: str) -> None:
         """Test that parsing and rebuilding maintains complete data integrity."""
@@ -141,11 +151,6 @@ class TestMarkdownItNativeParsing:
         assert original_spec.success_criteria == reparsed_spec.success_criteria
         assert original_spec.integration_context == reparsed_spec.integration_context
         assert original_spec.spec_status == reparsed_spec.spec_status
-        assert original_spec.phase_number == reparsed_spec.phase_number
-        assert original_spec.total_phases == reparsed_spec.total_phases
-        assert original_spec.creation_date == reparsed_spec.creation_date
-        assert original_spec.last_updated == reparsed_spec.last_updated
-        assert original_spec.spec_owner == reparsed_spec.spec_owner
 
 
 class TestRecursiveTraversalUtilities:

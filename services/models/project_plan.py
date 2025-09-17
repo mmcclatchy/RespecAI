@@ -1,7 +1,4 @@
-from datetime import datetime
 from typing import ClassVar
-
-from pydantic import Field
 
 from .base import MCPModel
 from .enums import ProjectStatus
@@ -11,40 +8,37 @@ class ProjectPlan(MCPModel):
     # Class configuration
     TITLE_PATTERN: ClassVar[str] = '# Project Plan:'
     TITLE_FIELD: ClassVar[str] = 'project_name'
-    HEADER_FIELD_MAPPING: ClassVar[dict[str, list[str]]] = {
-        'project_vision': ['Executive Summary', 'Vision'],
-        'project_mission': ['Executive Summary', 'Mission'],
-        'project_timeline': ['Executive Summary', 'Timeline'],
-        'project_budget': ['Executive Summary', 'Budget'],
-        'primary_objectives': ['Business Objectives', 'Primary Objectives'],
-        'success_metrics': ['Business Objectives', 'Success Metrics'],
-        'key_performance_indicators': ['Business Objectives', 'Key Performance Indicators'],
-        'included_features': ['Project Scope', 'Included Features'],
-        'excluded_features': ['Project Scope', 'Excluded Features'],
-        'project_assumptions': ['Project Scope', 'Assumptions'],
-        'project_constraints': ['Project Scope', 'Constraints'],
-        'project_sponsor': ['Stakeholders', 'Project Sponsor'],
-        'key_stakeholders': ['Stakeholders', 'Key Stakeholders'],
-        'end_users': ['Stakeholders', 'End Users'],
-        'work_breakdown': ['Project Structure', 'Work Breakdown'],
-        'phases_overview': ['Project Structure', 'Phases Overview'],
-        'project_dependencies': ['Project Structure', 'Dependencies'],
-        'team_structure': ['Resource Requirements', 'Team Structure'],
-        'technology_requirements': ['Resource Requirements', 'Technology Requirements'],
-        'infrastructure_needs': ['Resource Requirements', 'Infrastructure Needs'],
-        'identified_risks': ['Risk Management', 'Identified Risks'],
-        'mitigation_strategies': ['Risk Management', 'Mitigation Strategies'],
-        'contingency_plans': ['Risk Management', 'Contingency Plans'],
-        'quality_standards': ['Quality Assurance', 'Quality Standards'],
-        'testing_strategy': ['Quality Assurance', 'Testing Strategy'],
-        'acceptance_criteria': ['Quality Assurance', 'Acceptance Criteria'],
-        'reporting_structure': ['Communication Plan', 'Reporting Structure'],
-        'meeting_schedule': ['Communication Plan', 'Meeting Schedule'],
-        'documentation_standards': ['Communication Plan', 'Documentation Standards'],
-        'project_status': ['Metadata', 'Status'],
-        'creation_date': ['Metadata', 'Created'],
-        'last_updated': ['Metadata', 'Last Updated'],
-        'version': ['Metadata', 'Version'],
+    HEADER_FIELD_MAPPING: ClassVar[dict[str, tuple[str, ...]]] = {
+        'project_vision': ('Executive Summary', 'Vision'),
+        'project_mission': ('Executive Summary', 'Mission'),
+        'project_timeline': ('Executive Summary', 'Timeline'),
+        'project_budget': ('Executive Summary', 'Budget'),
+        'primary_objectives': ('Business Objectives', 'Primary Objectives'),
+        'success_metrics': ('Business Objectives', 'Success Metrics'),
+        'key_performance_indicators': ('Business Objectives', 'Key Performance Indicators'),
+        'included_features': ('Project Scope', 'Included Features'),
+        'excluded_features': ('Project Scope', 'Excluded Features'),
+        'project_assumptions': ('Project Scope', 'Assumptions'),
+        'project_constraints': ('Project Scope', 'Constraints'),
+        'project_sponsor': ('Stakeholders', 'Project Sponsor'),
+        'key_stakeholders': ('Stakeholders', 'Key Stakeholders'),
+        'end_users': ('Stakeholders', 'End Users'),
+        'work_breakdown': ('Project Structure', 'Work Breakdown'),
+        'phases_overview': ('Project Structure', 'Phases Overview'),
+        'project_dependencies': ('Project Structure', 'Dependencies'),
+        'team_structure': ('Resource Requirements', 'Team Structure'),
+        'technology_requirements': ('Resource Requirements', 'Technology Requirements'),
+        'infrastructure_needs': ('Resource Requirements', 'Infrastructure Needs'),
+        'identified_risks': ('Risk Management', 'Identified Risks'),
+        'mitigation_strategies': ('Risk Management', 'Mitigation Strategies'),
+        'contingency_plans': ('Risk Management', 'Contingency Plans'),
+        'quality_standards': ('Quality Assurance', 'Quality Standards'),
+        'testing_strategy': ('Quality Assurance', 'Testing Strategy'),
+        'acceptance_criteria': ('Quality Assurance', 'Acceptance Criteria'),
+        'reporting_structure': ('Communication Plan', 'Reporting Structure'),
+        'meeting_schedule': ('Communication Plan', 'Meeting Schedule'),
+        'documentation_standards': ('Communication Plan', 'Documentation Standards'),
+        'project_status': ('Metadata', 'Status'),
     }
 
     # Model fields with defaults
@@ -79,10 +73,6 @@ class ProjectPlan(MCPModel):
     meeting_schedule: str = 'Meeting Schedule not specified'
     documentation_standards: str = 'Documentation Standards not specified'
     project_status: ProjectStatus = ProjectStatus.DRAFT
-    creation_date: str = 'Creation Date not specified'
-    last_updated: str = 'Last Updated not specified'
-    version: str = 'Version not specified'
-    created_at: datetime = Field(default_factory=datetime.now)
 
     def build_markdown(self) -> str:
         return f"""# Project Plan: {self.project_name}
@@ -193,8 +183,7 @@ class ProjectPlan(MCPModel):
 {self.documentation_standards}
 
 ## Metadata
-- **Status**: {self.project_status.value}
-- **Created**: {self.creation_date}
-- **Last Updated**: {self.last_updated}
-- **Version**: {self.version}
+
+### Status
+{self.project_status.value}
 """

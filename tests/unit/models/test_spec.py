@@ -9,51 +9,56 @@ def complete_spec_markdown() -> str:
     return """# Technical Specification: Test Phase
 
 ## Overview
-**Objectives**: `Implement user authentication system`
-**Scope**: `Login, logout, password reset functionality`
-**Dependencies**: `User database, JWT library`
 
-## Deliverables
-`Authentication service, login UI, password reset flow`
+### Objectives
+Implement user authentication system
+
+### Scope
+Login, logout, password reset functionality
+
+### Dependencies
+User database, JWT library
+
+### Deliverables
+Authentication service, login UI, password reset flow
 
 ## System Design
 
 ### Architecture
-`Microservice architecture with JWT tokens`
+Microservice architecture with JWT tokens
 
 ### Technology Stack
-`Python FastAPI, PostgreSQL, JWT`
+Python FastAPI, PostgreSQL, JWT
 
 ## Implementation
 
 ### Functional Requirements
-`User login with email/password, secure password storage`
+User login with email/password, secure password storage
 
 ### Non-Functional Requirements
-`Response time < 200ms, 99.9% uptime`
+Response time < 200ms, 99.9% uptime
 
 ### Development Plan
-`Phase 1: Backend service, Phase 2: Frontend integration`
+Phase 1: Backend service, Phase 2: Frontend integration
 
 ### Testing Strategy
-`Unit tests, integration tests, security testing`
+Unit tests, integration tests, security testing
 
-## Research Requirements
-`OAuth integration patterns, JWT best practices`
+## Additional Details
 
-## Success Criteria
-`100% test coverage, security audit passed`
+### Research Requirements
+OAuth integration patterns, JWT best practices
 
-## Integration
-`Connects to user service, notification service`
+### Success Criteria
+100% test coverage, security audit passed
 
----
+### Integration Context
+Connects to user service, notification service
 
-**Status**: `in-development`
-**Phase**: `1` of `3`
-**Created**: `2024-01-15`
-**Last Updated**: `2024-01-16`
-**Owner**: `Test Owner`
+## Metadata
+
+### Status
+in-development
 """
 
 
@@ -62,7 +67,9 @@ def minimal_spec_markdown() -> str:
     return """# Technical Specification: Minimal Spec
 
 ## Overview
-**Objectives**: `Basic functionality`
+
+### Objectives
+Basic functionality
 """
 
 
@@ -100,22 +107,21 @@ def round_trip_spec_markdown() -> str:
 ### Testing Strategy
 `Round-trip validation`
 
-## Research Requirements
-`Parsing best practices`
+## Additional Details
 
-## Success Criteria
-`Character-for-character match`
+### Research Requirements
+Parsing best practices
 
-## Integration
-`Standalone component`
+### Success Criteria
+Character-for-character match
 
----
+### Integration Context
+Standalone component
 
-**Status**: `approved`
-**Phase**: `1` of `1`
-**Created**: `2024-01-15`
-**Last Updated**: `2024-01-15`
-**Owner**: `Test Owner`
+## Metadata
+
+### Status
+approved
 """
 
 
@@ -137,12 +143,7 @@ class TestTechnicalSpecParsing:
         assert spec.research_requirements == 'OAuth integration patterns, JWT best practices'
         assert spec.success_criteria == '100% test coverage, security audit passed'
         assert spec.integration_context == 'Connects to user service, notification service'
-        assert spec.spec_status == 'in-development'
-        assert spec.phase_number == '1'
-        assert spec.total_phases == '3'
-        assert spec.creation_date == '2024-01-15'
-        assert spec.last_updated == '2024-01-16'
-        assert spec.spec_owner == 'Test Owner'
+        assert spec.spec_status == SpecStatus.IN_DEVELOPMENT
 
     def test_parse_markdown_handles_missing_sections(self, minimal_spec_markdown: str) -> None:
         spec = TechnicalSpec.parse_markdown(minimal_spec_markdown)
@@ -155,7 +156,7 @@ class TestTechnicalSpecParsing:
     def test_parse_markdown_invalid_format_raises_error(self) -> None:
         invalid_markdown = 'This is not a valid specification'
 
-        with pytest.raises(ValueError, match='Invalid specification format'):
+        with pytest.raises(ValueError, match='Invalid technical spec format'):
             TechnicalSpec.parse_markdown(invalid_markdown)
 
 
@@ -177,26 +178,21 @@ class TestTechnicalSpecMarkdownBuilding:
             success_criteria='All tests pass',
             integration_context='API integration',
             spec_status=SpecStatus.APPROVED,
-            phase_number='1',
-            total_phases='3',
-            creation_date='2024-01-15',
-            last_updated='2024-01-15',
-            spec_owner='Test Owner',
         )
 
         markdown = spec.build_markdown()
 
         assert '# Technical Specification: Test Spec' in markdown
-        assert '- **Objectives**: Test objectives' in markdown
-        assert '- **Scope**: Test scope' in markdown
-        assert '- **Dependencies**: Test deps' in markdown
-        assert '- **Deliverables**: Test deliverables' in markdown
-        assert '- **Architecture**: Test architecture' in markdown
-        assert '- **Technology Stack**: Python, FastAPI' in markdown
-        assert '- **Functional Requirements**: Login functionality' in markdown
-        assert '- **Non-Functional Requirements**: High performance' in markdown
-        assert '- **Development Plan**: 3-phase approach' in markdown
-        assert '- **Testing Strategy**: TDD approach' in markdown
+        assert '### Objectives\nTest objectives' in markdown
+        assert '### Scope\nTest scope' in markdown
+        assert '### Dependencies\nTest deps' in markdown
+        assert '### Deliverables\nTest deliverables' in markdown
+        assert '### Architecture\nTest architecture' in markdown
+        assert '### Technology Stack\nPython, FastAPI' in markdown
+        assert '### Functional Requirements\nLogin functionality' in markdown
+        assert '### Non-Functional Requirements\nHigh performance' in markdown
+        assert '### Development Plan\n3-phase approach' in markdown
+        assert '### Testing Strategy\nTDD approach' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, round_trip_spec_markdown: str) -> None:
         spec = TechnicalSpec.parse_markdown(round_trip_spec_markdown)
@@ -239,8 +235,3 @@ class TestTechnicalSpecMarkdownBuilding:
         assert original_spec.success_criteria == reparsed_spec.success_criteria
         assert original_spec.integration_context == reparsed_spec.integration_context
         assert original_spec.spec_status == reparsed_spec.spec_status
-        assert original_spec.phase_number == reparsed_spec.phase_number
-        assert original_spec.total_phases == reparsed_spec.total_phases
-        assert original_spec.creation_date == reparsed_spec.creation_date
-        assert original_spec.last_updated == reparsed_spec.last_updated
-        assert original_spec.spec_owner == reparsed_spec.spec_owner

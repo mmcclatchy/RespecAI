@@ -218,6 +218,54 @@ class TestRoadmapToolsIntegration:
         create_result = roadmap_tools.create_roadmap('integration-test', roadmap_markdown)
         assert 'Integration Test Project' in create_result
 
+        # Add specs to the roadmap
+        foundation_spec = """# Technical Specification: Foundation
+
+## Overview
+
+### Objectives
+Build project foundation
+
+### Scope
+Core infrastructure setup
+
+### Dependencies
+None
+
+### Deliverables
+Foundation components
+
+## Metadata
+
+### Status
+draft
+"""
+
+        implementation_spec = """# Technical Specification: Implementation
+
+## Overview
+
+### Objectives
+Implement main features
+
+### Scope
+Core feature development
+
+### Dependencies
+Foundation
+
+### Deliverables
+Working features
+
+## Metadata
+
+### Status
+draft
+"""
+
+        roadmap_tools.add_spec('integration-test', 'Foundation', foundation_spec)
+        roadmap_tools.add_spec('integration-test', 'Implementation', implementation_spec)
+
         # Get roadmap
         get_result = roadmap_tools.get_roadmap('integration-test')
         assert 'Integration Test Project' in get_result

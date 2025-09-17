@@ -62,16 +62,16 @@ class CriticFeedback(MCPModel):
             fields[model_field_name] = field_value
 
         # Extract detailed feedback
-        detailed_feedback = cls._extract_content_by_header_path(tree, ['Analysis'])
+        detailed_feedback = cls._extract_content_by_header_path(tree, ('Analysis',))
 
         # Extract key issues and recommendations
         key_issues = []
         recommendations = []
 
         # Extract issues and recommendations using a special list extraction method
-        key_issues = cls._extract_list_items_by_header_path(tree, ['Issues and Recommendations', 'Key Issues'])
+        key_issues = cls._extract_list_items_by_header_path(tree, ('Issues and Recommendations', 'Key Issues'))
         recommendations = cls._extract_list_items_by_header_path(
-            tree, ['Issues and Recommendations', 'Recommendations']
+            tree, ('Issues and Recommendations', 'Recommendations')
         )
 
         # Set defaults for missing fields
