@@ -167,7 +167,12 @@ class MCPModel(BaseModel, ABC):
             title_pattern = cls.TITLE_PATTERN.replace('# ', '').split(':')[0]
             if title_pattern not in title_text:
                 continue
-            title_value = title_text.split(':', 1)[1].strip()
+            # Handle titles with and without colons
+            if ':' in title_text:
+                title_value = title_text.split(':', 1)[1].strip()
+            else:
+                # For titles without colons, use the full title text
+                title_value = title_text.strip()
             fields[cls.TITLE_FIELD] = title_value
             break
 

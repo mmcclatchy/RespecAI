@@ -56,6 +56,7 @@ markers = [
     "agent_coordination: marks tests for agent coordination and parameter passing",
     "error_injection: marks tests for error injection and failure scenarios",
     "golden_dataset: marks tests for golden dataset regression testing",
+    "integration: marks tests for integration testing across multiple components",
     "mcp_orchestration: marks tests for MCP server orchestration and workflow validation",
     "workflow_state: marks tests for workflow state management and failure recovery",
 ]

@@ -3,6 +3,7 @@ from collections import deque
 
 from services.models.initial_spec import InitialSpec
 from services.models.roadmap import Roadmap
+from services.models.spec import TechnicalSpec
 from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError, SpecNotFoundError
 from services.utils.models import LoopState, MCPResponse
 
@@ -37,17 +38,31 @@ class StateManager(ABC):
     @abstractmethod
     def get_roadmap(self, project_id: str) -> Roadmap: ...
 
+    # Initial Spec Management (Business Requirements)
     @abstractmethod
-    def store_spec(self, project_id: str, spec: InitialSpec) -> str: ...
+    def store_initial_spec(self, project_id: str, spec: InitialSpec) -> str: ...
 
     @abstractmethod
-    def get_spec(self, project_id: str, spec_name: str) -> InitialSpec: ...
+    def get_initial_spec(self, project_id: str, spec_name: str) -> InitialSpec: ...
 
     @abstractmethod
-    def list_specs(self, project_id: str) -> list[str]: ...
+    def list_initial_specs(self, project_id: str) -> list[str]: ...
 
     @abstractmethod
-    def delete_spec(self, project_id: str, spec_name: str) -> bool: ...
+    def delete_initial_spec(self, project_id: str, spec_name: str) -> bool: ...
+
+    # Technical Spec Management (Implementation Details)
+    @abstractmethod
+    def store_technical_spec(self, project_id: str, spec: TechnicalSpec) -> str: ...
+
+    @abstractmethod
+    def get_technical_spec(self, project_id: str, spec_name: str) -> TechnicalSpec: ...
+
+    @abstractmethod
+    def list_technical_specs(self, project_id: str) -> list[str]: ...
+
+    @abstractmethod
+    def delete_technical_spec(self, project_id: str, spec_name: str) -> bool: ...
 
 
 class Queue[T]:
@@ -72,7 +87,8 @@ class InMemoryStateManager(StateManager):
         self._loop_history: Queue[str] = Queue(maxlen=max_history_size)
         self._objective_feedback: dict[str, str] = {}
         self._roadmaps: dict[str, Roadmap] = {}
-        self._specs: dict[str, dict[str, InitialSpec]] = {}  # project_id -> {spec_name -> InitialSpec}
+        self._initial_specs: dict[str, dict[str, InitialSpec]] = {}  # project_id -> {spec_name -> InitialSpec}
+        self._technical_specs: dict[str, dict[str, TechnicalSpec]] = {}  # project_id -> {spec_name -> TechnicalSpec}
 
     def add_loop(self, loop: LoopState) -> None:
         if loop.id in self._active_loops:
@@ -122,14 +138,14 @@ class InMemoryStateManager(StateManager):
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
         return self._roadmaps[project_id]
 
-    def store_spec(self, project_id: str, spec: InitialSpec) -> str:
+    def store_initial_spec(self, project_id: str, spec: InitialSpec) -> str:
         if project_id not in self._roadmaps:
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
 
         # Store the InitialSpec separately
-        if project_id not in self._specs:
-            self._specs[project_id] = {}
-        self._specs[project_id][spec.phase_name] = spec
+        if project_id not in self._initial_specs:
+            self._initial_specs[project_id] = {}
+        self._initial_specs[project_id][spec.phase_name] = spec
 
         # Add spec to roadmap if not already there
         roadmap = self._roadmaps[project_id]
@@ -137,29 +153,29 @@ class InMemoryStateManager(StateManager):
 
         return spec.phase_name
 
-    def get_spec(self, project_id: str, spec_name: str) -> InitialSpec:
+    def get_initial_spec(self, project_id: str, spec_name: str) -> InitialSpec:
         if project_id not in self._roadmaps:
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
 
-        if project_id not in self._specs or spec_name not in self._specs[project_id]:
-            raise SpecNotFoundError(f'Spec not found: {spec_name}')
+        if project_id not in self._initial_specs or spec_name not in self._initial_specs[project_id]:
+            raise SpecNotFoundError(f'Initial spec not found: {spec_name}')
 
-        return self._specs[project_id][spec_name]
+        return self._initial_specs[project_id][spec_name]
 
-    def list_specs(self, project_id: str) -> list[str]:
+    def list_initial_specs(self, project_id: str) -> list[str]:
         if project_id not in self._roadmaps:
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
         roadmap = self._roadmaps[project_id]
         return [spec.phase_name for spec in roadmap.specs]
 
-    def delete_spec(self, project_id: str, spec_name: str) -> bool:
+    def delete_initial_spec(self, project_id: str, spec_name: str) -> bool:
         if project_id not in self._roadmaps:
             raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
 
-        # Remove from both the specs storage and roadmap
+        # Remove from both the initial specs storage and roadmap
         removed_from_specs = False
-        if project_id in self._specs and spec_name in self._specs[project_id]:
-            del self._specs[project_id][spec_name]
+        if project_id in self._initial_specs and spec_name in self._initial_specs[project_id]:
+            del self._initial_specs[project_id][spec_name]
             removed_from_specs = True
 
         roadmap = self._roadmaps[project_id]
@@ -171,3 +187,43 @@ class InMemoryStateManager(StateManager):
                 return True
 
         return removed_from_specs
+
+    def store_technical_spec(self, project_id: str, spec: TechnicalSpec) -> str:
+        if project_id not in self._roadmaps:
+            raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+
+        # Store the TechnicalSpec separately
+        if project_id not in self._technical_specs:
+            self._technical_specs[project_id] = {}
+        self._technical_specs[project_id][spec.phase_name] = spec
+
+        return spec.phase_name
+
+    def get_technical_spec(self, project_id: str, spec_name: str) -> TechnicalSpec:
+        if project_id not in self._roadmaps:
+            raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+
+        if project_id not in self._technical_specs or spec_name not in self._technical_specs[project_id]:
+            raise SpecNotFoundError(f'Technical spec not found: {spec_name}')
+
+        return self._technical_specs[project_id][spec_name]
+
+    def list_technical_specs(self, project_id: str) -> list[str]:
+        if project_id not in self._roadmaps:
+            raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+
+        if project_id not in self._technical_specs:
+            return []
+
+        return list(self._technical_specs[project_id].keys())
+
+    def delete_technical_spec(self, project_id: str, spec_name: str) -> bool:
+        if project_id not in self._roadmaps:
+            raise RoadmapNotFoundError(f'Roadmap not found for project: {project_id}')
+
+        # Remove from technical specs storage
+        if project_id in self._technical_specs and spec_name in self._technical_specs[project_id]:
+            del self._technical_specs[project_id][spec_name]
+            return True
+
+        return False

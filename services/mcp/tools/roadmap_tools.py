@@ -46,7 +46,7 @@ class RoadmapTools:
 
         try:
             spec = InitialSpec.parse_markdown(spec_markdown)
-            self.state.store_spec(project_id, spec)
+            self.state.store_initial_spec(project_id, spec)
             return f'Added spec "{spec_name}" to project {project_id}'
         except Exception as e:
             raise ToolError(f'Failed to add spec: {str(e)}')
@@ -58,7 +58,7 @@ class RoadmapTools:
             raise ToolError('Spec name cannot be empty')
 
         try:
-            self.state.get_spec(project_id, spec_name)
+            self.state.get_initial_spec(project_id, spec_name)
             return f'Retrieved spec "{spec_name}" from project {project_id}'
         except Exception as e:
             raise ResourceError(f'Spec "{spec_name}" not found in project {project_id}: {str(e)}')
@@ -74,7 +74,7 @@ class RoadmapTools:
         try:
             spec = InitialSpec.parse_markdown(spec_markdown)
             # Use state manager to store the updated spec
-            self.state.store_spec(project_id, spec)
+            self.state.store_initial_spec(project_id, spec)
             return f'Updated spec "{spec_name}" in project {project_id}'
         except Exception as e:
             raise ToolError(f'Failed to update spec: {str(e)}')
@@ -84,7 +84,7 @@ class RoadmapTools:
             raise ToolError('Project ID cannot be empty')
 
         try:
-            spec_names = self.state.list_specs(project_id)
+            spec_names = self.state.list_initial_specs(project_id)
             spec_list = ', '.join(spec_names) if spec_names else 'No specs found'
             return f'Specs in project {project_id}: {spec_list}'
         except Exception as e:
@@ -97,7 +97,7 @@ class RoadmapTools:
             raise ToolError('Spec name cannot be empty')
 
         try:
-            was_deleted = self.state.delete_spec(project_id, spec_name)
+            was_deleted = self.state.delete_initial_spec(project_id, spec_name)
             if was_deleted:
                 return f'Deleted spec "{spec_name}" from project {project_id}'
             else:

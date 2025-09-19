@@ -79,89 +79,137 @@ Strategic Plan → /plan-roadmap → [plan-roadmap ↔ roadmap-critic loop] → 
 
 ## Orchestration Pattern
 
-### Agent Coordination Flow
+### Complete Workflow Orchestration
 ```text
 Main Agent (via /plan-roadmap)
     │
-    ├── 1. Initialize Roadmap MCP Loop
+    ├── 1. Retrieve Strategic Plan
+    │   └── mcp_tool: get_project_plan_markdown(plan_loop_id)
+    │
+    ├── 2. Initialize Roadmap MCP Loop
     │   └── mcp_tool: initialize_refinement_loop(loop_type='roadmap')
     │
-    ├── 2. Strategic Plan Context Gathering
-    │   ├── Access strategic plan from /plan output
-    │   ├── Retrieve structured objectives from plan-analyst
-    │   └── Capture phasing preferences from user
-    │
     ├── 3. Roadmap Generation Loop
-    │   ├── Task: plan-roadmap (phase breakdown)
-    │   ├── Task: roadmap-critic (quality assessment → score)
-    │   └── mcp_tool: decide_loop_next_action(roadmap_loop_id, score)
+    │   ├── Task: plan-roadmap (phase breakdown → roadmap markdown)
+    │   ├── mcp_tool: create_roadmap(project_id, roadmap_markdown)
+    │   ├── Task: roadmap-critic (quality assessment → CriticFeedback)
+    │   ├── mcp_tool: store_critic_feedback(critic_feedback_markdown)
+    │   └── mcp_tool: decide_loop_next_action(roadmap_loop_id, quality_score)
     │
     ├── 4. Handle Loop Decision
-    │   ├── IF "refine" → Pass feedback to plan-roadmap
-    │   ├── IF "complete" → Proceed to final preparation
-    │   └── IF "user_input" → Request phasing clarification
+    │   ├── IF "refine" → Pass structured feedback to plan-roadmap
+    │   ├── IF "complete" → Finalize Roadmap model and proceed
+    │   └── IF "user_input" → Request roadmap clarification with feedback context
     │
-    └── 5. Final Roadmap Preparation
-        └── Ready for multiple /spec command invocations
+    └── 5. Finalize & Prepare for Spec Phase
+        ├── mcp_tool: get_roadmap(project_id)
+        └── Roadmap ready for multiple /spec command invocations
 ```
 
-### Data Flow Between Agents
-**Roadmap Generation Phase:**
+### Data Flow Between Components
+- **Main Agent → MCP Server**: `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan
 - **Main Agent → plan-roadmap**: Strategic plan + objectives + preferences
-- **plan-roadmap → Main Agent**: Implementation roadmap (markdown)
-- **Main Agent → roadmap-critic**: Roadmap document for assessment
-- **roadmap-critic → Main Agent**: Quality score (0-100) and feedback
-- **Main Agent → MCP Server**: Score for roadmap loop decision logic
-- **MCP Server → Main Agent**: Next action decision (refine/complete/user_input)
+- **plan-roadmap → Main Agent**: Implementation roadmap with phased breakdown (markdown)
+- **Main Agent → MCP Server**: `create_roadmap(project_id, roadmap_markdown)` - Create Roadmap model
+- **Main Agent → roadmap-critic**: Roadmap for FSDD assessment
+- **roadmap-critic → Main Agent**: Structured CriticFeedback (markdown format)
+- **Main Agent → MCP Server**: `store_critic_feedback(feedback_markdown)` - Store feedback model
+- **Main Agent → MCP Server**: `decide_loop_next_action(roadmap_loop_id, quality_score)` - Decision logic
+- **MCP Server → Main Agent**: Next action (refine/complete/user_input) with loop state
+- **Main Agent → MCP Server**: `get_roadmap(project_id)` - Final retrieval for /spec phase
+
+## Structured Data Models
+
+### Roadmap Model
+The `/plan-roadmap` command creates and stores structured Roadmap models:
+```python
+class Roadmap(MCPModel):
+    project_name: str
+    project_goal: str
+    total_duration: str
+    team_size: str
+    roadmap_budget: str
+    specs: list[InitialSpec] = Field(default_factory=list)
+    critical_path_analysis: str
+    key_risks: str
+    mitigation_plans: str
+    buffer_time: str
+    development_resources: str
+    infrastructure_requirements: str
+    external_dependencies: str
+    quality_assurance_plan: str
+    technical_milestones: str
+    business_milestones: str
+    quality_gates: str
+    performance_targets: str
+    roadmap_status: RoadmapStatus = RoadmapStatus.DRAFT
+    spec_count: int = 0
+```
+
+### CriticFeedback Model
+Quality assessments stored as structured feedback:
+```python
+class CriticFeedback(MCPModel):
+    loop_id: str
+    critic_agent: CriticAgent.ROADMAP_CRITIC
+    iteration: int
+    overall_score: int  # 0-100
+    assessment_summary: str
+    detailed_feedback: str
+    key_issues: list[str]
+    recommendations: list[str]
+    timestamp: datetime
+```
 
 ## Input/Output Specifications
 
 ### Input Requirements
-- **Strategic Plan**: Complete strategic plan document from `/plan` command
-- **Structured Objectives**: Business objectives analysis from plan-analyst processing
+- **ProjectPlan**: ProjectPlan model from `/plan` phase via `get_project_plan_markdown()`
 - **Phasing Preferences**: Optional user guidance on phase structure and timing
+- **Format**: Roadmap markdown structure
 
 ### Output Specifications
-- **Primary Output**: Implementation roadmap document (markdown format)
-- **Structure**:
-  ```markdown
-  # Implementation Roadmap: [Project Name]
-  
-  ## Overview
-  [Phasing strategy and implementation approach]
-  
-  ## Phase Summary  
-  [Total phases, duration, critical path]
-  
-  ## Phase 1: [Foundation/Core]
-  - Duration, Priority, Dependencies
-  - Scope, Deliverables, Technical Focus
-  - Success Criteria, Spec Context
-  
-  ## Phase 2: [Core Features]
-  [Same structure as Phase 1]
-  
-  ## Risk Mitigation
-  [Cross-phase risks and strategies]
-  
-  ## Integration Strategy
-  [How phases connect and build upon each other]
-  ```
+- **Primary Output**: Roadmap model stored in MCP Server + implementation roadmap markdown
+- **Structured Storage**: Roadmap with 18+ validated fields for `/spec` consumption
+- **Markdown Format**:
+```markdown
+# Project Roadmap: [Project Name]
 
-## Quality Assessment Process
+## Project Details
+### Project Goal / Total Duration / Team Size / Budget
 
-### MCP Server Integration
-The command coordinates with MCP Server for quality-driven refinement:
+## Specifications
+[Phased implementation breakdown with InitialSpec objects]
 
-1. **Score Submission**: Pass roadmap-critic scores to MCP Server
-2. **Decision Handling**: Process MCP Server responses:
-   - **"refine"**: Continue improvement cycle with critic feedback
-   - **"complete"**: Accept current roadmap and proceed
-   - **"user_input"**: Request additional user guidance
-3. **Loop Management**: MCP Server manages iteration counts and improvement tracking
+## Risk Assessment
+### Critical Path Analysis / Key Risks / Mitigation Plans / Buffer Time
 
-### Assessment Criteria
-The roadmap-critic evaluates roadmaps against these areas:
+## Resource Planning
+### Development Resources / Infrastructure Requirements
+### External Dependencies / Quality Assurance Plan
+
+## Success Metrics
+### Technical Milestones / Business Milestones
+### Quality Gates / Performance Targets
+
+## Metadata
+### Status / Spec Count
+```
+
+## Quality Gates
+
+### Success Criteria
+- **Quality Threshold**: 85% (configurable via `FSDD_LOOP_ROADMAP_THRESHOLD`)
+- **Maximum Iterations**: 5 (configurable via `FSDD_LOOP_ROADMAP_MAX_ITERATIONS`)
+- **Improvement Threshold**: 5 points minimum between iterations
+
+### Stagnation Detection
+- **Trigger**: Less than 5 points improvement over 2 consecutive iterations
+- **Action**: MCP Server returns "user_input" status
+- **Recovery**: Request specific guidance on roadmap areas
+
+### FSDD Assessment Points
+The roadmap-critic evaluates roadmaps against:
 1. **Phase Scoping** - Each phase delivers user value within reasonable timeframe
 2. **Dependency Management** - Clear sequencing and prerequisites without circular dependencies
 3. **Scope Clarity** - Specific deliverables and explicit boundaries per phase
@@ -170,6 +218,10 @@ The roadmap-critic evaluates roadmaps against these areas:
 6. **Risk Distribution** - Critical items appropriately phased with mitigation strategies
 7. **Timeline Feasibility** - Realistic duration estimates and milestone definitions
 8. **Success Criteria** - Clear, measurable outcomes for each phase
+9. **Specification Planning** - Adequate preparation for downstream `/spec` calls
+10. **Integration Strategy** - How phases connect and build upon each other
+11. **Quality Assurance** - Testing and validation approach per phase
+12. **Performance Targets** - Measurable performance criteria across phases
 
 ## Output Structure
 
@@ -294,26 +346,69 @@ IF loop initialization fails:
 
 ## Example Usage
 
-### Typical Invocation
+### Complete Workflow Example
 ```text
 User: /plan-roadmap
 
-Main Agent: I'll transform your strategic plan into a phased implementation roadmap. Let me analyze the plan and break it down into manageable phases.
+Main Agent: I'll transform your strategic plan into a phased implementation roadmap. Let me retrieve the plan and break it down into manageable phases.
+
+[Retrieves strategic plan using configured platform tools]
+
+Analyzing strategic plan for AI-powered customer feedback system...
 
 [Invokes plan-roadmap agent]
 
-plan-roadmap: Analyzing strategic plan for AI-powered feedback system. Creating 4-phase roadmap based on dependencies and value delivery...
+plan-roadmap: Creating phased roadmap based on business objectives and dependencies. Analyzing technical components for optimal sequencing...
 
-[Main Agent invokes roadmap-critic for quality assessment]
-[Score: 73% - needs better phase scoping and risk distribution]
+Phase 1: Core Infrastructure (4 weeks)
+- Authentication & data models
+- Basic API framework
+- Database setup
 
-[Main Agent receives "refine" decision from MCP Server]
+Phase 2: AI Integration (6 weeks)
+- Machine learning pipeline
+- Classification service
+- Training data pipeline
 
-[Refinement continues until MCP Server signals completion]
+Phase 3: User Interface (4 weeks)
+- Dashboard development
+- Feedback visualization
+- User management
 
-[Final score: 87% - Main Agent receives "complete" decision]
+Phase 4: Advanced Features (4 weeks)
+- Real-time analytics
+- Advanced reporting
+- Performance optimization
 
-Main Agent: Implementation roadmap completed successfully! Quality score: 87%. The roadmap defines 4 phases over 12 weeks, with each phase delivering user value. You can now use /spec for individual phase specifications.
+[Creates roadmap using create_roadmap tool]
+
+[Main Agent invokes roadmap-critic]
+
+roadmap-critic: Assessing roadmap quality...
+- Phase scoping: 85%
+- Dependencies: 78%
+- Risk distribution: 72%
+Overall Score: 78% - needs better risk mitigation planning
+
+[Score: 78% - Main Agent receives "refine" decision from MCP Server]
+
+plan-roadmap: Improving risk assessment and mitigation strategies...
+
+Adding:
+- Buffer time for ML model training
+- Parallel development opportunities
+- Rollback strategies per phase
+- Performance benchmarks
+
+[Final score: 88% - Main Agent receives "complete" decision]
+
+Main Agent: Implementation roadmap completed!
+- Quality score: 88%
+- 4 phases over 18 weeks
+- 12 InitialSpec objects created
+- Ready for phase-specific technical specifications
+
+Use /spec to create technical specifications for each phase.
 ```
 
 ### With Phasing Preferences
@@ -323,16 +418,34 @@ User: /plan-roadmap "prefer 2-week sprints, MVP by month 3"
 Main Agent: Creating roadmap with 2-week sprint phases targeting MVP delivery in 3 months...
 ```
 
+## Dependencies and Integration Points
+
 ### Required Components
 - **MCP Server**: Loop state management and decision logic
 - **plan-roadmap agent**: Phase breakdown and roadmap generation
 - **roadmap-critic agent**: Quality assessment and feedback
 
 ### MCP Tools Used
-**Roadmap Generation Phase:**
-- `initialize_refinement_loop(loop_type='roadmap')`
-- `decide_loop_next_action(roadmap_loop_id, current_score)`
-- `get_loop_status(roadmap_loop_id)` (optional for monitoring)
+**Roadmap Generation Workflow:**
+- `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan from /plan phase
+- `initialize_refinement_loop(loop_type='roadmap')` - Create roadmap refinement loop
+- `create_roadmap(project_id, roadmap_markdown)` - Store Roadmap model
+- `store_critic_feedback(feedback_markdown)` - Store structured CriticFeedback
+- `decide_loop_next_action(roadmap_loop_id, current_score)` - Loop decision engine
+- `get_roadmap(project_id)` - Retrieve final roadmap for /spec phase
+- `get_loop_status(roadmap_loop_id)` - Monitor loop state (optional)
+- `get_feedback_history(roadmap_loop_id, count)` - Retrieve recent feedback for context
+
+**Roadmap Management Tools:**
+- `add_spec(project_id, spec_name, spec_markdown)` - Add InitialSpec to roadmap
+- `get_spec(project_id, spec_name)` - Retrieve specific spec from roadmap
+- `update_spec(project_id, spec_name, spec_markdown)` - Update existing spec
+- `list_specs(project_id)` - List all specs in roadmap
+- `delete_spec(project_id, spec_name)` - Remove spec from roadmap
+
+### Environment Variables
+- `FSDD_LOOP_ROADMAP_THRESHOLD`: Quality threshold (default: 85)
+- `FSDD_LOOP_ROADMAP_MAX_ITERATIONS`: Maximum iterations (default: 5)
 
 ## MCP Server Response Handling
 
@@ -376,9 +489,23 @@ The command handles three MCP Server responses:
 ### Platform-Agnostic Design
 The `/plan-roadmap` command operates identically across all platforms (Linear, GitHub, Markdown) as it produces platform-independent roadmaps. Platform-specific behavior only emerges in subsequent `/spec` and `/build` phases.
 
+## Success Metrics
+
+### Quantitative Metrics
+- **Quality Score**: Target ≥85%
+- **Iterations to Complete**: Target ≤3
+- **Phase Coverage**: Target 100% of strategic objectives
+- **Spec Generation Success**: Target >95%
+
+### Qualitative Metrics
+- **Implementation Readiness**: All phases have sufficient detail for `/spec`
+- **Dependency Clarity**: Clear sequencing without circular dependencies
+- **Risk Mitigation**: Comprehensive strategies for identified risks
+- **Value Delivery**: Each phase delivers measurable user value
+
 ## Related Documentation
 - **Previous Phase**: [`/plan` Command Specification](plan.md)
+- **Next Phase**: [`/spec` Command Specification](spec.md)
 - **Primary Agent**: [`plan-roadmap` Agent Specification](../agents/plan-roadmap.md)
 - **Quality Agent**: [`roadmap-critic` Agent Specification](../agents/roadmap-critic.md)
-- **Next Phase**: [`/spec` Command Specification](spec.md)
 - **MCP Tools**: [MCP Tools Specification](../MCP_TOOLS_SPECIFICATION.md)

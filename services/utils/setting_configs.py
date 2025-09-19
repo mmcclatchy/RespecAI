@@ -36,7 +36,7 @@ class MCPSettings(BaseSettings):
         env_prefix='FSDD_MCP_',
     )
 
-    server_name: str = 'Loop Management Server'
+    server_name: str = 'specter'
     host: str = '0.0.0.0'
     port: int = 8000
     debug: bool = False

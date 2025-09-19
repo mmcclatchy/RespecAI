@@ -5,11 +5,9 @@ from unittest.mock import patch
 
 import pytest
 
+from services.mcp.server import create_mcp_server, health_check
 from services.mcp.tools.loop_tools import loop_tools
 from services.mcp.tools.roadmap_tools import roadmap_tools
-from services.mcp.server import create_mcp_server, health_check
-
-
 from services.utils.enums import HealthState, LoopStatus
 from services.utils.setting_configs import MCPSettings
 
@@ -99,7 +97,7 @@ class TestProductionMCPServer:
         assert len(tools) >= 13  # At least 6 loop + 7 roadmap tools (may grow)
 
         # Test server metadata
-        assert server.name == 'Loop Management Server'
+        assert server.name == 'specter'
 
         # Test prompts endpoint
         prompts = asyncio.run(server.get_prompts())
@@ -122,7 +120,7 @@ class TestProductionMCPServer:
             assert custom_settings.server_name == 'Test Production Server'
 
         default_settings = MCPSettings()
-        assert default_settings.server_name == 'Loop Management Server'
+        assert default_settings.server_name == 'specter'
 
     def test_multi_loop_concurrent_scenarios(self) -> None:
         server = create_mcp_server()
@@ -190,7 +188,7 @@ class TestProductionMCPServer:
         assert server is not None
 
         # Test server info access
-        assert server.name == 'Loop Management Server'
+        assert server.name == 'specter'
 
         # Test tools are accessible
         tools = asyncio.run(server.get_tools())
@@ -212,7 +210,7 @@ class TestProductionMCPServer:
         assert len(tools) >= 13  # Tools may expand over time
 
         # Test server name works with middleware
-        assert server.name == 'Loop Management Server'
+        assert server.name == 'specter'
 
     def test_production_configuration_validation(self) -> None:
         # Test with invalid environment variables
@@ -334,7 +332,7 @@ class TestProductionMCPServer:
         assert isinstance(prompts, dict)
 
         # Test server metadata accessible despite middleware
-        assert server.name == 'Loop Management Server'
+        assert server.name == 'specter'
         assert server.name is not None
         assert len(server.name) > 0
 
@@ -351,7 +349,7 @@ class TestProductionMCPServer:
                 # Should either use defaults or handle validation gracefully
                 settings = MCPSettings()
                 # Empty string should either be rejected or use default
-                assert settings.server_name != '' or settings.server_name == 'Loop Management Server'
+                assert settings.server_name != '' or settings.server_name == 'specter'
             except Exception as e:
                 # If validation fails, it should be a clear validation error
                 assert any(word in str(e).lower() for word in ['validation', 'field', 'value', 'invalid'])

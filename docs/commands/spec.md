@@ -78,28 +78,36 @@ Main Agent (via /spec)
     │   └── mcp_tool: initialize_refinement_loop(loop_type='spec')
     │
     ├── 2. Retrieve Strategic Plan
-    │   └── Access plan from previous phase or user input
+    │   └── mcp_tool: get_project_plan_markdown(plan_loop_id) or access user input
     │
     ├── 3. Technical Design Loop
-    │   ├── Task: spec-architect (architecture + research identification)
-    │   ├── Task: spec-critic (quality assessment → score)
-    │   └── mcp_tool: decide_loop_next_action(loop_id, score)
+    │   ├── Task: spec-architect (architecture + research identification → markdown)
+    │   ├── mcp_tool: store_technical_spec(spec_loop_id, technical_spec_markdown)
+    │   ├── Task: spec-critic (quality assessment → CriticFeedback)
+    │   ├── mcp_tool: store_critic_feedback(critic_feedback_markdown)
+    │   └── mcp_tool: decide_loop_next_action(spec_loop_id, quality_score)
     │
     ├── 4. Handle Loop Decision
-    │   ├── IF "refine" → Pass feedback to spec-architect
-    │   ├── IF "complete" → Proceed to storage
-    │   └── IF "user_input" → Request technical clarification
+    │   ├── IF "refine" → Pass structured feedback to spec-architect
+    │   ├── IF "complete" → Finalize TechnicalSpec model and proceed
+    │   └── IF "user_input" → Request technical clarification with feedback context
     │
-    └── 5. Store Specification
-        └── Platform-specific tool invocation
+    └── 5. Store Specification & Prepare for Build
+        ├── mcp_tool: get_technical_spec_markdown(spec_loop_id)
+        └── TechnicalSpec ready for /build command
 ```
 
 ### Data Flow Between Components
+- **Main Agent → MCP Server**: `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan
 - **Main Agent → spec-architect**: Strategic plan + technical context
-- **spec-architect → Main Agent**: Technical specification with research needs
-- **Main Agent → spec-critic**: Specification for assessment  
-- **spec-critic → Main Agent**: Quality score (0-100) and feedback
-- **Main Agent → Platform Tools**: Final specification for storage
+- **spec-architect → Main Agent**: Technical specification with research needs (markdown)
+- **Main Agent → MCP Server**: `store_technical_spec(spec_loop_id, technical_spec_markdown)` - Create TechnicalSpec model
+- **Main Agent → spec-critic**: TechnicalSpec for FSDD assessment
+- **spec-critic → Main Agent**: Structured CriticFeedback (markdown format)
+- **Main Agent → MCP Server**: `store_critic_feedback(feedback_markdown)` - Store feedback model
+- **Main Agent → MCP Server**: `decide_loop_next_action(spec_loop_id, quality_score)` - Decision logic
+- **MCP Server → Main Agent**: Next action (refine/complete/user_input) with loop state
+- **Main Agent → MCP Server**: `get_technical_spec_markdown(spec_loop_id)` - Final retrieval for /build
 
 ## Quality Gates
 
@@ -185,53 +193,74 @@ platform = get_active_platform()  # Returns: 'linear' | 'github' | 'markdown'
 - **Version Control**: Git-tracked changes
 - **Cross-references**: Links to strategic plan
 
+## Structured Data Models
+
+### TechnicalSpec Model
+The `/spec` command creates and stores structured TechnicalSpec models:
+```python
+class TechnicalSpec(MCPModel):
+    id: str = Field(default_factory=lambda: str(uuid4())[:8])
+    phase_name: str = 'Unnamed Specification'
+    objectives: str
+    scope: str
+    dependencies: str
+    deliverables: str
+    architecture: str
+    technology_stack: str
+    functional_requirements: str
+    non_functional_requirements: str
+    development_plan: str
+    testing_strategy: str
+    research_requirements: str
+    success_criteria: str
+    integration_context: str
+    spec_status: SpecStatus = SpecStatus.DRAFT
+```
+
+### CriticFeedback Model
+Quality assessments stored as structured feedback:
+```python
+class CriticFeedback(MCPModel):
+    loop_id: str
+    critic_agent: CriticAgent.SPEC_CRITIC
+    iteration: int
+    overall_score: int  # 0-100
+    assessment_summary: str
+    detailed_feedback: str
+    key_issues: list[str]
+    recommendations: list[str]
+    timestamp: datetime
+```
+
 ## Input/Output Specifications
 
 ### Input Requirements
-- **Strategic Plan**: Completed plan from `/plan` phase
+- **Strategic Plan**: ProjectPlan model from `/plan` phase via `get_project_plan_markdown()`
 - **Technical Focus**: Optional area of emphasis
-- **Format**: Markdown document or platform reference
+- **Format**: TechnicalSpec markdown structure
 
 ### Output Specifications
-- **Primary Output**: Technical specification document
-- **Structure**:
+- **Primary Output**: TechnicalSpec model stored in MCP Server + technical specification markdown
+- **Structured Storage**: TechnicalSpec with validated fields for `/build` consumption
+- **Markdown Format**:
   ```markdown
-  # Technical Specification: [Project Name]
-  
+  # Technical Specification: [Phase Name]
+
   ## Overview
-  [Technical summary and objectives]
-  
-  ## Architecture Design
-  ### System Components
-  [Component descriptions and interactions]
-  
-  ### Technology Stack
-  - Frontend: [Technologies]
-  - Backend: [Technologies]
-  - Database: [Technologies]
-  - Infrastructure: [Technologies]
-  
-  ## Data Models
-  [Entity relationships and schemas]
-  
-  ## API Design
-  [Endpoints and contracts]
-  
-  ## Security Architecture
-  [Security measures and protocols]
-  
-  ## Performance Requirements
-  [Metrics and benchmarks]
-  
-  ## Research Requirements
-  ### Existing Documentation
-  - Read: [paths to existing docs]
-  
-  ### External Research Needed
-  - Synthesize: [research prompts]
-  
-  ## Implementation Considerations
-  [Technical constraints and decisions]
+  ### Objectives / Scope / Dependencies / Deliverables
+
+  ## System Design
+  ### Architecture / Technology Stack
+
+  ## Implementation
+  ### Functional Requirements / Non-Functional Requirements
+  ### Development Plan / Testing Strategy
+
+  ## Additional Details
+  ### Research Requirements / Success Criteria / Integration Context
+
+  ## Metadata
+  ### Status
   ```
 
 ## Error Handling
@@ -352,9 +381,16 @@ Main Agent: I'll create a technical specification with special emphasis on API d
 - **Platform tools**: Linear/GitHub/Markdown storage
 
 ### MCP Tools Used
-- `initialize_refinement_loop(loop_type='spec')`
-- `decide_loop_next_action(loop_id, current_score)`
-- `get_loop_status(loop_id)` (optional for monitoring)
+**Technical Specification Workflow:**
+- `initialize_refinement_loop(loop_type='spec')` - Create specification refinement loop
+- `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan from /plan phase
+- `store_technical_spec(spec_loop_id, technical_spec_markdown)` - Store TechnicalSpec model
+- `store_critic_feedback(feedback_markdown)` - Store structured CriticFeedback
+- `decide_loop_next_action(spec_loop_id, current_score)` - Loop decision engine
+- `get_technical_spec_markdown(spec_loop_id)` - Retrieve final specification for /build
+- `get_loop_status(spec_loop_id)` - Monitor loop state (optional)
+- `get_feedback_history(spec_loop_id, count)` - Retrieve recent feedback for context
+- `list_technical_specs(count)` - List existing specifications
 
 ### Shell Scripts
 - `~/.claude/scripts/research-advisor-archive-scan.sh`

@@ -88,51 +88,52 @@ Provide actionable improvement guidance:
 
 ## OUTPUT FORMAT
 
-SCORE: [overall_score]
+You must output your validation assessment as structured markdown matching the CriticFeedback format:
 
-FEEDBACK:
+```markdown
+# Critic Feedback: ANALYST-CRITIC
 
-### Validation Summary
-- **Source Plan Alignment**: [High/Medium/Low] - [brief assessment]
-- **Extraction Coverage**: [percentage]% of objectives captured
-- **Quantification Rate**: [percentage]% of metrics properly measured
-- **Critical Issues**: [count] requiring immediate attention
+## Assessment Summary
+- **Loop ID**: [loop_id from context]
+- **Iteration**: [current iteration number]
+- **Overall Score**: [calculated overall validation score 0-100]
+- **Assessment Summary**: [Brief one-sentence summary of extraction quality]
 
-### Strengths
-- [Specific well-executed extraction elements]
-- [Accurate semantic interpretations]
-- [Comprehensive coverage areas]
+## Analysis
 
-### Areas for Improvement
+[Detailed validation analysis including:]
+- Semantic accuracy assessment of objective extraction
+- Completeness evaluation against source strategic plan
+- Quantification quality of success metrics and targets
+- Evidence supporting the validation score calculation
+- Specific findings from source plan comparison
 
-**Critical Issues** (Score <70):
-- [Specific extraction problems with source plan references]
-- [Missing objectives with plan section citations]
-- [Semantic accuracy issues with suggested corrections]
+## Issues and Recommendations
 
-**Enhancement Opportunities** (Score 70-89):
-- [Areas needing strengthened quantification]
-- [Stakeholder mapping improvements]
-- [Success criteria refinements]
+### Key Issues
 
-### Dimension Scores
-- Semantic Accuracy: [score]/100 - [specific finding]
-- Completeness: [score]/100 - [coverage assessment]
-- Quantification Quality: [score]/100 - [metrics evaluation]
-- Stakeholder Mapping: [score]/100 - [accuracy assessment]
-- Priority Accuracy: [score]/100 - [classification evaluation]
-- Dependency Mapping: [score]/100 - [relationship assessment]
-- Constraint Documentation: [score]/100 - [completeness check]
-- Risk Assessment: [score]/100 - [identification quality]
-- Timeline Alignment: [score]/100 - [realism evaluation]
-- Assumption Clarity: [score]/100 - [documentation assessment]
-- Success Criteria: [score]/100 - [measurability evaluation]
-- Implementation Readiness: [score]/100 - [specification readiness]
+- [Specific extraction problem 1 with source plan reference]
+- [Missing objective 2 with plan section citation]
+- [Semantic accuracy issue 3 with suggested correction]
 
-### Specific Recommendations
-1. **[Priority Level]**: [Specific action with plan section reference]
-2. **[Priority Level]**: [Concrete improvement with example]
-3. **[Priority Level]**: [Enhancement suggestion with rationale]
+### Recommendations
+
+- [Specific improvement action 1 with plan reference]
+- [Concrete enhancement 2 with implementation guidance]
+- [Refinement suggestion 3 addressing validation gaps]
+
+## Metadata
+- **Critic**: ANALYST-CRITIC
+- **Timestamp**: [current ISO timestamp]
+- **Status**: completed
+```
+
+### Important Notes:
+- Replace [bracketed placeholders] with actual values from your validation
+- Overall Score should be the calculated weighted validation score (0-100)
+- Key Issues should reference specific problems with source plan citations
+- Recommendations should provide actionable guidance for analyst refinement
+- Analysis section should detail your semantic accuracy and completeness findings
 
 ## VALIDATION CRITERIA
 

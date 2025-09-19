@@ -87,31 +87,36 @@ Technical Spec → /build → Parallel Research → Planning Loop → Coding Loo
 Main Agent (via /build)
     │
     ├── 1. Retrieve Specification
-    │   └── Specification retrieval using configured tools
+    │   └── mcp_tool: get_technical_spec_markdown(spec_loop_id)
     │
     ├── 2. Environment Discovery
     │   └── Bash: detect-packages.sh → technology context
     │
     ├── 3. Parallel Research Execution
-    │   ├── Parse Research Requirements section
+    │   ├── Parse Research Requirements section from TechnicalSpec
     │   ├── For each "Synthesize: [prompt]" item:
-    │   │   └── Task: research-synthesizer (parallel)
-    │   └── Collect: All documentation paths (The Read: paths and Synthesize: paths)
+    │   │   └── Task: research-synthesizer (parallel) → documentation paths
+    │   └── Collect: All documentation paths (Read paths + Synthesize paths)
     │
     ├── 4. Implementation Planning Loop
     │   ├── mcp_tool: initialize_refinement_loop(loop_type='build_plan')
-    │   ├── Task: build-planner (with doc paths)
-    │   ├── Task: build-critic → score
-    │   └── mcp_tool: decide_loop_next_action(loop_id, score)
+    │   ├── Task: build-planner (with doc paths) → build plan markdown
+    │   ├── mcp_tool: store_build_plan(build_plan_loop_id, build_plan_markdown)
+    │   ├── Task: build-critic (assess BuildPlan) → CriticFeedback
+    │   ├── mcp_tool: store_critic_feedback(critic_feedback_markdown)
+    │   └── mcp_tool: decide_loop_next_action(build_plan_loop_id, quality_score)
     │
     ├── 5. Code Implementation Loop
     │   ├── mcp_tool: initialize_refinement_loop(loop_type='build_code')
-    │   ├── Task: build-coder (TDD approach)
-    │   ├── Task: build-reviewer → score
-    │   └── mcp_tool: decide_loop_next_action(loop_id, score)
+    │   ├── mcp_tool: get_build_plan_markdown(build_plan_loop_id)
+    │   ├── Task: build-coder (TDD approach) → implementation
+    │   ├── Task: build-reviewer (assess code) → CriticFeedback
+    │   ├── mcp_tool: store_critic_feedback(reviewer_feedback_markdown)
+    │   └── mcp_tool: decide_loop_next_action(build_code_loop_id, quality_score)
     │
     └── 6. Completion & Documentation
-        └── Update specification with results using configured tools
+        ├── Update TechnicalSpec with implementation results
+        └── Production-ready code with comprehensive validation
 ```
 
 ### Parallel Research Pattern
@@ -196,46 +201,87 @@ Main Agent identifies 4 research items:
 [Specific technical guidance]
 ```
 
+## Structured Data Models
+
+### BuildPlan Model
+The `/build` command creates and stores structured BuildPlan models:
+```python
+class BuildPlan(MCPModel):
+    project_name: str
+    project_goal: str
+    total_duration: str
+    team_size: str
+    primary_language: str
+    framework: str
+    database: str
+    development_environment: str
+    database_schema: str
+    api_architecture: str
+    frontend_architecture: str
+    core_features: str
+    integration_points: str
+    testing_strategy: str
+    code_standards: str
+    performance_requirements: str
+    security_implementation: str
+    build_status: BuildStatus = BuildStatus.PLANNING
+    creation_date: str
+    last_updated: str
+    build_owner: str
+```
+
+### CriticFeedback Model
+Quality assessments for both planning and code phases:
+```python
+class CriticFeedback(MCPModel):
+    loop_id: str
+    critic_agent: CriticAgent  # BUILD_CRITIC, BUILD_REVIEWER
+    iteration: int
+    overall_score: int  # 0-100
+    assessment_summary: str
+    detailed_feedback: str
+    key_issues: list[str]
+    recommendations: list[str]
+    timestamp: datetime
+```
+
 ## Input/Output Specifications
 
 ### Input Requirements
-- **Specification Identifier**: Reference to technical specification
-- **Format**: Identifier format determined by configured platform
-- **Required Sections**: Must contain Research Requirements
+- **TechnicalSpec**: Specification model from `/spec` phase via `get_technical_spec_markdown()`
+- **Research Requirements**: Structured section in TechnicalSpec for documentation gathering
+- **Environment Context**: Technology stack detection via detect-packages.sh
 
 ### Output Specifications
 
 #### Build Plan Output
+- **Structured Storage**: BuildPlan model with 21+ validated fields
+- **Markdown Format**:
 ```markdown
-# Implementation Plan: [Project Name]
+# Build Plan: [Project Name]
 
-## Overview
-[Implementation approach summary]
+## Project Overview
+### Goal / Duration / Team Size
 
-## Phase 1: Setup and Configuration
-- [ ] Task 1: [Description]
-- [ ] Task 2: [Description]
+## Technology Stack
+### Primary Language / Framework / Database / Development Environment
 
-## Phase 2: Core Implementation
-- [ ] Task 3: [Description]
-- [ ] Task 4: [Description]
+## Architecture
+### Database Schema / API Architecture / Frontend Architecture
 
-## Phase 3: Testing and Validation
-- [ ] Task 5: [Description]
-- [ ] Task 6: [Description]
+## Implementation Details
+### Core Features / Integration Points / Testing Strategy
+### Code Standards / Performance Requirements / Security Implementation
 
-## Technology Decisions
-[Specific libraries and patterns]
-
-## Risk Mitigation
-[Identified risks and solutions]
+## Metadata
+### Status / Creation Date / Last Updated / Build Owner
 ```
 
 #### Implementation Output
-- **Source Code**: Implemented features with tests
-- **Test Results**: Passing test suites
-- **Documentation**: Code comments and updates
-- **Specification Updates**: Marked complete with implementation details
+- **Source Code**: Production-ready features with comprehensive tests
+- **Test Results**: All test suites passing with coverage reports
+- **Documentation**: Code comments, API documentation, and implementation guides
+- **TechnicalSpec Updates**: Implementation status and results documented
 
 ## Error Handling
 
@@ -376,10 +422,26 @@ Summary:
 - **research-synthesizer agent**: External research
 
 ### MCP Tools Used
-- `initialize_refinement_loop(loop_type='build_plan')`
-- `initialize_refinement_loop(loop_type='build_code')`
-- `decide_loop_next_action(loop_id, current_score)`
-- Configured retrieval and update tools
+**Specification Retrieval:**
+- `get_technical_spec_markdown(spec_loop_id)` - Retrieve TechnicalSpec from /spec phase
+
+**Build Planning Loop (build_plan):**
+- `initialize_refinement_loop(loop_type='build_plan')` - Create build planning loop
+- `store_build_plan(build_plan_loop_id, build_plan_markdown)` - Store BuildPlan model
+- `store_critic_feedback(feedback_markdown)` - Store build-critic CriticFeedback
+- `decide_loop_next_action(build_plan_loop_id, current_score)` - Planning decision engine
+- `get_build_plan_markdown(build_plan_loop_id)` - Retrieve plan for code phase
+
+**Code Implementation Loop (build_code):**
+- `initialize_refinement_loop(loop_type='build_code')` - Create code implementation loop
+- `store_critic_feedback(feedback_markdown)` - Store build-reviewer CriticFeedback
+- `decide_loop_next_action(build_code_loop_id, current_score)` - Implementation decision engine
+
+**Feedback & Monitoring:**
+- `get_feedback_history(loop_id, count)` - Retrieve recent feedback for context
+- `get_loop_status(loop_id)` - Monitor loop state (optional)
+- `list_build_plans(count)` - List existing build plans
+- `delete_build_plan(loop_id)` - Clean up build plans
 
 ### Shell Scripts
 - `~/.claude/scripts/detect-packages.sh`

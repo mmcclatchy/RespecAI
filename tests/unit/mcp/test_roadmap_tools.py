@@ -266,7 +266,7 @@ class TestAddSpec(TestRoadmapTools):
     def test_add_spec_returns_success_message(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
     ) -> None:
-        mock_state_manager.store_spec.return_value = 'User Authentication'
+        mock_state_manager.store_initial_spec.return_value = 'User Authentication'
 
         result = roadmap_tools.add_spec('test-project', 'Auth Spec', valid_spec_markdown)
 
@@ -278,12 +278,12 @@ class TestAddSpec(TestRoadmapTools):
     def test_add_spec_parses_markdown_before_storing(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
     ) -> None:
-        mock_state_manager.store_spec.return_value = 'Parsed Spec'
+        mock_state_manager.store_initial_spec.return_value = 'Parsed Spec'
 
         roadmap_tools.add_spec('test-project', 'Display Name', valid_spec_markdown)
 
-        mock_state_manager.store_spec.assert_called_once()
-        call_args = mock_state_manager.store_spec.call_args
+        mock_state_manager.store_initial_spec.assert_called_once()
+        call_args = mock_state_manager.store_initial_spec.call_args
         assert call_args[0][0] == 'test-project'
         assert isinstance(call_args[0][1], InitialSpec)
         # Check that markdown was parsed correctly
@@ -301,7 +301,7 @@ class TestAddSpec(TestRoadmapTools):
     def test_add_spec_raises_error_on_storage_failure(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
     ) -> None:
-        mock_state_manager.store_spec.side_effect = Exception('Storage failed')
+        mock_state_manager.store_initial_spec.side_effect = Exception('Storage failed')
 
         with pytest.raises(ToolError, match='Failed to add spec'):
             roadmap_tools.add_spec('non-existent-project', 'Spec Name', valid_spec_markdown)
@@ -322,7 +322,7 @@ class TestAddSpec(TestRoadmapTools):
         project_id: str,
         spec_name: str,
     ) -> None:
-        mock_state_manager.store_spec.return_value = spec_name
+        mock_state_manager.store_initial_spec.return_value = spec_name
 
         result = roadmap_tools.add_spec(project_id, spec_name, valid_spec_markdown)
 
@@ -343,7 +343,7 @@ class TestGetSpec(TestRoadmapTools):
             last_updated=datetime.now().isoformat(),
             spec_owner='Test Owner',
         )
-        mock_state_manager.get_spec.return_value = mock_spec
+        mock_state_manager.get_initial_spec.return_value = mock_spec
 
         result = roadmap_tools.get_spec('test-project', 'Test Spec')
 
@@ -355,7 +355,7 @@ class TestGetSpec(TestRoadmapTools):
     def test_get_spec_raises_error_when_spec_missing(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        mock_state_manager.get_spec.side_effect = Exception('Spec not found')
+        mock_state_manager.get_initial_spec.side_effect = Exception('Spec not found')
 
         with pytest.raises(ResourceError, match='Spec "Missing Spec" not found in project test-project'):
             roadmap_tools.get_spec('test-project', 'Missing Spec')
@@ -363,7 +363,7 @@ class TestGetSpec(TestRoadmapTools):
     def test_get_spec_raises_error_when_roadmap_missing(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        mock_state_manager.get_spec.side_effect = Exception('Roadmap not found')
+        mock_state_manager.get_initial_spec.side_effect = Exception('Roadmap not found')
 
         with pytest.raises(ResourceError, match='Spec "Any Spec" not found in project missing-project'):
             roadmap_tools.get_spec('missing-project', 'Any Spec')
@@ -373,7 +373,7 @@ class TestUpdateSpec(TestRoadmapTools):
     def test_update_spec_returns_success_message(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
     ) -> None:
-        mock_state_manager.store_spec.return_value = 'User Authentication'
+        mock_state_manager.store_initial_spec.return_value = 'User Authentication'
 
         result = roadmap_tools.update_spec('test-project', 'Auth Spec', valid_spec_markdown)
 
@@ -385,13 +385,13 @@ class TestUpdateSpec(TestRoadmapTools):
     def test_update_spec_parses_markdown_and_stores_spec(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
     ) -> None:
-        mock_state_manager.store_spec.return_value = 'User Authentication'
+        mock_state_manager.store_initial_spec.return_value = 'User Authentication'
 
         roadmap_tools.update_spec('test-project', 'Update Spec', valid_spec_markdown)
 
         # Should call store_spec with parsed InitialSpec
-        mock_state_manager.store_spec.assert_called_once()
-        call_args = mock_state_manager.store_spec.call_args
+        mock_state_manager.store_initial_spec.assert_called_once()
+        call_args = mock_state_manager.store_initial_spec.call_args
         assert call_args[0][0] == 'test-project'
         assert isinstance(call_args[0][1], InitialSpec)
         stored_spec = call_args[0][1]
@@ -400,7 +400,7 @@ class TestUpdateSpec(TestRoadmapTools):
     def test_update_spec_raises_error_on_storage_failure(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
     ) -> None:
-        mock_state_manager.store_spec.side_effect = Exception('Storage failed')
+        mock_state_manager.store_initial_spec.side_effect = Exception('Storage failed')
 
         with pytest.raises(ToolError, match='Failed to update spec'):
             roadmap_tools.update_spec('missing-project', 'Spec', valid_spec_markdown)
@@ -417,7 +417,7 @@ class TestListSpecs(TestRoadmapTools):
     def test_list_specs_returns_success_with_spec_names(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        mock_state_manager.list_specs.return_value = ['Spec A', 'Spec B', 'Spec C']
+        mock_state_manager.list_initial_specs.return_value = ['Spec A', 'Spec B', 'Spec C']
 
         result = roadmap_tools.list_specs('test-project')
 
@@ -426,7 +426,7 @@ class TestListSpecs(TestRoadmapTools):
         assert 'test-project' in result
 
     def test_list_specs_handles_empty_roadmap(self, roadmap_tools: RoadmapTools, mock_state_manager: Mock) -> None:
-        mock_state_manager.list_specs.return_value = []
+        mock_state_manager.list_initial_specs.return_value = []
 
         result = roadmap_tools.list_specs('empty-project')
 
@@ -436,7 +436,7 @@ class TestListSpecs(TestRoadmapTools):
     def test_list_specs_raises_error_when_roadmap_not_found(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        mock_state_manager.list_specs.side_effect = Exception('Not found')
+        mock_state_manager.list_initial_specs.side_effect = Exception('Not found')
 
         with pytest.raises(ResourceError, match='Failed to list specs for project missing-project'):
             roadmap_tools.list_specs('missing-project')
@@ -453,7 +453,7 @@ class TestListSpecs(TestRoadmapTools):
     def test_list_specs_formats_different_spec_counts(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, spec_names: list[str], expected_message_part: str
     ) -> None:
-        mock_state_manager.list_specs.return_value = spec_names
+        mock_state_manager.list_initial_specs.return_value = spec_names
 
         result = roadmap_tools.list_specs('test-project')
 
@@ -465,7 +465,7 @@ class TestDeleteSpec(TestRoadmapTools):
     def test_delete_spec_returns_success_when_spec_deleted(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        mock_state_manager.delete_spec.return_value = True
+        mock_state_manager.delete_initial_spec.return_value = True
 
         result = roadmap_tools.delete_spec('test-project', 'Target Spec')
 
@@ -477,7 +477,7 @@ class TestDeleteSpec(TestRoadmapTools):
     def test_delete_spec_raises_error_when_spec_missing(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        mock_state_manager.delete_spec.return_value = False
+        mock_state_manager.delete_initial_spec.return_value = False
 
         with pytest.raises(ToolError, match='Failed to delete spec'):
             roadmap_tools.delete_spec('test-project', 'Missing Spec')
@@ -485,7 +485,7 @@ class TestDeleteSpec(TestRoadmapTools):
     def test_delete_spec_raises_error_when_roadmap_not_found(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        mock_state_manager.delete_spec.side_effect = Exception('Not found')
+        mock_state_manager.delete_initial_spec.side_effect = Exception('Not found')
 
         with pytest.raises(ToolError, match='Failed to delete spec'):
             roadmap_tools.delete_spec('missing-project', 'Any Spec')
@@ -493,16 +493,16 @@ class TestDeleteSpec(TestRoadmapTools):
     def test_delete_spec_delegates_correctly_to_state_manager(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        mock_state_manager.delete_spec.return_value = True
+        mock_state_manager.delete_initial_spec.return_value = True
 
         roadmap_tools.delete_spec('project-123', 'spec-456')
 
-        mock_state_manager.delete_spec.assert_called_once_with('project-123', 'spec-456')
+        mock_state_manager.delete_initial_spec.assert_called_once_with('project-123', 'spec-456')
 
     def test_delete_spec_returns_success_message_when_deleted(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
     ) -> None:
-        mock_state_manager.delete_spec.return_value = True
+        mock_state_manager.delete_initial_spec.return_value = True
 
         result = roadmap_tools.delete_spec('test-project', 'test-spec')
 
@@ -529,10 +529,10 @@ class TestRoadmapToolsIntegration(TestRoadmapTools):
         )
 
         mock_state_manager.store_roadmap.return_value = 'workflow-project'
-        mock_state_manager.store_spec.return_value = 'Workflow Spec'
-        mock_state_manager.get_spec.return_value = mock_spec
+        mock_state_manager.store_initial_spec.return_value = 'Workflow Spec'
+        mock_state_manager.get_initial_spec.return_value = mock_spec
         mock_state_manager.get_roadmap.return_value = mock_roadmap
-        mock_state_manager.delete_spec.return_value = True
+        mock_state_manager.delete_initial_spec.return_value = True
 
         # Execute workflow
         roadmap_markdown = create_test_roadmap_markdown('Workflow Roadmap')
@@ -552,9 +552,9 @@ class TestRoadmapToolsIntegration(TestRoadmapTools):
         # Verify state manager was called appropriately
         mock_state_manager.store_roadmap.assert_called_once()
         # store_spec is called twice: once for add_spec and once for update_spec
-        assert mock_state_manager.store_spec.call_count == 2
-        mock_state_manager.get_spec.assert_called_once()
-        mock_state_manager.delete_spec.assert_called_once()
+        assert mock_state_manager.store_initial_spec.call_count == 2
+        mock_state_manager.get_initial_spec.assert_called_once()
+        mock_state_manager.delete_initial_spec.assert_called_once()
 
     def test_error_scenarios_raise_appropriate_exceptions(
         self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, valid_spec_markdown: str
@@ -564,18 +564,18 @@ class TestRoadmapToolsIntegration(TestRoadmapTools):
         with pytest.raises(ResourceError):
             roadmap_tools.get_roadmap('missing-project')
 
-        mock_state_manager.get_spec.side_effect = Exception('Spec not found')
+        mock_state_manager.get_initial_spec.side_effect = Exception('Spec not found')
         with pytest.raises(ResourceError):
             roadmap_tools.get_spec('test-project', 'missing-spec')
 
-        mock_state_manager.store_spec.side_effect = Exception('Storage failed')
+        mock_state_manager.store_initial_spec.side_effect = Exception('Storage failed')
         with pytest.raises(ToolError):
             roadmap_tools.add_spec('test-project', 'spec', valid_spec_markdown)
 
-        mock_state_manager.list_specs.side_effect = Exception('Roadmap not found')
+        mock_state_manager.list_initial_specs.side_effect = Exception('Roadmap not found')
         with pytest.raises(ResourceError):
             roadmap_tools.list_specs('missing-project')
 
-        mock_state_manager.delete_spec.side_effect = Exception('Delete failed')
+        mock_state_manager.delete_initial_spec.side_effect = Exception('Delete failed')
         with pytest.raises(ToolError):
             roadmap_tools.delete_spec('test-project', 'spec')

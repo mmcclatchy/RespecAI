@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Self
 
 from markdown_it import MarkdownIt
 from markdown_it.tree import SyntaxTreeNode
@@ -31,12 +32,12 @@ class CriticFeedback(MCPModel):
         return self.overall_score
 
     @classmethod
-    def parse_markdown(cls, markdown: str) -> 'CriticFeedback':
+    def parse_markdown(cls, markdown: str) -> Self:
         md = MarkdownIt('commonmark')
         tree = SyntaxTreeNode(md.parse(markdown))
 
         fields = {}
-        critic_name = 'ANALYST'
+        critic_name = 'UNKNOWN'
 
         # Extract title
         for node in cls._find_nodes_by_type(tree, 'heading'):

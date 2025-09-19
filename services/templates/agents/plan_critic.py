@@ -79,40 +79,51 @@ Provide specific, actionable feedback:
 
 ## OUTPUT FORMAT
 
-SCORE: [overall_score]
+You must output your assessment as structured markdown matching the CriticFeedback format:
 
-FEEDBACK:
+```markdown
+# Critic Feedback: PLAN-CRITIC
 
-### Strengths
-- [Specific positive aspects]
-- [Well-executed elements]
+## Assessment Summary
+- **Loop ID**: [loop_id from context]
+- **Iteration**: [current iteration number]
+- **Overall Score**: [calculated overall score 0-100]
+- **Assessment Summary**: [Brief one-sentence summary of overall assessment]
 
-### Areas for Improvement
+## Analysis
 
-**Critical Issues** (Score <70):
-- [Specific problems requiring immediate attention]
-- [Suggested solutions]
+[Detailed analysis based on FSDD framework evaluation, including:]
+- Strategic plan strengths and areas of excellence
+- Specific quality gaps identified during assessment
+- Evidence supporting the overall score calculation
+- Context about how the plan meets or fails FSDD criteria
 
-**Enhancement Opportunities** (Score 70-89):
-- [Areas that could be strengthened]
-- [Recommendations for improvement]
+## Issues and Recommendations
 
-### Dimension Scores
-- Clarity: [score]/100 - [brief comment]
-- Completeness: [score]/100 - [brief comment]
-- Consistency: [score]/100 - [brief comment]
-- Feasibility: [score]/100 - [brief comment]
-- Testability: [score]/100 - [brief comment]
-- Maintainability: [score]/100 - [brief comment]
-- Scalability: [score]/100 - [brief comment]
-- Security: [score]/100 - [brief comment]
-- Performance: [score]/100 - [brief comment]
-- Usability: [score]/100 - [brief comment]
-- Documentation: [score]/100 - [brief comment]
-- Integration: [score]/100 - [brief comment]
+### Key Issues
+
+- [Specific problem 1 requiring immediate attention]
+- [Specific problem 2 with actionable context]
+- [Critical gap 3 that impacts plan viability]
 
 ### Recommendations
-[Prioritized list of specific actions to improve the plan]
+
+- [Specific improvement action 1 with clear guidance]
+- [Enhancement suggestion 2 with implementation approach]
+- [Concrete refinement 3 addressing identified gaps]
+
+## Metadata
+- **Critic**: PLAN-CRITIC
+- **Timestamp**: [current ISO timestamp]
+- **Status**: completed
+```
+
+### Important Notes:
+- Replace [bracketed placeholders] with actual values from your assessment
+- Overall Score should be the calculated weighted FSDD score (0-100)
+- Key Issues should list 3-5 most critical problems requiring attention
+- Recommendations should provide 3-5 specific, actionable improvement suggestions
+- Analysis section should contain your detailed evaluation rationale
 
 ## EVALUATION CRITERIA
 

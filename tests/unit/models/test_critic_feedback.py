@@ -195,3 +195,38 @@ The specification demonstrates thorough understanding of requirements and provid
         assert parsed_feedback.assessment_summary == original_feedback.assessment_summary
         assert parsed_feedback.key_issues == original_feedback.key_issues
         assert parsed_feedback.recommendations == original_feedback.recommendations
+
+    def test_parse_markdown_with_unknown_critic_defaults_to_analyst(self) -> None:
+        markdown = """# Critic Feedback: UNKNOWN
+
+## Assessment Summary
+- **Loop ID**: test-loop-123
+- **Iteration**: 1
+- **Overall Score**: 85
+- **Assessment Summary**: Test feedback
+
+## Analysis
+
+Test analysis content.
+
+## Issues and Recommendations
+
+### Key Issues
+
+- Test issue
+
+### Recommendations
+
+- Test recommendation
+
+## Metadata
+- **Critic**: UNKNOWN
+- **Timestamp**: 2024-01-15T14:30:00Z
+- **Status**: completed
+"""
+
+        feedback = CriticFeedback.parse_markdown(markdown)
+
+        # Should default to ANALYST_CRITIC for unknown types
+        assert feedback.critic_agent == CriticAgent.ANALYST_CRITIC
+        assert feedback.loop_id == 'test-loop-123'
