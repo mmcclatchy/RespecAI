@@ -4,9 +4,113 @@
 
 This document captures advanced features and capabilities that were deferred from the initial MCP Memory Architecture implementation. These features represent valuable enhancements but are not required for the core functionality and can be implemented in future iterations based on actual usage patterns and needs.
 
-## Deferred Advanced Features
+## Recently Identified Future Features
 
-### 1. Comprehensive Modification History Tracking
+### 1. Context Overflow Prevention and Management
+
+**Description**: Proactive context size monitoring with automatic summarization to prevent workflow failures due to context window exhaustion.
+
+**Current Problem**:
+- `/plan` workflow manages 15+ variables with complex conversation contexts
+- No proactive context management leads to workflow crashes when context limits exceeded
+- Multiple refinement cycles cause context bloat without mitigation
+- Context overflow can occur during conversation gathering, plan generation, or critic feedback accumulation
+
+**Proposed Solution**:
+- Context size monitoring with configurable warning and critical thresholds
+- Automatic context summarization preserving key information
+- Progressive context compression maintaining recent and high-priority content
+- Context recovery mechanisms when context is lost during processing
+
+**Implementation Approach**:
+```python
+class ContextManager:
+    def check_context_size(self, context: str) -> tuple[str, bool]:
+        if len(context) > CONTEXT_CRITICAL_THRESHOLD:
+            return self.emergency_compress(context), True
+        elif len(context) > CONTEXT_WARNING_THRESHOLD:
+            return self.progressive_summarize(context), False
+        return context, False
+
+    def progressive_summarize(self, context: str) -> str:
+        # Preserve most recent 20% and highest-priority 30% of content
+        # Summarize middle sections while maintaining structure
+
+    def emergency_compress(self, context: str) -> str:
+        # Keep only current iteration data and critical variables
+        # Store full context in persistent storage for recovery
+```
+
+**Why Future Feature**:
+- Current system needs to prove baseline functionality first
+- Context overflow patterns need to be observed to optimize compression strategies
+- Advanced summarization algorithms require understanding of actual content patterns
+- Emergency scenarios are rare but need systematic approach
+
+**Implementation Priority**: High (25% consistency improvement potential)
+
+### 2. Centralized Error Recovery Orchestration
+
+**Description**: Comprehensive error handling framework with automatic recovery strategies and centralized failure management across the entire `/plan` workflow.
+
+**Current Problem**:
+- Error handling scattered across workflow steps with inconsistent patterns
+- Agent failures (plan-conversation, plan-critic, plan-analyst, analyst-critic) handled locally
+- No systematic fallback strategies for common failure modes
+- MCP tool failures lack comprehensive recovery mechanisms
+- Variable state corruption not automatically detected or recovered
+
+**Proposed Solution**:
+- Centralized `WorkflowErrorRecovery` class managing all error scenarios
+- Automatic recovery strategies with multiple fallback approaches
+- Error categorization (transient, configuration, data, external service)
+- Graceful degradation maintaining partial workflow functionality
+- State validation and automatic correction for variable corruption
+
+**Implementation Approach**:
+```python
+class WorkflowErrorRecovery:
+    def handle_agent_failure(self, step: str, agent: str, error: Exception) -> RecoveryAction:
+        error_category = self.categorize_error(error)
+
+        if error_category == ErrorType.TRANSIENT:
+            return self.retry_with_backoff(step, agent)
+        elif error_category == ErrorType.CONTEXT_OVERFLOW:
+            return self.trigger_context_compression(step)
+        elif error_category == ErrorType.MCP_UNAVAILABLE:
+            return self.fallback_to_local_mode(step)
+        else:
+            return self.graceful_degradation(step, error)
+
+    def validate_workflow_state(self, state: dict) -> StateValidationResult:
+        # Check all required variables are present and valid
+        # Detect state corruption patterns
+        # Suggest recovery actions
+
+    def graceful_degradation(self, step: str, error: Exception) -> RecoveryAction:
+        # Continue workflow with reduced functionality
+        # Document degradation for user awareness
+        # Provide manual override options
+```
+
+**Error Recovery Strategies**:
+- **Agent Failures**: Retry with simplified context, fallback to template-based generation
+- **MCP Tool Failures**: Local state management fallbacks, manual workflow progression
+- **Context Overflow**: Emergency compression, workflow checkpoint/resume
+- **Variable Corruption**: State validation, automatic variable reconstruction
+- **Template Failures**: Fallback to basic markdown generation, manual template completion
+
+**Why Future Feature**:
+- Current basic error handling sufficient for initial stability testing
+- Error patterns need to be observed before optimizing recovery strategies
+- Advanced recovery mechanisms add significant complexity to workflow
+- System needs to demonstrate core functionality before adding resilience layers
+
+**Implementation Priority**: High (40% reliability improvement potential)
+
+## Original Deferred Advanced Features
+
+### 3. Comprehensive Modification History Tracking
 
 **Description**: Track detailed modification history with timestamps and reasons for every component change.
 

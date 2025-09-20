@@ -76,8 +76,8 @@ Risk assessment section needs expansion with specific mitigation strategies.
         assert result.id == loop_id
         assert 'Score: 85' in result.message
         assert 'plan-critic' in result.message
-        # get_loop is called twice: once for loop state access and once for critic auto-detection
-        assert mock_state_manager.get_loop.call_count == 2
+        # get_loop is called once for loop state access (no auto-detection for explicit critic)
+        assert mock_state_manager.get_loop.call_count == 1
         mock_state_manager.get_loop.assert_called_with(loop_id)
         # Verify feedback was added to loop state
         assert len(sample_loop_state.feedback_history) == 1
@@ -90,7 +90,7 @@ Risk assessment section needs expansion with specific mitigation strategies.
         mock_state_manager.get_loop.return_value = sample_loop_state
         invalid_markdown = 'This is not valid CriticFeedback markdown'
 
-        with pytest.raises(ToolError, match='Markdown does not contain valid CriticFeedback structure'):
+        with pytest.raises(ToolError, match='Feedback must specify a valid critic agent'):
             feedback_tools.store_critic_feedback(loop_id, invalid_markdown)
 
     def test_store_critic_feedback_empty_inputs(self, feedback_tools: FeedbackStorageTools) -> None:
@@ -220,63 +220,67 @@ Risk assessment section needs expansion with specific mitigation strategies.
         with pytest.raises(ResourceError, match='Loop does not exist'):
             feedback_tools.get_previous_analysis(loop_id)
 
-    def test_derive_critic_from_loop_all_types(
-        self, feedback_tools: FeedbackStorageTools, mock_state_manager: Mock
-    ) -> None:
-        # Test all LoopType to CriticAgent mappings
-        test_cases = [
-            (LoopType.PLAN, CriticAgent.PLAN_CRITIC),
-            (LoopType.ANALYST, CriticAgent.ANALYST_CRITIC),
-            (LoopType.ROADMAP, CriticAgent.ROADMAP_CRITIC),
-            (LoopType.SPEC, CriticAgent.SPEC_CRITIC),
-            (LoopType.BUILD_PLAN, CriticAgent.BUILD_CRITIC),
-            (LoopType.BUILD_CODE, CriticAgent.BUILD_REVIEWER),
-        ]
-
-        for loop_type, expected_critic in test_cases:
-            loop_state = LoopState(loop_type=loop_type)
-            mock_state_manager.get_loop.return_value = loop_state
-
-            result = feedback_tools._derive_critic_from_loop('test-loop')
-
-            assert result == expected_critic, f'Failed for {loop_type}: expected {expected_critic}, got {result}'
-
-    def test_derive_critic_from_loop_handles_exceptions(
-        self, feedback_tools: FeedbackStorageTools, mock_state_manager: Mock
-    ) -> None:
-        # Test exception handling returns None
-        mock_state_manager.get_loop.side_effect = Exception('State manager error')
-
-        result = feedback_tools._derive_critic_from_loop('test-loop')
-
-        assert result is None
-
-    def test_derive_critic_from_loop_empty_loop_id(self, feedback_tools: FeedbackStorageTools) -> None:
-        # Test empty loop ID returns None
-        result = feedback_tools._derive_critic_from_loop('')
-
-        assert result is None
-
-    def test_store_critic_feedback_auto_detects_critic_agent(
+    def test_store_critic_feedback_preserves_explicit_critic_agent(
         self,
         feedback_tools: FeedbackStorageTools,
         mock_state_manager: Mock,
         sample_feedback_markdown: str,
     ) -> None:
         loop_id = 'test-loop-123'
-        # Set up loop state with SPEC type
+        # Set up loop state with SPEC type - different from markdown
         spec_loop_state = LoopState(loop_type=LoopType.SPEC)
         mock_state_manager.get_loop.return_value = spec_loop_state
 
         result = feedback_tools.store_critic_feedback(loop_id, sample_feedback_markdown)
 
-        # Verify the critic agent was overridden to SPEC_CRITIC based on loop context
+        # Verify the explicit critic agent from markdown is preserved
         assert isinstance(result, MCPResponse)
         assert result.id == loop_id
-        assert 'spec-critic' in result.message
-        # Verify feedback was added with auto-detected critic
+        assert 'plan-critic' in result.message
+        # Verify feedback was added with explicit critic, not auto-detected
         assert len(spec_loop_state.feedback_history) == 1
-        assert spec_loop_state.feedback_history[0].critic_agent == CriticAgent.SPEC_CRITIC
+        assert spec_loop_state.feedback_history[0].critic_agent == CriticAgent.PLAN_CRITIC
+
+    def test_store_critic_feedback_rejects_unknown_critic_agent(
+        self,
+        feedback_tools: FeedbackStorageTools,
+        mock_state_manager: Mock,
+    ) -> None:
+        loop_id = 'test-loop-456'
+        # Set up loop state
+        spec_loop_state = LoopState(loop_type=LoopType.SPEC)
+        mock_state_manager.get_loop.return_value = spec_loop_state
+
+        # Markdown with unknown critic should now raise an error
+        unknown_critic_markdown = """# Critic Feedback: UNKNOWN
+
+## Assessment Summary
+- **Loop ID**: test-loop-456
+- **Iteration**: 1
+- **Overall Score**: 80
+- **Assessment Summary**: Unknown critic feedback
+
+## Analysis
+
+Test analysis content.
+
+## Issues and Recommendations
+
+### Key Issues
+
+- Test issue
+
+### Recommendations
+
+- Test recommendation
+
+## Metadata
+- **Critic**: UNKNOWN
+- **Timestamp**: 2025-01-15T14:30:00Z
+- **Status**: completed"""
+
+        with pytest.raises(ToolError, match='Feedback must specify a valid critic agent'):
+            feedback_tools.store_critic_feedback(loop_id, unknown_critic_markdown)
 
     def test_store_critic_feedback_fallback_to_markdown_parsing(
         self,
@@ -327,7 +331,7 @@ Risk assessment section needs expansion with specific mitigation strategies.
         # Markdown that will cause CriticFeedback.parse_markdown to raise an exception
         malformed_markdown = '# Invalid\n\nThis will cause a parsing error in CriticFeedback'
 
-        with pytest.raises(ToolError, match='Markdown does not contain valid CriticFeedback structure'):
+        with pytest.raises(ToolError, match='Feedback must specify a valid critic agent'):
             feedback_tools.store_critic_feedback(loop_id, malformed_markdown)
 
 

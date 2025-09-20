@@ -11,7 +11,7 @@ from .initial_spec import InitialSpec
 
 class Roadmap(MCPModel):
     # Class configuration for MCPModel
-    TITLE_PATTERN: ClassVar[str] = '# Project Roadmap:'
+    TITLE_PATTERN: ClassVar[str] = '# Project Roadmap'
     TITLE_FIELD: ClassVar[str] = 'project_name'
     HEADER_FIELD_MAPPING: ClassVar[dict[str, tuple[str, ...]]] = {
         'project_goal': ('Project Details', 'Project Goal'),
@@ -60,7 +60,7 @@ class Roadmap(MCPModel):
         # Generate specs list dynamically from InitialSpec objects
         specs_list = '\n'.join(f'- **Spec {i + 1}**: {spec.phase_name}' for i, spec in enumerate(self.specs))
 
-        return f"""# Project Roadmap: {self.project_name}
+        return f"""{self.TITLE_PATTERN}: {self.project_name}
 
 ## Project Details
 

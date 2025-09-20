@@ -1,25 +1,12 @@
 from fastmcp import Context, FastMCP
 
-from services.models.enums import CriticAgent
 from services.models.feedback import CriticFeedback
 from services.shared import state_manager
-from services.utils.enums import LoopType
 from fastmcp.exceptions import ResourceError, ToolError
 
 from services.utils.errors import LoopNotFoundError
 from services.utils.models import MCPResponse
 from services.utils.state_manager import StateManager
-
-
-# Mapping from LoopType to CriticAgent for auto-detection
-LOOP_TYPE_TO_CRITIC = {
-    LoopType.PLAN: CriticAgent.PLAN_CRITIC,
-    LoopType.ANALYST: CriticAgent.ANALYST_CRITIC,
-    LoopType.ROADMAP: CriticAgent.ROADMAP_CRITIC,
-    LoopType.SPEC: CriticAgent.SPEC_CRITIC,
-    LoopType.BUILD_PLAN: CriticAgent.BUILD_CRITIC,
-    LoopType.BUILD_CODE: CriticAgent.BUILD_REVIEWER,
-}
 
 
 class FeedbackStorageTools:
@@ -29,25 +16,6 @@ class FeedbackStorageTools:
         self.state = state
         # Simple storage for plan-analyst analysis data
         self._analysis_storage: dict[str, str] = {}
-
-    def _derive_critic_from_loop(self, loop_id: str) -> CriticAgent | None:
-        """Derive critic agent from loop context.
-
-        Args:
-            loop_id: Loop identifier
-
-        Returns:
-            CriticAgent if derivable from loop context, None otherwise
-        """
-        if not loop_id:
-            return None
-
-        try:
-            loop_state = self.state.get_loop(loop_id)
-            return LOOP_TYPE_TO_CRITIC.get(loop_state.loop_type)
-        except Exception:
-            # If we can't get loop context, return None to fall back to markdown parsing
-            return None
 
     def store_critic_feedback(self, loop_id: str, feedback_markdown: str) -> MCPResponse:
         """Store critic feedback by parsing markdown and adding to LoopState.
@@ -71,7 +39,7 @@ class FeedbackStorageTools:
             raise ResourceError('Loop does not exist')
 
         # Parse feedback markdown into CriticFeedback model
-        feedback = self._parse_and_validate_feedback(feedback_markdown, loop_id)
+        feedback = self._parse_and_validate_feedback(feedback_markdown)
 
         # Add feedback to loop state (this also updates the score)
         loop_state.add_feedback(feedback)
@@ -82,24 +50,27 @@ class FeedbackStorageTools:
             message=f'Stored {feedback.critic_agent.value} feedback for loop {loop_id} (Score: {feedback.overall_score})',
         )
 
-    def _parse_and_validate_feedback(self, feedback_markdown: str, loop_id: str) -> CriticFeedback:
+    def _parse_and_validate_feedback(self, feedback_markdown: str) -> CriticFeedback:
         try:
             feedback = CriticFeedback.parse_markdown(feedback_markdown)
         except Exception as e:
             raise ToolError(f'Failed to parse feedback markdown: {str(e)}')
 
-        # Auto-detect and correct critic agent from loop context if possible
-        detected_critic = self._derive_critic_from_loop(loop_id)
-        if detected_critic:
-            feedback.critic_agent = detected_critic
+        # Check for explicitly unknown critic in markdown
+        if 'UNKNOWN' in feedback_markdown.upper():
+            raise ToolError('Feedback must specify a valid critic agent. Unknown critic specification found.')
 
-        # Validate that parsing found meaningful content
+        # Check if markdown lacks proper critic feedback header structure
+        if '# Critic Feedback:' not in feedback_markdown:
+            raise ToolError('Feedback must specify a valid critic agent. Missing critic feedback header.')
+
+        # Validate that parsing found meaningful content (fallback for malformed structure)
         if (
             feedback.loop_id == 'unknown'
             and feedback.overall_score == 0
             and feedback.assessment_summary == 'Assessment Summary not provided'
         ):
-            raise ToolError('Markdown does not contain valid CriticFeedback structure')
+            raise ToolError('Feedback must specify a valid critic agent. Markdown structure is invalid.')
 
         return feedback
 

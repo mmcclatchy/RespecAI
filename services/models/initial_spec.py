@@ -9,7 +9,7 @@ from .enums import SpecStatus
 
 class InitialSpec(MCPModel):
     # Class configuration for MCPModel
-    TITLE_PATTERN: ClassVar[str] = '# Technical Specification:'
+    TITLE_PATTERN: ClassVar[str] = '# Technical Specification'
     TITLE_FIELD: ClassVar[str] = 'phase_name'
     HEADER_FIELD_MAPPING: ClassVar[dict[str, tuple[str, ...]]] = {
         'objectives': ('Overview', 'Objectives'),
@@ -28,7 +28,7 @@ class InitialSpec(MCPModel):
     spec_status: SpecStatus = SpecStatus.DRAFT
 
     def build_markdown(self) -> str:
-        return f"""# Technical Specification: {self.phase_name}
+        return f"""{self.TITLE_PATTERN}: {self.phase_name}
 
 ## Overview
 

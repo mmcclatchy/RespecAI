@@ -6,7 +6,7 @@ from .enums import BuildStatus
 
 class BuildPlan(MCPModel):
     # Class configuration for MCPModel
-    TITLE_PATTERN: ClassVar[str] = '# Build Plan:'
+    TITLE_PATTERN: ClassVar[str] = '# Build Plan'
     TITLE_FIELD: ClassVar[str] = 'project_name'
     HEADER_FIELD_MAPPING: ClassVar[dict[str, tuple[str, ...]]] = {
         'project_goal': ('Project Overview', 'Goal'),
@@ -49,7 +49,7 @@ class BuildPlan(MCPModel):
     build_status: BuildStatus = BuildStatus.PLANNING
 
     def build_markdown(self) -> str:
-        return f"""# Build Plan: {self.project_name}
+        return f"""{self.TITLE_PATTERN}: {self.project_name}
 
 ## Project Overview
 

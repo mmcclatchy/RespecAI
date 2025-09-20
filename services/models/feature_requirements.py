@@ -6,7 +6,7 @@ from .enums import RequirementsStatus
 
 class FeatureRequirements(MCPModel):
     # Class configuration for MCPModel
-    TITLE_PATTERN: ClassVar[str] = '# Feature Requirements:'
+    TITLE_PATTERN: ClassVar[str] = '# Feature Requirements'
     TITLE_FIELD: ClassVar[str] = 'project_name'
     HEADER_FIELD_MAPPING: ClassVar[dict[str, tuple[str, ...]]] = {
         'feature_description': ('Overview', 'Feature Description'),
@@ -51,7 +51,7 @@ class FeatureRequirements(MCPModel):
     requirements_status: RequirementsStatus = RequirementsStatus.DRAFT
 
     def build_markdown(self) -> str:
-        return f"""# Feature Requirements: {self.project_name}
+        return f"""{self.TITLE_PATTERN}: {self.project_name}
 
 ## Overview
 
