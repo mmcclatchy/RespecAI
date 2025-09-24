@@ -4,8 +4,8 @@ from fastmcp.exceptions import ResourceError, ToolError
 from services.mcp.tools.project_plan_tools import ProjectPlanTools
 from services.models.enums import ProjectStatus
 from services.models.project_plan import ProjectPlan
-from services.utils.enums import LoopStatus, LoopType
-from services.utils.models import LoopState, MCPResponse
+from services.utils.enums import LoopStatus
+from services.utils.models import MCPResponse
 from services.utils.state_manager import InMemoryStateManager
 
 
@@ -68,7 +68,7 @@ class TestProjectPlanTools:
 
 
 class TestCreateProjectPlan:
-    def test_create_project_plan_creates_new_loop_state(
+    def test_create_project_plan_creates_new_project_entry(
         self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
     ) -> None:
         response = project_plan_tools.create_project_plan(sample_project_plan)
@@ -76,12 +76,11 @@ class TestCreateProjectPlan:
         assert isinstance(response, MCPResponse)
         assert response.status == LoopStatus.INITIALIZED
         assert 'Created project plan' in response.message
+        assert response.id == sample_project_plan.project_name
 
-        # Verify loop state was created
-        loop_state = project_plan_tools.state.get_loop(response.id)
-        assert loop_state is not None
-        assert loop_state.loop_type.value == 'plan'
-        assert loop_state.status == LoopStatus.INITIALIZED
+        # Verify project plan was stored by project name
+        stored_plan = project_plan_tools.get_project_plan_data(sample_project_plan.project_name)
+        assert stored_plan.project_name == sample_project_plan.project_name
 
     def test_create_project_plan_validates_project_plan_model(self, project_plan_tools: ProjectPlanTools) -> None:
         with pytest.raises(ToolError):
@@ -90,39 +89,33 @@ class TestCreateProjectPlan:
 
 class TestStoreProjectPlan:
     def test_store_project_plan_validates_project_plan_model(self, project_plan_tools: ProjectPlanTools) -> None:
-        with pytest.raises(ToolError, match='Invalid project plan: cannot be None'):
-            project_plan_tools.store_project_plan(None, 'some-loop-id')  # type: ignore[arg-type]
+        with pytest.raises(ToolError, match='Invalid project plan: ProjectPlan cannot be None'):
+            project_plan_tools.store_project_plan(None, 'some-project-name')  # type: ignore[arg-type]
 
-    def test_store_project_plan_updates_existing_loop_state(
+    def test_store_project_plan_updates_existing_project(
         self,
         project_plan_tools: ProjectPlanTools,
-        state_manager: InMemoryStateManager,
         sample_project_plan: ProjectPlan,
     ) -> None:
-        # Create existing loop
-        existing_loop = LoopState(loop_type=LoopType.PLAN)
-        state_manager.add_loop(existing_loop)
+        project_name = sample_project_plan.project_name
 
-        response = project_plan_tools.store_project_plan(sample_project_plan, existing_loop.id)
+        response = project_plan_tools.store_project_plan(sample_project_plan, project_name)
 
-        assert response.id == existing_loop.id
-        assert response.status == LoopStatus.INITIALIZED
+        assert response.id == project_name
+        assert response.status == LoopStatus.IN_PROGRESS
         assert 'Stored project plan' in response.message
 
     def test_store_project_plan_stores_structured_data(
         self,
         project_plan_tools: ProjectPlanTools,
         sample_project_plan: ProjectPlan,
-        state_manager: InMemoryStateManager,
     ) -> None:
-        # Create existing loop first
-        existing_loop = LoopState(loop_type=LoopType.PLAN)
-        state_manager.add_loop(existing_loop)
+        project_name = sample_project_plan.project_name
 
-        response = project_plan_tools.store_project_plan(sample_project_plan, existing_loop.id)
+        project_plan_tools.store_project_plan(sample_project_plan, project_name)
 
         # Verify structured data is stored (not just markdown)
-        stored_plan = project_plan_tools.get_project_plan_data(response.id)
+        stored_plan = project_plan_tools.get_project_plan_data(project_name)
         assert stored_plan.project_name == sample_project_plan.project_name
         assert stored_plan.project_vision == sample_project_plan.project_vision
         assert stored_plan.primary_objectives == sample_project_plan.primary_objectives
@@ -143,23 +136,11 @@ class TestGetProjectPlan:
         assert retrieved_plan.project_vision == sample_project_plan.project_vision
         assert retrieved_plan.primary_objectives == sample_project_plan.primary_objectives
 
-    def test_get_project_plan_raises_error_when_loop_not_found(self, project_plan_tools: ProjectPlanTools) -> None:
+    def test_get_project_plan_raises_error_when_project_not_found(self, project_plan_tools: ProjectPlanTools) -> None:
         with pytest.raises(ResourceError) as exc_info:
-            project_plan_tools.get_project_plan_data('non-existent-loop')
+            project_plan_tools.get_project_plan_data('non-existent-project')
 
-        assert 'Loop does not exist' in str(exc_info.value)
-
-    def test_get_project_plan_raises_error_when_no_plan_stored(
-        self, project_plan_tools: ProjectPlanTools, state_manager: InMemoryStateManager
-    ) -> None:
-        # Create loop without storing plan
-        loop_state = LoopState(loop_type=LoopType.PLAN)
-        state_manager.add_loop(loop_state)
-
-        with pytest.raises(ResourceError) as exc_info:
-            project_plan_tools.get_project_plan_data(loop_state.id)
-
-        assert 'No project plan stored' in str(exc_info.value)
+        assert 'No project plan found for project' in str(exc_info.value)
 
 
 class TestGetProjectPlanMarkdown:
@@ -172,7 +153,7 @@ class TestGetProjectPlanMarkdown:
 
         assert isinstance(markdown_response, MCPResponse)
         assert markdown_response.id == response.id
-        assert markdown_response.status == LoopStatus.INITIALIZED
+        assert markdown_response.status == LoopStatus.COMPLETED
         assert '# Project Plan:' in markdown_response.message
         assert sample_project_plan.project_name in markdown_response.message
         assert sample_project_plan.project_vision in markdown_response.message
@@ -186,13 +167,11 @@ class TestGetProjectPlanMarkdown:
         assert isinstance(markdown_response, MCPResponse)
         assert sample_project_plan.project_name in markdown_response.message
 
-    def test_get_project_plan_markdown_raises_error_when_loop_not_found(
+    def test_get_project_plan_markdown_raises_error_when_project_not_found(
         self, project_plan_tools: ProjectPlanTools
     ) -> None:
-        with pytest.raises(ResourceError) as exc_info:
-            project_plan_tools.get_project_plan_markdown('non-existent-loop')
-
-        assert 'Loop does not exist' in str(exc_info.value)
+        with pytest.raises(ToolError):
+            project_plan_tools.get_project_plan_markdown('non-existent-project')
 
 
 class TestListProjectPlans:
@@ -274,7 +253,7 @@ class TestListProjectPlans:
 
 
 class TestDeleteProjectPlan:
-    def test_delete_project_plan_removes_plan_and_loop(
+    def test_delete_project_plan_removes_plan(
         self, project_plan_tools: ProjectPlanTools, sample_project_plan: ProjectPlan
     ) -> None:
         # Store plan first
@@ -287,12 +266,14 @@ class TestDeleteProjectPlan:
         assert delete_response.id == response.id
         assert 'Deleted project plan' in delete_response.message
 
-        # Verify plan and loop are removed
+        # Verify plan is removed
         with pytest.raises(ResourceError):
             project_plan_tools.get_project_plan_data(response.id)
 
-    def test_delete_project_plan_raises_error_when_loop_not_found(self, project_plan_tools: ProjectPlanTools) -> None:
+    def test_delete_project_plan_raises_error_when_project_not_found(
+        self, project_plan_tools: ProjectPlanTools
+    ) -> None:
         with pytest.raises(ResourceError) as exc_info:
-            project_plan_tools.delete_project_plan('non-existent-loop')
+            project_plan_tools.delete_project_plan('non-existent-project')
 
-        assert 'Loop does not exist' in str(exc_info.value)
+        assert 'No project plan found for project' in str(exc_info.value)

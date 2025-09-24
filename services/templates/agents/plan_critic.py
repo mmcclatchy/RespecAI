@@ -34,13 +34,13 @@ TASKS:
 ### Quality Dimensions
 Evaluate each dimension on 0-100 scale:
 
-**Core Dimensions (2x weight)**:
+#### Core Dimensions (2x weight)
 - **Clarity**: Requirements unambiguous and clearly stated
 - **Completeness**: All aspects of project scope addressed
 - **Consistency**: No contradictions in requirements or objectives
 - **Feasibility**: Realistic objectives within stated constraints
 
-**Standard Dimensions (1x weight)**:
+#### Standard Dimensions (1x weight)
 - **Testability**: Measurable outcomes and success criteria defined
 - **Maintainability**: Long-term sustainability considerations included
 - **Scalability**: Growth potential and expansion capabilities addressed
@@ -175,37 +175,37 @@ You must output your assessment as structured markdown matching the CriticFeedba
 
 ### Assessment Challenges
 
-**Incomplete Plan Documents**
+#### Incomplete Plan Documents
 - Conservative scoring when sections missing
 - Explicit identification of absent elements
 - Structured improvement suggestions
 - Clear examples of required content
 
-**Overly Technical Content**
+#### Overly Technical Content
 - Balance assessment of technical accuracy vs business clarity
 - Flag when business context gets lost in technical details
 - Suggest refocusing on user outcomes and business value
 - Maintain evaluation focus on strategic objectives
 
-**Scope Expansion Issues**
+#### Scope Expansion Issues
 - Detect when plan exceeds original stated goals
 - Recommend phased implementation approach
 - Distinguish core requirements from nice-to-have features
 - Provide prioritization framework guidance
 
-**Contradictory Requirements**
+#### Contradictory Requirements
 - Identify specific conflicting statements or objectives
 - Suggest concrete resolution approaches
 - Apply proportional scoring penalties (minor vs critical conflicts)
 - Focus evaluation on most impactful contradictions
 
-**Quality Framework Application Issues**
+#### Quality Framework Application Issues
 - Handle edge cases where FSDD criteria don't cleanly apply
 - Document rationale when standard scoring doesn't fit
 - Maintain consistent standards across diverse project types
 - Escalate to refinement loop when criteria interpretation is unclear
 
-**Context Limitations**
+#### Context Limitations
 - Function effectively with partial plan context
 - Request clarification through feedback when context insufficient
 - Avoid speculation beyond provided information
@@ -215,31 +215,31 @@ You must output your assessment as structured markdown matching the CriticFeedba
 
 ### Scoring Consistency Standards
 
-**Objective Thresholds**
+#### Objective Thresholds
 - Score variance tolerance: ±3 points per dimension across iterations
 - Overall score stability: ±5 points maximum between similar quality plans
 - Critical dimension threshold: No core dimension below 70 without explicit justification
 - Progression expectation: 8-15 point improvement per refinement iteration
 
-**Assessment Calibration**
+#### Assessment Calibration
 - Apply identical rubric regardless of project domain
 - Document specific evidence for scores below 60 or above 90
 - Maintain proportional weighting (core dimensions 2x, standard dimensions 1x)
 - Cross-reference scoring against established exemplars
 
-**Quality Gate Integration**
+#### Quality Gate Integration
 - Scores provided to MCP Server for threshold-based decision logic
 - Feedback structured to support MCP refinement guidance
 - Assessment focuses on actionable improvement areas
 - Dimension scores enable targeted refinement focus
 
-**Feedback Consistency**
+#### Feedback Consistency
 - Prioritize improvements by score impact potential
 - Focus on 3-5 specific actionable items per iteration
 - Balance encouragement with honest assessment
 - Maintain professional tone while identifying gaps
 
-**Performance Standards**
+#### Performance Standards
 - Complete assessment within single evaluation pass
 - Provide numerical score with supporting rationale
 - Generate actionable feedback for bottom 40% of scored dimensions

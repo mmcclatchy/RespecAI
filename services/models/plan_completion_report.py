@@ -6,32 +6,24 @@ from .base import MCPModel
 
 
 class PlanCompletionStatus(str):
-    """Status enum for plan completion reports."""
-
     USER_ACCEPTED = 'User-accepted (human-driven decision)'
     ANALYST_VALIDATED = 'Analyst validation completed'
     COMPLETED = 'Planning phase completed'
 
 
 class UserDecision(str):
-    """User decision options during plan generation."""
-
     CONTINUE_CONVERSATION = 'continue_conversation'
     REFINE_PLAN = 'refine_plan'
     ACCEPT_PLAN = 'accept_plan'
 
 
 class AnalystLoopStatus(str):
-    """Status options for analyst validation loop."""
-
     REFINE = 'refine'
     USER_INPUT = 'user_input'
     COMPLETED = 'completed'
 
 
 class PlanCompletionReport(MCPModel):
-    """Completion report for the strategic planning phase."""
-
     # Class configuration
     TITLE_PATTERN: ClassVar[str] = '# Strategic Plan Output'
     TITLE_FIELD: ClassVar[str] = 'report_title'

@@ -37,13 +37,13 @@ TASKS:
 ### Validation Dimensions
 Evaluate each dimension on 0-100 scale:
 
-**Core Extraction Dimensions (2x weight)**:
+#### Core Extraction Dimensions (2x weight)
 - **Semantic Accuracy**: Extracted objectives match source plan intent
 - **Completeness**: All stated objectives captured without omissions
 - **Quantification Quality**: Success metrics properly measured and targeted
 - **Stakeholder Mapping**: Accurate identification and needs assessment
 
-**Supporting Dimensions (1x weight)**:
+#### Supporting Dimensions (1x weight)
 - **Priority Accuracy**: Correct must-have vs nice-to-have classification
 - **Dependency Mapping**: Accurate relationship identification
 - **Constraint Documentation**: Complete technical and business limitations
@@ -173,31 +173,31 @@ You must output your validation assessment as structured markdown matching the C
 
 ### Validation Challenges
 
-**Ambiguous Source Material**
+#### Ambiguous Source Material
 - Score conservatively when plan language unclear
 - Document interpretation assumptions explicitly
 - Request clarification through refinement feedback
 - Provide alternative interpretation options when appropriate
 
-**Extraction Over-Interpretation**
+#### Extraction Over-Interpretation
 - Penalize addition of unstated objectives significantly
 - Flag assumptions as semantic accuracy violations
 - Distinguish analyst additions from plan content
 - Recommend strict adherence to source material
 
-**Missing Source Context**
+#### Missing Source Context
 - Work with available plan sections for validation
 - Note context limitations in feedback explicitly
 - Focus validation on available material quality
 - Avoid speculation beyond provided information
 
-**Incomplete Objective Analysis**
+#### Incomplete Objective Analysis
 - Score based on present content quality
 - Identify missing sections clearly in feedback
 - Provide specific examples of required additions
 - Maintain consistent standards despite gaps
 
-**Conflicting Plan Requirements**
+#### Conflicting Plan Requirements
 - Validate analyst handling of contradictions appropriately
 - Check for proper conflict documentation in analysis
 - Assess suggested resolution approaches for reasonableness
@@ -207,25 +207,25 @@ You must output your validation assessment as structured markdown matching the C
 
 ### Validation Consistency Standards
 
-**Scoring Reliability**
+#### Scoring Reliability
 - Score variance tolerance: ±5 points per dimension across similar analyses
 - Overall score consistency: ±8 points for comparable extraction quality
 - Core dimension emphasis: Semantic accuracy and completeness never below 70
 - Progressive improvement: 10-20 point gains expected per refinement
 
-**Assessment Objectivity**
+#### Assessment Objectivity
 - Base scores on evidence from comparison with source plan
 - Document specific plan sections supporting dimension scores
 - Maintain consistent rubric application across diverse project types
 - Cross-reference validation against established extraction standards
 
-**Feedback Effectiveness**
+#### Feedback Effectiveness
 - Prioritize improvements by score impact and implementation difficulty
 - Focus on 3-4 specific actionable items per validation cycle
 - Balance recognition of strengths with honest gap assessment
 - Provide concrete examples and plan references for improvements
 
-**Loop Integration Standards**
+#### Loop Integration Standards
 - Enable MCP decision logic through clear numerical scoring
 - Support analyst refinement with specific, actionable guidance
 - Maintain validation consistency while tracking improvement progress

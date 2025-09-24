@@ -3,9 +3,8 @@ from fastmcp.exceptions import ResourceError, ToolError
 from pydantic import ValidationError
 
 from services.models.project_plan import ProjectPlan
-from services.utils.enums import LoopStatus, LoopType
-from services.utils.errors import LoopNotFoundError
-from services.utils.models import LoopState, MCPResponse
+from services.utils.enums import LoopStatus
+from services.utils.models import MCPResponse
 from services.utils.state_manager import StateManager
 
 
@@ -15,72 +14,69 @@ from services.shared import state_manager
 class ProjectPlanTools:
     def __init__(self, state: StateManager) -> None:
         self.state = state
-        self._project_plans: dict[str, ProjectPlan] = {}
+        self._project_plans: dict[str, ProjectPlan] = {}  # project_name -> ProjectPlan
 
     def create_project_plan(self, project_plan: ProjectPlan) -> MCPResponse:
         try:
             if project_plan is None:
                 raise ValueError('ProjectPlan cannot be None')
 
-            loop_state = LoopState(loop_type=LoopType.PLAN)
-            self.state.add_loop(loop_state)
-            self._project_plans[loop_state.id] = project_plan
+            project_name = project_plan.project_name
+            if not project_name or project_name == 'Unnamed Project':
+                raise ValueError('Project plan must have a valid project name')
+
+            self._project_plans[project_name] = project_plan
             return MCPResponse(
-                id=loop_state.id,
-                status=loop_state.status,
-                message=f'Created project plan: {project_plan.project_name}',
+                id=project_name,
+                status=LoopStatus.INITIALIZED,
+                message=f'Created project plan: {project_name}',
             )
         except ValidationError:
             raise ToolError('Invalid project plan data provided')
-        except ValueError:
-            raise ToolError('Invalid project plan: cannot be None')
+        except ValueError as e:
+            raise ToolError(f'Invalid project plan: {str(e)}')
         except Exception as e:
             raise ToolError(f'Unexpected error creating project plan: {str(e)}')
 
-    def store_project_plan(self, project_plan: ProjectPlan, loop_id: str) -> MCPResponse:
+    def store_project_plan(self, project_plan: ProjectPlan, project_name: str) -> MCPResponse:
         try:
             if project_plan is None:
                 raise ValueError('ProjectPlan cannot be None')
+            if not project_name:
+                raise ValueError('Project name cannot be empty')
 
-            loop_state = self.state.get_loop(loop_id)
-            self._project_plans[loop_id] = project_plan
+            self._project_plans[project_name] = project_plan
             return MCPResponse(
-                id=loop_id, status=loop_state.status, message=f'Stored project plan: {project_plan.project_name}'
+                id=project_name,
+                status=LoopStatus.IN_PROGRESS,
+                message=f'Stored project plan: {project_plan.project_name}',
             )
         except ValidationError:
             raise ToolError('Invalid project plan data provided')
-        except ValueError:
-            raise ToolError('Invalid project plan: cannot be None')
-        except LoopNotFoundError:
-            raise ResourceError('Loop does not exist')
+        except ValueError as e:
+            raise ToolError(f'Invalid project plan: {str(e)}')
         except Exception as e:
             raise ToolError(f'Unexpected error storing project plan: {str(e)}')
 
-    def get_project_plan_data(self, loop_id: str) -> ProjectPlan:
+    def get_project_plan_data(self, project_name: str) -> ProjectPlan:
         try:
-            # Check if loop exists
-            self.state.get_loop(loop_id)
+            if not project_name:
+                raise ToolError('Project name cannot be empty')
 
-            if loop_id not in self._project_plans:
-                raise ResourceError('No project plan stored for this loop')
+            if project_name not in self._project_plans:
+                raise ResourceError(f'No project plan found for project: {project_name}')
 
-            return self._project_plans[loop_id]
-        except LoopNotFoundError:
-            raise ResourceError('Loop does not exist')
+            return self._project_plans[project_name]
         except (ResourceError, ToolError):
             raise  # Re-raise FastMCP exceptions as-is
         except Exception as e:
             raise ToolError(f'Unexpected error retrieving project plan: {str(e)}')
 
-    def get_project_plan_markdown(self, loop_id: str) -> MCPResponse:
+    def get_project_plan_markdown(self, project_name: str) -> MCPResponse:
         try:
-            loop_state = self.state.get_loop(loop_id)
-            project_plan = self.get_project_plan_data(loop_id)
-
+            project_plan = self.get_project_plan_data(project_name)
             markdown = project_plan.build_markdown()
-            return MCPResponse(id=loop_id, status=loop_state.status, message=markdown)
-        except LoopNotFoundError:
-            raise ResourceError('Loop does not exist')
+            return MCPResponse(id=project_name, status=LoopStatus.COMPLETED, message=markdown)
         except Exception as e:
             raise ToolError(f'Unexpected error generating markdown: {str(e)}')
 
@@ -94,8 +90,8 @@ class ProjectPlanTools:
             plan_count = len(plan_items)
 
             plan_summaries = []
-            for loop_id, plan in plan_items:
-                summary = f'ID: {loop_id}, Project: {plan.project_name}'
+            for project_name, plan in plan_items:
+                summary = f'Project: {project_name}, Status: {plan.project_status.value}'
                 plan_summaries.append(summary)
 
             message = f'Found {plan_count} project plan{"s" if plan_count != 1 else ""}: ' + '; '.join(plan_summaries)
@@ -103,20 +99,21 @@ class ProjectPlanTools:
         except Exception as e:
             raise ToolError(f'Unexpected error listing project plans: {str(e)}')
 
-    def delete_project_plan(self, loop_id: str) -> MCPResponse:
+    def delete_project_plan(self, project_name: str) -> MCPResponse:
         try:
-            # Check if loop exists
-            self.state.get_loop(loop_id)
+            if not project_name:
+                raise ToolError('Project name cannot be empty')
 
             # Remove project plan
-            if loop_id in self._project_plans:
-                plan_name = self._project_plans[loop_id].project_name
-                del self._project_plans[loop_id]
+            if project_name in self._project_plans:
+                del self._project_plans[project_name]
+                return MCPResponse(
+                    id=project_name, status=LoopStatus.COMPLETED, message=f'Deleted project plan: {project_name}'
+                )
             else:
-                plan_name = 'Unknown'
-            return MCPResponse(id=loop_id, status=LoopStatus.COMPLETED, message=f'Deleted project plan: {plan_name}')
-        except LoopNotFoundError:
-            raise ResourceError('Loop does not exist')
+                raise ResourceError(f'No project plan found for project: {project_name}')
+        except (ResourceError, ToolError):
+            raise  # Re-raise FastMCP exceptions as-is
         except Exception as e:
             raise ToolError(f'Unexpected error deleting project plan: {str(e)}')
 
@@ -151,26 +148,26 @@ def register_project_plan_tools(mcp: FastMCP) -> None:
             raise ToolError(f'Failed to create project plan: {str(e)}')
 
     @mcp.tool()
-    async def store_project_plan(loop_id: str, project_plan_markdown: str, ctx: Context) -> MCPResponse:
+    async def store_project_plan(project_name: str, project_plan_markdown: str, ctx: Context) -> MCPResponse:
         """Store structured project plan data from markdown.
 
         Parses markdown content into a ProjectPlan model and stores it with
-        the specified loop.
+        the specified project name.
 
         Parameters:
-        - loop_id: Loop ID to store the project plan in
+        - project_name: Project name to store the project plan for
         - project_plan_markdown: Complete project plan in markdown format
 
         Returns:
-        - MCPResponse: Contains loop_id, status, and confirmation message
+        - MCPResponse: Contains project_name, status, and confirmation message
         """
 
-        await ctx.info(f'Parsing and storing project plan markdown with loop_id: {loop_id}')
+        await ctx.info(f'Parsing and storing project plan markdown for project: {project_name}')
 
         try:
             # Parse markdown into ProjectPlan model
             project_plan = ProjectPlan.parse_markdown(project_plan_markdown)
-            result = project_plan_tools.store_project_plan(project_plan, loop_id)
+            result = project_plan_tools.store_project_plan(project_plan, project_name)
 
             await ctx.info(f'Stored project plan with ID: {result.id}')
             return result
@@ -179,25 +176,25 @@ def register_project_plan_tools(mcp: FastMCP) -> None:
             raise ToolError(f'Failed to store project plan: {str(e)}')
 
     @mcp.tool()
-    async def get_project_plan_markdown(loop_id: str, ctx: Context) -> MCPResponse:
+    async def get_project_plan_markdown(project_name: str, ctx: Context) -> MCPResponse:
         """Generate markdown for project plan.
 
         Retrieves stored project plan and formats as markdown
 
         Parameters:
-        - loop_id: Unique identifier of the loop
+        - project_name: Name of the project
 
         Returns:
-        - MCPResponse: Contains loop_id, status, and formatted markdown content
+        - MCPResponse: Contains project_name, status, and formatted markdown content
         """
-        await ctx.info(f'Generating markdown for project plan {loop_id}')
+        await ctx.info(f'Generating markdown for project plan {project_name}')
         try:
-            result = project_plan_tools.get_project_plan_markdown(loop_id)
-            await ctx.info(f'Generated markdown for project plan {loop_id}')
+            result = project_plan_tools.get_project_plan_markdown(project_name)
+            await ctx.info(f'Generated markdown for project plan {project_name}')
             return result
         except Exception as e:
             await ctx.error(f'Failed to generate project plan markdown: {str(e)}')
-            raise ResourceError(f'Project plan not found for loop {loop_id}: {str(e)}')
+            raise ResourceError(f'Project plan not found for project {project_name}: {str(e)}')
 
     @mcp.tool()
     async def list_project_plans(count: int, ctx: Context) -> MCPResponse:
@@ -221,21 +218,21 @@ def register_project_plan_tools(mcp: FastMCP) -> None:
             raise ToolError(f'Failed to list project plans: {str(e)}')
 
     @mcp.tool()
-    async def delete_project_plan(loop_id: str, ctx: Context) -> MCPResponse:
+    async def delete_project_plan(project_name: str, ctx: Context) -> MCPResponse:
         """Delete a stored project plan.
 
-        Removes project plan data associated with the given loop ID.
+        Removes project plan data associated with the given project name.
 
         Parameters:
-        - loop_id: Unique identifier of the loop
+        - project_name: Name of the project
 
         Returns:
-        - MCPResponse: Contains loop_id, status, and deletion confirmation
+        - MCPResponse: Contains project_name, status, and deletion confirmation
         """
-        await ctx.info(f'Deleting project plan {loop_id}')
+        await ctx.info(f'Deleting project plan {project_name}')
         try:
-            result = project_plan_tools.delete_project_plan(loop_id)
-            await ctx.info(f'Deleted project plan {loop_id}')
+            result = project_plan_tools.delete_project_plan(project_name)
+            await ctx.info(f'Deleted project plan {project_name}')
             return result
         except Exception as e:
             await ctx.error(f'Failed to delete project plan: {str(e)}')

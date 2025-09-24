@@ -264,7 +264,7 @@ draft
         # Get roadmap
         get_result = roadmap_tools.get_roadmap('integration-test')
         assert 'Integration Test Project' in get_result
-        assert '2 specs' in get_result
+        assert '- **Spec 1**: Foundation' in get_result and '- **Spec 2**: Implementation' in get_result
 
         # List specs
         list_result = roadmap_tools.list_specs('integration-test')

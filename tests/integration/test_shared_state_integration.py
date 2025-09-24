@@ -107,7 +107,7 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
 
         roadmap_status = roadmap_tools.get_roadmap('test-project')
         assert isinstance(roadmap_status, str)
-        assert '1 specs' in roadmap_status
+        assert '- **Spec 1**: Shared State Test' in roadmap_status
 
     def test_state_manager_handles_concurrent_access(
         self, loop_tools: LoopTools, roadmap_tools: RoadmapTools, sample_spec_markdown: str
@@ -284,7 +284,7 @@ Using shared InMemoryStateManager instance across LoopTools and RoadmapTools.
 
         # 9. Verify final state
         final_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert '1 specs' in final_roadmap  # Should have one spec (updated)
+        assert '- **Spec 1**: Shared State Test' in final_roadmap  # Should have one spec (updated)
 
         final_loop_status = loop_tools.get_loop_status(loop_id)
         assert final_loop_status.status == LoopStatus.COMPLETED

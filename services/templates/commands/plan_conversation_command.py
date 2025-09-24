@@ -9,11 +9,14 @@ description: Conduct conversational requirements gathering
 
 ## Command Integration
 
-**Purpose**: This command conducts structured conversation with the user to gather comprehensive project requirements. It operates as a sub-command called by `/plan` and returns structured context for strategic plan generation.
+#### Purpose
+This command conducts structured conversation with the user to gather comprehensive project requirements. It operates as a sub-command called by `/plan` and returns structured context for strategic plan generation.
 
-**Variable Management**: Store all conversation results in the variable `CONVERSATION_CONTEXT` for handoff back to the calling command.
+#### Variable Management
+Store all conversation results in the variable `CONVERSATION_CONTEXT` for handoff back to the calling command.
 
-**Completion Protocol**: This command completes when all three stages have been executed and comprehensive context has been gathered in structured format.
+#### Completion Protocol
+This command completes when all three stages have been executed and comprehensive context has been gathered in structured format.
 
 ## Stage 1: Vision and Context Discovery
 Begin with broad, open-ended exploration:
@@ -74,14 +77,14 @@ Refine understanding with specific validation:
 
 ## Conversation Completion Criteria
 
-**Ready to Complete When:**
+#### Ready to Complete When:
 - All three stages have been conducted with meaningful user engagement
 - User has provided sufficient detail in each major area (vision, requirements, constraints, priorities)
 - Key questions have been answered and understanding has been validated
 - User expresses satisfaction that their needs have been captured
 - No critical information gaps remain that would prevent strategic plan creation
 
-**Completion Checklist:**
+#### Completion Checklist:
 - [ ] Vision and desired outcomes clearly articulated
 - [ ] Key requirements and constraints identified
 - [ ] Priorities and trade-offs discussed
@@ -90,7 +93,8 @@ Refine understanding with specific validation:
 
 ## Context Structure and Handoff Protocol
 
-**Final Step**: After completing all conversation stages and meeting completion criteria, structure all gathered information in the `CONVERSATION_CONTEXT` variable using this format:
+#### Final Step
+After completing all conversation stages and meeting completion criteria, structure all gathered information in the `CONVERSATION_CONTEXT` variable using this format:
 
 ```json
 {
@@ -131,43 +135,45 @@ Refine understanding with specific validation:
 }
 ```
 
-**Handoff Protocol**: Once `CONVERSATION_CONTEXT` is populated, the calling `/plan` command will automatically proceed with strategic plan generation using this structured context.
+#### Handoff Protocol
+Once `CONVERSATION_CONTEXT` is populated, the calling `/plan` command will automatically proceed with strategic plan generation using this structured context.
 
 ## Error Handling and Recovery
 
 ### Conversation Stalls
-**If user becomes unresponsive or provides minimal answers:**
+#### If user becomes unresponsive or provides minimal answers:
 - Rephrase questions using simpler language or concrete examples
 - Offer multiple-choice options to jumpstart engagement
 - Break complex questions into smaller, more manageable parts
 - Example: "I notice you're hesitating. Would it help if I gave you some examples of what I mean?"
 
 ### Scope Overwhelm
-**If user seems overwhelmed by the scope of questions:**
+#### If user seems overwhelmed by the scope of questions:
 - Focus on one area at a time and reassure about the process
 - Emphasize that incomplete answers can be refined later
 - Suggest starting with what they're most confident about
 - Example: "Let's start with just the core problem you're trying to solve. We can build from there."
 
 ### Technical Confusion
-**If user gets bogged down in technical details:**
+#### If user gets bogged down in technical details:
 - Redirect to business outcomes and user value
 - Defer technical implementation discussions
 - Focus on "what" rather than "how"
 - Example: "Let's focus on what you want to achieve first. We'll figure out the technical approach later."
 
 ### Information Gaps
-**If critical information is missing after all stages:**
+#### If critical information is missing after all stages:
 - Identify specific gaps and ask targeted follow-up questions
 - Use hypothetical scenarios to help user think through unclear areas
 - Suggest reasonable assumptions that can be validated later
 - Document gaps clearly for strategic plan generation
 
 ### Conversation Recovery
-**If conversation derails or becomes unproductive:**
+#### If conversation derails or becomes unproductive:
 - Summarize progress made so far to re-establish momentum
 - Identify the most important remaining areas to cover
 - Offer to change approach or take a break if needed
 - Example: "We've made good progress on X and Y. Let's focus on Z to wrap up the key pieces."
 
-**Error Escalation**: If conversation cannot be completed due to persistent issues, populate `CONVERSATION_CONTEXT` with available information and include detailed notes in `conversation_summary` about the challenges encountered."""
+#### Error Escalation
+If conversation cannot be completed due to persistent issues, populate `CONVERSATION_CONTEXT` with available information and include detailed notes in `conversation_summary` about the challenges encountered."""

@@ -453,7 +453,7 @@ and comprehensive error recovery mechanisms.
         # Phase 9: Verification of Final State
         final_roadmap = roadmap_tools.get_roadmap(project_id)
         assert isinstance(final_roadmap, str)
-        assert '1 specs' in final_roadmap
+        assert '- **Spec 1**: Production Workflow Test' in final_roadmap
 
         final_loop_status = loop_tools.get_loop_status(loop_id)
         assert final_loop_status.status == LoopStatus.COMPLETED
@@ -481,7 +481,7 @@ and comprehensive error recovery mechanisms.
 
         # Verify empty roadmap after deletion
         empty_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert '0 specs' in empty_roadmap
+        assert '## Specifications\n\n\n## Risk Assessment' in empty_roadmap
 
     def test_production_concurrent_mixed_operations(self) -> None:
         server = create_mcp_server()
@@ -540,7 +540,7 @@ Async MCP server operations
             # Verify roadmaps have specs
             roadmap_check = roadmap_tools.get_roadmap(f'concurrent-project-{i}')
             assert isinstance(roadmap_check, str)
-            assert '1 specs' in roadmap_check
+            assert '- **Spec 1**: Test Spec' in roadmap_check
 
             # List all specs in each roadmap
             specs_list = roadmap_tools.list_specs(f'concurrent-project-{i}')

@@ -35,22 +35,22 @@ TASKS:
 ### Business Objectives Categories
 Extract objectives into these categories:
 
-**Primary Objectives**:
+#### Primary Objectives
 - Core business goals that must be achieved
 - Primary value propositions and outcomes
 - Critical success factors
 
-**Secondary Objectives**:
+#### Secondary Objectives
 - Supporting goals that enhance primary objectives
 - Nice-to-have features and capabilities
 - Long-term aspirational goals
 
-**Technical Objectives**:
+#### Technical Objectives
 - System capabilities and performance targets
 - Integration and compatibility requirements
 - Security and compliance objectives
 
-**User Experience Objectives**:
+#### User Experience Objectives
 - User satisfaction and engagement targets
 - Accessibility and usability goals
 - User workflow and efficiency improvements
@@ -236,31 +236,31 @@ Include for each objective:
 
 ### Extraction Challenges
 
-**Incomplete Strategic Plans**
+#### Incomplete Strategic Plans
 - Extract available objectives and document missing sections clearly
 - Note gaps explicitly in output with "MISSING:" indicators
 - Proceed with best-effort extraction using available information
 - Flag uncertain extractions with confidence levels
 
-**Contradictory Objectives**
+#### Contradictory Objectives
 - Document both conflicting objectives in separate sections
 - Note contradiction explicitly: "CONFLICT: [objective A] vs [objective B]"
 - Suggest resolution approach in Risk Analysis section
 - Flag for stakeholder clarification in output
 
-**Vague Success Criteria**
+#### Vague Success Criteria
 - Extract measurable elements where identifiable
 - Document assumptions made during quantification
 - Suggest specific quantification approaches in output
 - Note limitations in measurement plan section
 
-**Missing Stakeholder Information**
+#### Missing Stakeholder Information
 - Identify stakeholders from context and requirements
 - Document assumed stakeholder roles with "ASSUMED:" prefix
 - Suggest stakeholder validation in next steps
 - Proceed with reasonable stakeholder mapping
 
-**Ambiguous Timeline Requirements**
+#### Ambiguous Timeline Requirements
 - Use industry standard timelines for similar projects
 - Document timeline assumptions clearly
 - Provide range estimates when specifics unavailable
@@ -270,25 +270,25 @@ Include for each objective:
 
 ### Extraction Completeness Standards
 
-**Objective Coverage Requirements**
+#### Objective Coverage Requirements
 - Primary objective identification: >95% accuracy from plan content
 - Secondary objective capture: All mentioned goals documented
 - Stakeholder mapping: All referenced parties included
 - Constraint documentation: Technical and business limits captured
 
-**Output Structure Consistency**
+#### Output Structure Consistency
 - Markdown format adherence: Strict template compliance
 - Section completeness: All required sections present
 - Measurement specificity: >80% of metrics quantified with targets
 - Timeline precision: Phases clearly defined with timeframes
 
-**Analysis Quality Thresholds**
+#### Analysis Quality Thresholds
 - Assumption documentation: All assumptions explicitly noted
 - Risk identification: Major risks captured with mitigation strategies
 - Dependency mapping: Critical path relationships documented
 - Success criteria clarity: Measurable acceptance criteria defined
 
-**State Management Standards**
+#### State Management Standards
 - Previous analysis comparison: Acknowledge improvements if available
 - Progress tracking: Note evolution from previous iterations
 - Consistency maintenance: Align with previous analysis direction

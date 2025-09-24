@@ -34,15 +34,17 @@ def remove_single_line_docstrings(content: str) -> Tuple[str, int]:
         single_line_docstring_pattern = r'^(\s*)""".*?"""\s*$'
 
         if re.match(single_line_docstring_pattern, line):
-            # Check if the previous line looks like a function/method definition
+            # Check if the previous line looks like a function/method/class definition
             if i > 0:
                 prev_line = lines[i - 1].strip()
                 if (
                     prev_line.startswith('def ')
                     or prev_line.startswith('async def ')
                     or (prev_line.endswith(':') and ('def ' in prev_line))
+                    or prev_line.startswith('class ')
+                    or (prev_line.endswith(':') and ('class ' in prev_line))
                 ):
-                    # This is a single-line docstring after a function definition
+                    # This is a single-line docstring after a function/class definition
                     # Skip this line (remove it)
                     removals_count += 1
                     i += 1

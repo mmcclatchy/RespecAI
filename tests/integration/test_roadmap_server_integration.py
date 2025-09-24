@@ -119,7 +119,8 @@ class TestRoadmapServerIntegration:
 
         assert isinstance(result, str)
         assert 'Test Roadmap for Get' in result
-        assert '0 specs' in result
+        # For empty specs list, check for empty Specifications section
+        assert '## Specifications\n\n\n## Risk Assessment' in result
 
     def test_add_spec_integration(self, server: FastMCP, valid_spec_markdown: str) -> None:
         project_id = 'spec-test-project'
@@ -250,7 +251,7 @@ class TestRoadmapServerIntegration:
 
         # Step 2: Verify empty roadmap
         empty_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert '0 specs' in empty_roadmap
+        assert '## Specifications\n\n\n## Risk Assessment' in empty_roadmap
 
         # Step 3: Add spec
         add_result = roadmap_tools.add_spec(project_id, 'Workflow Spec', valid_spec_markdown)
@@ -259,7 +260,7 @@ class TestRoadmapServerIntegration:
 
         # Step 4: Verify roadmap now has spec
         populated_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert '1 specs' in populated_roadmap
+        assert '- **Spec 1**: Integration Test Spec' in populated_roadmap
 
         # Step 5: List specs
         list_result = roadmap_tools.list_specs(project_id)
@@ -285,7 +286,7 @@ class TestRoadmapServerIntegration:
 
         # Step 9: Verify empty roadmap again
         final_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert '0 specs' in final_roadmap
+        assert '## Specifications\n\n\n## Risk Assessment' in final_roadmap
 
     def test_error_handling_integration(self, server: FastMCP) -> None:
         # Verify error handling tools are registered
@@ -387,7 +388,7 @@ class TestRoadmapServerIntegration:
         # Verify each project has exactly one spec
         for project_id in project_ids:
             roadmap_result = roadmap_tools.get_roadmap(project_id)
-            assert '1 specs' in roadmap_result
+            assert '- **Spec 1**: Test Spec' in roadmap_result
 
             list_result = roadmap_tools.list_specs(project_id)
             assert 'Test Spec' in list_result  # Parsed name from markdown

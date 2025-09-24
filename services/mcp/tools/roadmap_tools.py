@@ -31,8 +31,7 @@ class RoadmapTools:
 
         try:
             roadmap = self.state.get_roadmap(project_id)
-            spec_count = len(roadmap.specs)
-            return f'Roadmap "{roadmap.project_name}" found with {spec_count} specs'
+            return roadmap.build_markdown()
         except Exception as e:
             raise ResourceError(f'Roadmap not found for project {project_id}: {str(e)}')
 
