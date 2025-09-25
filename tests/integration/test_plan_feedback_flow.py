@@ -1,19 +1,14 @@
 import pytest
+from fastmcp import FastMCP
 
-from services.mcp.tools.feedback_storage_tools import FeedbackStorageTools
+from services.mcp.tools.feedback_storage_tools import FeedbackStorageTools, register_feedback_storage_tools
 from services.models.enums import CriticAgent
 from services.utils.enums import LoopType
-from services.utils.models import LoopState, MCPResponse
+from services.utils.loop_state import LoopState, MCPResponse
 from services.utils.state_manager import InMemoryStateManager
 
 
-from fastmcp import FastMCP
-from services.mcp.tools.feedback_storage_tools import register_feedback_storage_tools
-
-
 class TestPlanFeedbackIntegrationFlow:
-    """Integration tests for the complete plan feedback flow."""
-
     @pytest.fixture
     def state_manager(self) -> InMemoryStateManager:
         return InMemoryStateManager()

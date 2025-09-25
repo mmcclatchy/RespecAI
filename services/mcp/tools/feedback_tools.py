@@ -3,12 +3,10 @@ from fastmcp.exceptions import ResourceError, ToolError
 from pydantic import ValidationError
 
 from services.models.feedback import CriticFeedback
-from services.utils.errors import LoopNotFoundError
-from services.utils.models import MCPResponse
-from services.utils.state_manager import StateManager
-
-
 from services.shared import state_manager
+from services.utils.errors import LoopNotFoundError
+from services.utils.loop_state import MCPResponse
+from services.utils.state_manager import StateManager
 
 
 class FeedbackTools:

@@ -1,21 +1,17 @@
-import pytest
 from unittest.mock import Mock
+
+import pytest
 from fastmcp.exceptions import ResourceError, ToolError
 
-from services.mcp.tools.feedback_storage_tools import FeedbackStorageTools
+from services.mcp.tools.feedback_storage_tools import FeedbackStorageTools, register_feedback_storage_tools
+from services.models.enums import CriticAgent
 from services.models.feedback import CriticFeedback
 from services.utils.enums import LoopType
-from services.models.enums import CriticAgent
 from services.utils.errors import LoopNotFoundError
-from services.utils.models import LoopState, MCPResponse
-
-
-from services.mcp.tools.feedback_storage_tools import register_feedback_storage_tools
+from services.utils.loop_state import LoopState, MCPResponse
 
 
 class TestFeedbackStorageTools:
-    """Test suite for FeedbackStorageTools class."""
-
     @pytest.fixture
     def mock_state_manager(self) -> Mock:
         return Mock()
@@ -336,8 +332,6 @@ Test analysis content.
 
 
 class TestFeedbackStorageToolsRegistration:
-    """Test suite for MCP tool registration functions."""
-
     @pytest.fixture
     def mock_mcp(self) -> Mock:
         return Mock()

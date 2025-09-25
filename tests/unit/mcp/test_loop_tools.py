@@ -5,7 +5,7 @@ from services.models.enums import CriticAgent
 from services.models.feedback import CriticFeedback
 from services.utils.enums import LoopStatus, LoopType
 from services.utils.errors import LoopStateError, LoopValidationError
-from services.utils.models import LoopState, MCPResponse
+from services.utils.loop_state import LoopState, MCPResponse
 from services.utils.state_manager import InMemoryStateManager
 
 

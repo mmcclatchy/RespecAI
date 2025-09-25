@@ -4,7 +4,7 @@ from fastmcp import FastMCP
 from services.mcp.server import create_mcp_server, health_check
 from services.mcp.tools.loop_tools import loop_tools
 from services.utils.enums import HealthState, LoopStatus
-from services.utils.models import HealthStatus
+from services.utils.loop_state import HealthStatus
 from services.utils.setting_configs import mcp_settings
 
 

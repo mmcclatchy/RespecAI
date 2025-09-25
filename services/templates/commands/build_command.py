@@ -2,19 +2,29 @@ def generate_build_command_template(
     get_spec_tool: str,
     comment_spec_tool: str,
 ) -> str:
+    # Safe Python list construction to prevent YAML injection
+    base_tools = [
+        'Task(build-planner)',
+        'Task(build-critic)',
+        'Task(build-coder)',
+        'Task(build-reviewer)',
+        'Task(research-synthesizer)',
+        'Bash(~/.claude/scripts/detect-packages.sh:*)',
+        'mcp__specter__initialize_refinement_loop',  # Fixed: mcp__loop_state__ -> mcp__specter__
+        'mcp__specter__decide_loop_next_action',  # Fixed: mcp__loop_state__ -> mcp__specter__
+        'mcp__specter__get_loop_status',  # Fixed: mcp__loop_state__ -> mcp__specter__
+    ]
+
+    # Add platform tools with validation
+    platform_tools = [get_spec_tool, comment_spec_tool]
+    all_tools = base_tools + platform_tools
+
+    # Convert to YAML with proper escaping
+    tools_yaml = '\n'.join(f'  - {tool}' for tool in all_tools)
+
     return f"""---
 allowed-tools:
-  - Task(build-planner)
-  - Task(build-critic)
-  - Task(build-coder)
-  - Task(build-reviewer)
-  - Task(research-synthesizer)
-  - Bash(~/.claude/scripts/detect-packages.sh:*)
-  - {get_spec_tool}
-  - {comment_spec_tool}
-  - mcp__loop_state__initialize_refinement_loop
-  - mcp__loop_state__decide_loop_next_action
-  - mcp__loop_state__get_loop_status
+{tools_yaml}
 argument-hint: [specification-identifier]
 description: Transform technical specifications into production-ready code through parallel research, implementation planning, and TDD development
 ---
@@ -149,7 +159,7 @@ Coordinate build plan development and refinement:
 
 ```
 # Initialize planning refinement loop
-PLANNING_LOOP_ID = mcp__loop_state__initialize_refinement_loop:
+PLANNING_LOOP_ID = mcp__specter__initialize_refinement_loop:
   loop_type: "build_plan"
 
 # Begin planning cycle
@@ -192,7 +202,7 @@ PLAN_QUALITY_SCORE = [build-critic output: Overall Quality Score (0-100)]
 PLAN_IMPROVEMENT_FEEDBACK = [build-critic output: Priority Improvements and suggestions]
 
 # MCP decision for planning loop
-PLANNING_DECISION = mcp__loop_state__decide_loop_next_action:
+PLANNING_DECISION = mcp__specter__decide_loop_next_action:
   loop_id: ${{PLANNING_LOOP_ID}}
   current_score: ${{PLAN_QUALITY_SCORE}}
 
@@ -229,7 +239,7 @@ Coordinate TDD code development:
 
 ```
 # Initialize code implementation loop
-CODING_LOOP_ID = mcp__loop_state__initialize_refinement_loop:
+CODING_LOOP_ID = mcp__specter__initialize_refinement_loop:
   loop_type: "build_code"
 
 # Begin coding cycle with approved plan
@@ -274,7 +284,7 @@ CODE_IMPROVEMENT_FEEDBACK = [build-reviewer output: Priority Improvements and su
 TEST_RESULTS = [build-reviewer output: Test Results and coverage]
 
 # MCP decision for coding loop
-CODING_DECISION = mcp__loop_state__decide_loop_next_action:
+CODING_DECISION = mcp__specter__decide_loop_next_action:
   loop_id: ${{CODING_LOOP_ID}}
   current_score: ${{CODE_QUALITY_SCORE}}
 

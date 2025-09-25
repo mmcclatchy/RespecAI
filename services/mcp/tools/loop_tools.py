@@ -3,7 +3,7 @@ from fastmcp import Context, FastMCP
 from services.shared import state_manager
 from services.utils.enums import LoopType
 from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, LoopStateError, LoopValidationError
-from services.utils.models import LoopState, MCPResponse
+from services.utils.loop_state import LoopState, MCPResponse
 from services.utils.state_manager import StateManager
 
 

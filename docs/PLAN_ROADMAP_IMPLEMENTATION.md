@@ -501,29 +501,29 @@ IF MCP_DECISION == "user_input":
 
 ## Implementation Checklist
 
-### Phase 1: Create Agent Files ✅ **DUAL TOOL ARCHITECTURE IMPLEMENTED**
-- [x] `services/templates/agents/plan_roadmap.py` (250+ lines)
+### Phase 1: Create Agent Files ❌ **MISSING DUAL TOOL ARCHITECTURE**
+- [x] `services/templates/agents/plan_roadmap.py` (250 lines)
   - [x] Follows established pattern with imperative task instructions
   - [x] Structured roadmap output format with comprehensive phase breakdown
   - [x] Multiple decomposition patterns (Foundation First, Vertical Slice, MVP Progressive)
-  - [x] **FIXED**: Platform-injected parameters (`read_file`, `grep_search`, `glob_pattern`)
-  - [x] **FIXED**: Dual tool architecture (state management vs platform persistence)
-  - [x] **FIXED**: Action-based parameter design (`get_project_plan`, `store_roadmap_state`, etc.)
-  - [x] **FIXED**: Function takes platform tool injection parameters
+  - [ ] **BROKEN**: Hardcoded tools (`Read`, `Grep`, `Glob`) instead of platform-injected parameters
+  - [ ] **BROKEN**: Missing dual tool architecture (no state management vs platform persistence separation)
+  - [ ] **BROKEN**: No action-based parameter design (`get_project_plan`, `store_roadmap_state`, etc.)
+  - [ ] **BROKEN**: Function takes no parameters for platform tool injection
 - [x] `services/templates/agents/roadmap_critic.py` (244 lines)
   - [x] Follows assessment pattern with structured evaluation
   - [x] No tool permissions (pure assessment agent) ✅
   - [x] CriticFeedback output format
   - [x] 5-dimension assessment criteria with weighted scoring
-- [x] `services/templates/agents/create_spec.py` (253+ lines)
+- [x] `services/templates/agents/create_spec.py` (253 lines)
   - [x] Template structure for roadmap retrieval and spec storage
   - [x] InitialSpec creation logic with proper scaffolding
   - [x] Parallel execution design for concurrent spec creation
   - [x] Comprehensive error handling for multiple failure modes
-  - [x] **FIXED**: Platform-injected parameters instead of hardcoded tools
-  - [x] **FIXED**: Dual tool architecture (MCP Specter state + Platform persistence)
-  - [x] **FIXED**: Clear distinction between `get_roadmap_state` vs `create_spec_external`
-  - [x] **FIXED**: Function takes platform abstraction parameters
+  - [ ] **BROKEN**: Hardcoded tools instead of platform-injected parameters
+  - [ ] **BROKEN**: Missing dual tool architecture (MCP Specter state + Platform persistence)
+  - [ ] **BROKEN**: No distinction between `get_roadmap_state` vs `get_roadmap_external`
+  - [ ] **BROKEN**: Function takes no parameters for platform abstraction
 
 ### Phase 2: Refactor Command Template ❌ **TEMPLATE EXISTS BUT NON-FUNCTIONAL**
 - [x] `services/templates/commands/plan_roadmap_command.py` (283 lines)

@@ -5,7 +5,7 @@ from services.models.initial_spec import InitialSpec
 from services.models.roadmap import Roadmap
 from services.models.spec import TechnicalSpec
 from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError, SpecNotFoundError
-from services.utils.models import LoopState, MCPResponse
+from services.utils.loop_state import LoopState, MCPResponse
 
 
 class StateManager(ABC):

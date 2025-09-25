@@ -91,7 +91,7 @@ project/
 │       ├── build-critic.md            # Generated (implementation quality)
 │       ├── build-coder.md             # Generated (execution)
 │       └── build-reviewer.md          # Generated (validation)
-└── .fsdd/
+└── .specter/
     ├── config/
     │   ├── platform.json              # Platform choice and settings
     │   └── quality-gates.json         # FSDD thresholds

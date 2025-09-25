@@ -5,7 +5,7 @@ from services.mcp.tools.project_plan_tools import ProjectPlanTools
 from services.models.enums import ProjectStatus
 from services.models.project_plan import ProjectPlan
 from services.utils.enums import LoopStatus
-from services.utils.models import MCPResponse
+from services.utils.loop_state import MCPResponse
 from services.utils.state_manager import InMemoryStateManager
 
 

@@ -3,20 +3,29 @@ def generate_spec_command_template(
     get_spec_tool: str,
     update_spec_tool: str,
 ) -> str:
+    # Safe Python list construction to prevent YAML injection
+    base_tools = [
+        'Task(spec-architect)',
+        'Task(spec-critic)',
+        'Task(plan-analyst)',
+        'Bash(~/.claude/scripts/research-advisor-archive-scan.sh:*)',
+        'mcp__memory__search_nodes',
+        'mcp__memory__open_nodes',
+        'mcp__specter__initialize_refinement_loop',  # Fixed: mcp__loop_state__ -> mcp__specter__
+        'mcp__specter__decide_loop_next_action',  # Fixed: mcp__loop_state__ -> mcp__specter__
+        'mcp__specter__get_loop_status',  # Fixed: mcp__loop_state__ -> mcp__specter__
+    ]
+
+    # Add platform tools with validation
+    platform_tools = [create_spec_tool, get_spec_tool, update_spec_tool]
+    all_tools = base_tools + platform_tools
+
+    # Convert to YAML with proper escaping
+    tools_yaml = '\n'.join(f'  - {tool}' for tool in all_tools)
+
     return f"""---
 allowed-tools:
-  - Task(spec-architect)
-  - Task(spec-critic)
-  - Task(plan-analyst)
-  - Bash(~/.claude/scripts/research-advisor-archive-scan.sh:*)
-  - {create_spec_tool}
-  - {get_spec_tool}
-  - {update_spec_tool}
-  - mcp__memory__search_nodes
-  - mcp__memory__open_nodes
-  - mcp__loop_state__initialize_refinement_loop
-  - mcp__loop_state__decide_loop_next_action
-  - mcp__loop_state__get_loop_status
+{tools_yaml}
 argument-hint: [optional: technical-focus-area]
 description: Transform strategic plans into detailed technical specifications
 ---
@@ -77,7 +86,7 @@ Retrieve the strategic plan and set up the technical specification workflow:
 
 ```
 # Initialize MCP refinement loop
-mcp__loop_state__initialize_refinement_loop:
+mcp__specter__initialize_refinement_loop:
   loop_type: "spec"
 
 # Retrieve strategic plan context
@@ -148,7 +157,7 @@ QUALITY_SCORE = [spec-critic output: Overall Quality Score (0-100)]
 IMPROVEMENT_FEEDBACK = [spec-critic output: Priority Improvements and specific suggestions]
 
 # MCP decision based on score
-LOOP_DECISION = mcp__loop_state__decide_loop_next_action:
+LOOP_DECISION = mcp__specter__decide_loop_next_action:
   loop_id: [from Step 1 initialization]
   current_score: ${{QUALITY_SCORE}}
   feedback: ${{IMPROVEMENT_FEEDBACK}}
@@ -276,7 +285,7 @@ IF ~/.claude/scripts/research-advisor-archive-scan.sh fails:
 
 #### 3. MCP Loop State Errors
 ```
-IF mcp__loop_state__* tools unavailable:
+IF mcp__specter__* tools unavailable:
   ERROR_RESPONSE = {{
     "error_type": "mcp_error",
     "error_message": "MCP loop state management unavailable", 

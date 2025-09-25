@@ -6,7 +6,7 @@ from services.models.build_plan import BuildPlan
 from services.shared import state_manager
 from services.utils.enums import LoopStatus
 from services.utils.errors import LoopNotFoundError
-from services.utils.models import MCPResponse
+from services.utils.loop_state import MCPResponse
 from services.utils.state_manager import StateManager
 
 

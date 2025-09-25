@@ -1,15 +1,14 @@
+from datetime import datetime
+
 import pytest
-from services.utils.state_manager import InMemoryStateManager, Queue
-from services.utils.models import LoopState
+
+from services.models.enums import RoadmapStatus, SpecStatus
+from services.models.initial_spec import InitialSpec
+from services.models.roadmap import Roadmap
 from services.utils.enums import LoopType
 from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError, SpecNotFoundError
-from services.models.roadmap import Roadmap
-from services.models.initial_spec import InitialSpec
-
-
-from services.models.enums import RoadmapStatus
-from datetime import datetime
-from services.models.enums import SpecStatus
+from services.utils.loop_state import LoopState
+from services.utils.state_manager import InMemoryStateManager, Queue
 
 
 # Import feedback module to ensure LoopState model is fully rebuilt with forward references

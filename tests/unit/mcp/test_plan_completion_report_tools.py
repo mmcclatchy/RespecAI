@@ -1,20 +1,19 @@
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 from fastmcp.exceptions import ResourceError, ToolError
 
-from services.mcp.tools.plan_completion_report_tools import PlanCompletionReportTools
+from services.mcp.tools.plan_completion_report_tools import (
+    PlanCompletionReportTools,
+    register_plan_completion_report_tools,
+)
 from services.models.plan_completion_report import PlanCompletionReport
 from services.utils.enums import LoopStatus, LoopType
 from services.utils.errors import LoopNotFoundError
-from services.utils.models import LoopState, MCPResponse
-
-
-from services.mcp.tools.plan_completion_report_tools import register_plan_completion_report_tools
+from services.utils.loop_state import LoopState, MCPResponse
 
 
 class TestPlanCompletionReportTools:
-    """Test suite for PlanCompletionReportTools class."""
-
     @pytest.fixture
     def mock_state_manager(self) -> Mock:
         return Mock()
@@ -338,8 +337,6 @@ class TestPlanCompletionReportTools:
 
 
 class TestPlanCompletionReportToolsRegistration:
-    """Test suite for MCP tool registration functions."""
-
     @pytest.fixture
     def mock_mcp(self) -> Mock:
         return Mock()

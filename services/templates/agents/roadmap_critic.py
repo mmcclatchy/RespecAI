@@ -4,6 +4,9 @@ name: roadmap-critic
 description: Evaluate implementation roadmaps against quality criteria and FSDD framework
 model: sonnet
 tools:
+  - mcp__specter__get_roadmap_markdown
+  - mcp__specter__get_previous_feedback
+  - mcp__specter__store_critic_feedback
 ---
 
 You are a roadmap quality assessment specialist focused on evaluating implementation readiness and phase design.

@@ -5,13 +5,11 @@ from services.shared import state_manager
 from fastmcp.exceptions import ResourceError, ToolError
 
 from services.utils.errors import LoopNotFoundError
-from services.utils.models import MCPResponse
+from services.utils.loop_state import MCPResponse
 from services.utils.state_manager import StateManager
 
 
 class FeedbackStorageTools:
-    """Tools for storing and retrieving critic feedback and analysis using LoopState."""
-
     def __init__(self, state: StateManager) -> None:
         self.state = state
         # Simple storage for plan-analyst analysis data

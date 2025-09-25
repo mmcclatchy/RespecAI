@@ -11,22 +11,35 @@ def generate_plan_roadmap_command_template(
     - MCP Specter Tools: Explicitly defined for loop management and spec management
     - Platform Tools: Injected for external spec creation (Markdown/Linear/GitHub)
     """
+    # Safe Python list construction to prevent YAML injection
+    base_tools = [
+        'Task(plan-roadmap)',
+        'Task(roadmap-critic)',
+        'Task(create-spec)',
+        'mcp__specter__initialize_refinement_loop',
+        'mcp__specter__decide_loop_next_action',
+        'mcp__specter__get_loop_status',
+        'mcp__specter__get_project_plan_markdown',
+        'mcp__specter__add_spec',
+        'mcp__specter__list_specs',
+    ]
+
+    # Add platform tools with validation
+    platform_tools = [
+        get_project_plan_tool,
+        update_project_plan_tool,
+        create_spec_tool,
+        get_spec_tool,
+        update_spec_tool,
+    ]
+    all_tools = base_tools + platform_tools
+
+    # Convert to YAML with proper escaping
+    tools_yaml = '\n'.join(f'  - {tool}' for tool in all_tools)
+
     return f"""---
 allowed-tools:
-  - Task(plan-roadmap)
-  - Task(roadmap-critic)
-  - Task(create-spec)
-  - mcp__specter__initialize_refinement_loop
-  - mcp__specter__decide_loop_next_action
-  - mcp__specter__get_loop_status
-  - mcp__specter__get_project_plan_markdown
-  - mcp__specter__add_spec
-  - mcp__specter__list_specs
-  - {get_project_plan_tool}
-  - {update_project_plan_tool}
-  - {create_spec_tool}
-  - {get_spec_tool}
-  - {update_spec_tool}
+{tools_yaml}
 argument-hint: [project-name] [optional: phasing-preferences]
 description: Transform strategic plans into multiple InitialSpecs through quality-driven refinement
 ---

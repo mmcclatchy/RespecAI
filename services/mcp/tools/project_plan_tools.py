@@ -3,12 +3,10 @@ from fastmcp.exceptions import ResourceError, ToolError
 from pydantic import ValidationError
 
 from services.models.project_plan import ProjectPlan
-from services.utils.enums import LoopStatus
-from services.utils.models import MCPResponse
-from services.utils.state_manager import StateManager
-
-
 from services.shared import state_manager
+from services.utils.enums import LoopStatus
+from services.utils.loop_state import MCPResponse
+from services.utils.state_manager import StateManager
 
 
 class ProjectPlanTools:

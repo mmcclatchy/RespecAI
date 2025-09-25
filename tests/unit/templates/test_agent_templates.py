@@ -1,7 +1,5 @@
 """Tests for agent template generation functions."""
 
-import pytest
-
 from services.templates.agents.plan_roadmap import generate_plan_roadmap_template
 from services.templates.agents.roadmap_critic import generate_roadmap_critic_template
 from services.templates.agents.create_spec import generate_create_spec_template
@@ -65,17 +63,10 @@ class TestRoadmapCriticTemplate:
         assert 'model: sonnet' in template
         assert 'tools:' in template
 
-        # Check no tools (pure assessment)
-        lines = template.split('\n')
-        tools_section_started = False
-        for line in lines:
-            if line.strip() == 'tools:':
-                tools_section_started = True
-                continue
-            if tools_section_started and line.startswith('  - '):
-                pytest.fail('roadmap-critic should have no tools')
-            if tools_section_started and line.strip() == '---':
-                break
+        # Check MCP tools for data retrieval and feedback storage
+        assert '- mcp__specter__get_roadmap_markdown' in template
+        assert '- mcp__specter__get_previous_feedback' in template
+        assert '- mcp__specter__store_critic_feedback' in template
 
     def test_template_includes_critic_feedback_format(self) -> None:
         template = generate_roadmap_critic_template()

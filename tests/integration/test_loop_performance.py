@@ -4,7 +4,7 @@ import pytest
 
 from services.mcp.tools.loop_tools import loop_tools
 from services.utils.enums import LoopStatus
-from services.utils.models import MCPResponse
+from services.utils.loop_state import MCPResponse
 
 
 class TestLoopPerformance:

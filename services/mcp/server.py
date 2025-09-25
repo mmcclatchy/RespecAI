@@ -7,7 +7,7 @@ from fastmcp.server.middleware.logging import LoggingMiddleware
 
 from services.mcp.tools import register_all_tools
 from services.utils.enums import HealthState
-from services.utils.models import HealthStatus
+from services.utils.loop_state import HealthStatus
 from services.utils.setting_configs import mcp_settings
 
 
