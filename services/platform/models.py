@@ -9,6 +9,7 @@ from .platform_selector import PlatformType
 from .tool_enums import (
     AbstractOperation,
     BuiltInTool,
+    CommandTemplate,
     ExternalPlatformTool,
     ToolEnums,
 )
@@ -58,19 +59,7 @@ class ProjectPlatformChangeRequest(PlatformRequest):
 
 
 class TemplateGenerationRequest(PlatformRequest):
-    command_name: str = Field(min_length=1, description='Name of the command template to generate')
-
-    @field_validator('command_name')
-    @classmethod
-    def validate_command_name(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError('Command name cannot be empty')
-
-        cleaned = v.strip()
-        if not cleaned.replace('-', '').replace('_', '').isalnum():
-            raise ValueError('Command name can only contain letters, numbers, hyphens, and underscores')
-
-        return cleaned
+    command_name: CommandTemplate = Field(description='Name of the command template to generate')
 
 
 class ProjectConfig(PlatformRequest):

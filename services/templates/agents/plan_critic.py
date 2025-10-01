@@ -1,6 +1,6 @@
 def generate_plan_critic_template() -> str:
     return """---
-name: plan-critic
+name: specter-plan-critic
 description: Evaluate strategic plans using FSDD framework
 model: sonnet
 tools:

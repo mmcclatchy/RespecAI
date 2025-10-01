@@ -14,6 +14,7 @@ from services.platform.models import (
 )
 from services.platform.platform_orchestrator import PlatformOrchestrator
 from services.platform.platform_selector import PlatformType
+from services.platform.tool_enums import CommandTemplate
 
 
 class TestPlatformOrchestrator:
@@ -56,8 +57,9 @@ class TestPlatformOrchestrator:
         # Set up project first
         self.orchestrator.setup_project_with_defaults(self.test_project_path, PlatformType.LINEAR)
 
-        # Generate spec command template
-        request = TemplateGenerationRequest(project_path=Path(self.test_project_path), command_name='spec')
+        request = TemplateGenerationRequest(
+            project_path=Path(self.test_project_path), command_name=CommandTemplate.SPEC
+        )
         template = self.orchestrator.generate_command_template(request)
 
         # Verify template contains Linear-specific tools
@@ -66,7 +68,9 @@ class TestPlatformOrchestrator:
         assert 'mcp__linear-server__update_issue' in template
 
     def test_generate_command_template_no_config(self) -> None:
-        request = TemplateGenerationRequest(project_path=Path(self.test_project_path), command_name='spec')
+        request = TemplateGenerationRequest(
+            project_path=Path(self.test_project_path), command_name=CommandTemplate.SPEC
+        )
         with pytest.raises(ValueError, match='No configuration found for project'):
             self.orchestrator.generate_command_template(request)
 
@@ -132,11 +136,11 @@ class TestPlatformOrchestrator:
     def test_get_available_commands(self) -> None:
         commands = self.orchestrator.get_available_commands()
 
-        assert 'plan' in commands
-        assert 'spec' in commands
-        assert 'build' in commands
-        assert 'plan-roadmap' in commands
-        assert 'plan-conversation' in commands
+        assert 'specter-plan' in commands
+        assert 'specter-spec' in commands
+        assert 'specter-build' in commands
+        assert 'specter-roadmap' in commands
+        assert 'specter-plan-conversation' in commands
 
     def test_recommend_platform_for_requirements(self) -> None:
         # Requirements favoring Linear

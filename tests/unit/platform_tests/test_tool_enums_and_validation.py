@@ -2,20 +2,20 @@
 
 import pytest
 
-from services.platform.tool_enums import (
-    ExternalPlatformTool,
-    BuiltInTool,
-    SpecterMCPTool,
-    AbstractOperation,
-)
-from services.platform.models import ToolReference, PlatformToolMapping
-from services.platform.tool_registry import ToolRegistry
+from services.platform.models import PlatformToolMapping, ToolReference
 from services.platform.platform_selector import PlatformType
-from services.platform.template_helpers import TemplateToolBuilder, create_spec_command_tools
 from services.platform.startup_validation import (
     validate_external_platform_tools,
     validate_tool_registry,
 )
+from services.platform.template_helpers import TemplateToolBuilder, create_spec_command_tools
+from services.platform.tool_enums import (
+    AbstractOperation,
+    BuiltInTool,
+    ExternalPlatformTool,
+    SpecterMCPTool,
+)
+from services.platform.tool_registry import ToolRegistry
 
 
 class TestToolEnums:
@@ -44,12 +44,12 @@ class TestToolReference:
         assert tool_ref.render() == 'Read'
 
     def test_tool_reference_render_with_parameters(self) -> None:
-        tool_ref = ToolReference(tool=BuiltInTool.READ, parameters='.specter/projects/*/specs/*.md')
-        assert tool_ref.render() == 'Read(.specter/projects/*/specs/*.md)'
+        tool_ref = ToolReference(tool=BuiltInTool.READ, parameters='.specter/projects/*/specter-specs/*.md')
+        assert tool_ref.render() == 'Read(.specter/projects/*/specter-specs/*.md)'
 
     def test_tool_reference_validation_file_operations(self) -> None:
         # Should work with valid path
-        ToolReference(tool=BuiltInTool.READ, parameters='.specter/projects/*/specs/*.md')
+        ToolReference(tool=BuiltInTool.READ, parameters='.specter/projects/*/specter-specs/*.md')
 
         # Should fail with directory traversal
         with pytest.raises(ValueError, match='directory traversal'):
@@ -78,7 +78,7 @@ class TestPlatformToolMapping:
             operation=AbstractOperation.CREATE_SPEC_TOOL,
             linear_tool=ToolReference(tool=ExternalPlatformTool.LINEAR_CREATE_ISSUE),
             github_tool=ToolReference(tool=ExternalPlatformTool.GITHUB_CREATE_ISSUE),
-            markdown_tool=ToolReference(tool=BuiltInTool.WRITE, parameters='.specter/projects/*/specs/*.md'),
+            markdown_tool=ToolReference(tool=BuiltInTool.WRITE, parameters='.specter/projects/*/specter-specs/*.md'),
         )
 
         assert mapping.operation == AbstractOperation.CREATE_SPEC_TOOL
@@ -90,7 +90,7 @@ class TestPlatformToolMapping:
         mapping = PlatformToolMapping(
             operation=AbstractOperation.CREATE_SPEC_TOOL,
             linear_tool=ToolReference(tool=ExternalPlatformTool.LINEAR_CREATE_ISSUE),
-            markdown_tool=ToolReference(tool=BuiltInTool.WRITE, parameters='.specter/projects/*/specs/*.md'),
+            markdown_tool=ToolReference(tool=BuiltInTool.WRITE, parameters='.specter/projects/*/specter-specs/*.md'),
         )
 
         linear_tool = mapping.get_tool_for_platform(PlatformType.LINEAR)
@@ -104,14 +104,14 @@ class TestPlatformToolMapping:
         mapping = PlatformToolMapping(
             operation=AbstractOperation.CREATE_SPEC_TOOL,
             linear_tool=ToolReference(tool=ExternalPlatformTool.LINEAR_CREATE_ISSUE),
-            markdown_tool=ToolReference(tool=BuiltInTool.WRITE, parameters='.specter/projects/*/specs/*.md'),
+            markdown_tool=ToolReference(tool=BuiltInTool.WRITE, parameters='.specter/projects/*/specter-specs/*.md'),
         )
 
         linear_rendered = mapping.render_tool_for_platform(PlatformType.LINEAR)
         assert linear_rendered == 'mcp__linear-server__create_issue'
 
         markdown_rendered = mapping.render_tool_for_platform(PlatformType.MARKDOWN)
-        assert markdown_rendered == 'Write(.specter/projects/*/specs/*.md)'
+        assert markdown_rendered == 'Write(.specter/projects/*/specter-specs/*.md)'
 
         github_rendered = mapping.render_tool_for_platform(PlatformType.GITHUB)
         assert github_rendered is None
@@ -135,7 +135,7 @@ class TestPlatformToolMapping:
         # Should work with built-in tools
         mapping = PlatformToolMapping(
             operation=AbstractOperation.CREATE_SPEC_TOOL,
-            markdown_tool=ToolReference(tool=BuiltInTool.WRITE, parameters='.specter/projects/*/specs/*.md'),
+            markdown_tool=ToolReference(tool=BuiltInTool.WRITE, parameters='.specter/projects/*/specter-specs/*.md'),
         )
         assert mapping.markdown_tool is not None
 
@@ -163,7 +163,7 @@ class TestToolRegistry:
 
         # Test Markdown platform
         markdown_tool = registry.get_tool_for_platform('create_spec_tool', PlatformType.MARKDOWN)
-        assert markdown_tool == 'Write(.specter/projects/*/specs/*.md)'
+        assert markdown_tool == 'Write(.specter/projects/*/specter-specs/*.md)'
 
     def test_tool_registry_get_all_tools_for_platform(self) -> None:
         registry = ToolRegistry()
@@ -219,7 +219,7 @@ class TestTemplateHelpers:
 
         yaml_output = create_spec_command_tools(platform_tools)
 
-        assert '- Task(spec-architect)' in yaml_output
+        assert '- Task(specter-spec-architect)' in yaml_output
         assert '- mcp__specter__initialize_refinement_loop' in yaml_output
         assert '- mcp__linear-server__create_issue' in yaml_output
 

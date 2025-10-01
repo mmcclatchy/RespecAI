@@ -9,7 +9,7 @@ argument-hint: [project-name] [optional: phasing-preferences]
 description: Transform strategic plans into multiple InitialSpecs through quality-driven refinement
 ---
 
-# /plan-roadmap Command: Implementation Roadmap Orchestration
+# /specter-roadmap Command: Implementation Roadmap Orchestration
 
 ## Overview
 Orchestrate the transformation of strategic plans into discrete, implementable phase roadmaps. Bridge strategic planning to technical specification through quality-driven decomposition and refinement.
@@ -17,14 +17,14 @@ Orchestrate the transformation of strategic plans into discrete, implementable p
 ## Workflow Steps
 
 ### 1. Strategic Plan Retrieval and Validation
-Retrieve and validate completed strategic plan from /plan command:
+Retrieve and validate completed strategic plan from /specter-plan command:
 
 #### Retrieve Project Plan:
 ```
 STRATEGIC_PLAN = mcp__specter__get_project_plan_markdown(project_name)
 IF STRATEGIC_PLAN not found:
   ERROR: "No strategic plan found for project: [project_name]"
-  SUGGEST: "Run '/plan [project_name]' to create strategic plan first"
+  SUGGEST: "Run '/specter-plan [project_name]' to create strategic plan first"
   EXIT: Graceful failure with guidance
 STRUCTURED_OBJECTIVES = [Extract from strategic plan Business Objectives analysis]
 PHASING_PREFERENCES = [user provided preferences or empty]
@@ -37,11 +37,11 @@ ROADMAP_LOOP_ID = initialize_refinement_loop(loop_type='roadmap')
 ```
 
 ### 3. Roadmap Generation Loop
-Coordinate plan-roadmap → roadmap-critic → MCP decision cycle:
+Coordinate roadmap → roadmap-critic → MCP decision cycle:
 
 #### Phase Breakdown Generation:
 ```
-Invoke plan-roadmap agent with:
+Invoke roadmap agent with:
 - Strategic Plan: ${{STRATEGIC_PLAN}}
 - Phasing Preferences: ${{PHASING_PREFERENCES}}
 
@@ -74,7 +74,7 @@ Handle MCP Server response actions:
 
 #### If MCP_DECISION == "refine":
 ```
-Pass critic feedback to plan-roadmap agent for improvements
+Pass critic feedback to roadmap agent for improvements
 Continue refinement cycle with updated roadmap
 ```
 
@@ -137,7 +137,7 @@ Execute planned specifications using platform tools:
 ```
 For each planned_spec in SPEC_CREATION_PLAN:
     Task(
-        agent="create-spec",
+        agent="specter-create-spec",
         prompt=f'''
         Project ID: {{project_id}}
         Spec Name: {{planned_spec.name}}
@@ -171,9 +171,9 @@ Present completed roadmap with:
   * Platform tool confirmations (Linear tickets, GitHub issues, Notion pages)
   * Failed spec creation attempts with specific error categories
   * Recovery actions taken for partial failures
-- Readiness assessment for /spec command execution:
+- Readiness assessment for /specter-spec command execution:
   * Phases ready for immediate technical specification
-  * Phases requiring manual intervention before /spec execution
+  * Phases requiring manual intervention before /specter-spec execution
   * Recommended next steps based on completion status
 - Overall workflow health metrics and any warnings or recommendations
 ```
@@ -185,13 +185,13 @@ Present completed roadmap with:
 #### Strategic Plan Not Available:
 ```
 Display: "No strategic plan found for project: [project-name]"
-Suggest: "/plan [project-name] to create strategic plan"
+Suggest: "/specter-plan [project-name] to create strategic plan"
 Exit gracefully with guidance
 ```
 
 #### Agent Failures:
 ```
-IF plan-roadmap fails:
+IF roadmap fails:
   Retry once with simplified input
   Create basic 3-phase roadmap as fallback
   Note limitations in output
@@ -241,7 +241,7 @@ The command maintains orchestration focus by:
 - **Providing error recovery** without detailed implementation guidance
 
 All specialized work delegated to appropriate agents:
-- **plan-roadmap**: Phase breakdown and roadmap generation (with MCP tool access)
+- **roadmap**: Phase breakdown and roadmap generation (with MCP tool access)
 - **roadmap-critic**: Quality assessment and feedback
 - **create-spec**: Individual InitialSpec creation + platform tool integration
 - **MCP Server**: Decision logic and threshold management
@@ -263,5 +263,5 @@ All specialized work delegated to appropriate agents:
 - MCP tools used for internal state management
 - Platform tools used for external specification delivery
 
-Ready for technical specification development through /spec command execution on individual phases with validated input and platform integration.
+Ready for technical specification development through /specter-spec command execution on individual phases with validated input and platform integration.
 """

@@ -77,7 +77,7 @@ class InitialSpec:
 - **Sophisticated Loop Decision Logic**: Automatic threshold checking, stagnation detection, max iterations
 - **Configurable Quality Gates**: Per-loop-type thresholds via settings (plan_threshold, spec_threshold, etc.)
 - **Score History Tracking**: Automatic improvement calculation and trend analysis
-- **State Management**: Clean separation between loop state and roadmap/spec storage
+- **State Management**: Clean separation between loop state and roadmap/specter-spec storage
 - **Error Handling**: Comprehensive error mapping and validation
 - **Template System**: Platform-agnostic command and agent generation
 
@@ -133,7 +133,7 @@ class InitialSpec:
 - Zero markdown parsing errors for technical specifications
 - Successful round-trip: structured data → platform markdown → validation
 - Basic quality progression tracking with stagnation detection
-- Seamless integration with existing `/spec` command workflow
+- Seamless integration with existing `/specter-spec` command workflow
 
 ## Future Loop Integration
 Once MVP proves successful with Loop 4 (Technical Specification), expand to other loops in this order:
@@ -232,7 +232,7 @@ class ProjectPlan(MCPModel):
         # Complete 189-line markdown generation
 ```
 
-**2. TechnicalSpec Model - FULLY IMPLEMENTED (services/models/spec.py)**
+**2. TechnicalSpec Model - FULLY IMPLEMENTED (services/models/specter-spec.py)**
 ```python
 # ✅ PRODUCTION: TechnicalSpec with comprehensive field mapping and validation
 class TechnicalSpec(MCPModel):
@@ -279,9 +279,9 @@ class CriticFeedback(MCPModel):
         #Parse feature_requirements_template.md format into structured fields
 ```
 
-**3. Roadmap Model (for /plan-roadmap workflow)**
+**3. Roadmap Model (for /specter-roadmap workflow)**
 ```python
-# ✅ IMPLEMENTED: Roadmap (for /plan-roadmap workflow)
+# ✅ IMPLEMENTED: Roadmap (for /specter-roadmap workflow)
 class Roadmap(BaseModel):
     # High-level implementation roadmap organizing Specs step-by-step
     # 40+ fields based on roadmap_template.md structure
@@ -308,9 +308,9 @@ class Roadmap(BaseModel):
         """Generate markdown in roadmap_template.md format"""
 ```
 
-**4. TechnicalSpec Model (for /spec workflow)**
+**4. TechnicalSpec Model (for /specter-spec workflow)**
 ```python
-# ✅ IMPLEMENTED: TechnicalSpec (for /spec workflow)
+# ✅ IMPLEMENTED: TechnicalSpec (for /specter-spec workflow)
 class TechnicalSpec(BaseModel):
     # System Architecture Design - first Engineering-forward step
     # 20 fields based on phase_spec_template.md structure
@@ -342,9 +342,9 @@ class TechnicalSpec(BaseModel):
         """Generate markdown in phase_spec_template.md format"""
 ```
 
-**5. BuildPlan Model (for /build workflow)**
+**5. BuildPlan Model (for /specter-build workflow)**
 ```python
-# ✅ IMPLEMENTED: BuildPlan (for /build workflow)
+# ✅ IMPLEMENTED: BuildPlan (for /specter-build workflow)
 class BuildPlan(BaseModel):
     # Detailed implementation plan with specific patterns and best-practices
     # 21 fields based on build_plan_template.md structure

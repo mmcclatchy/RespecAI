@@ -8,7 +8,7 @@ The `build-reviewer` agent evaluates implementation code quality, test coverage,
 **Name**: `build-reviewer`  
 **Type**: Implementation quality validation specialist  
 **Model**: Claude Sonnet  
-**Invoked By**: Main Agent via `/build` command  
+**Invoked By**: Main Agent via `/specter-build` command  
 **Phase**: Code Implementation (Loop 4 - Review)  
 
 ## Invocation Context
@@ -528,7 +528,7 @@ Not ready for deployment. Address critical issues first.
 - Measurable outcomes
 
 ## Related Documentation
-- **Command**: [`/build` Command Specification](../commands/build.md)
+- **Command**: [`/specter-build` Command Specification](../commands/specter-build.md)
 - **Coder**: [`build-coder` Agent Specification](build-coder.md)
 - **Planner**: [`build-planner` Agent Specification](build-planner.md)
 - **MCP Tools**: [MCP Tools Specification](../MCP_TOOLS_SPECIFICATION.md)

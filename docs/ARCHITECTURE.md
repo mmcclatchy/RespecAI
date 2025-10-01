@@ -103,7 +103,7 @@ project/
 ```
 
 **Workflow**:
-1. **Platform Selection**: User chooses Linear/GitHub/Markdown via `/spec-setup`
+1. **Platform Selection**: User chooses Linear/GitHub/Markdown via `/specter-spec-setup`
 2. **Template Resolution**: System generates commands with platform-specific tools
 3. **Agent Creation**: Specialized agents receive platform-appropriate tool sets
 4. **Quality Configuration**: FSDD gates configured per project requirements
@@ -209,7 +209,7 @@ The MCP server provides **30 production MCP tools** across 6 modules (1,264+ lin
 - **`list_project_plans`**: Manage multiple project plans
 - **`delete_project_plan`**: Clean project plan storage
 
-#### Technical Specification Tools (services/mcp/tools/spec_tools.py)
+#### Technical Specification Tools (services/mcp/tools/specter-spec_tools.py)
 - **`create_technical_spec`**: Create structured technical specifications
 - **`store_technical_spec`**: Associate specs with loops and projects
 - **`get_technical_spec_markdown`**: Generate platform-specific outputs
@@ -220,7 +220,7 @@ The MCP server provides **30 production MCP tools** across 6 modules (1,264+ lin
 - **`store_roadmap`**: Associate roadmaps with planning loops
 - **`get_roadmap_markdown`**: Generate roadmap documentation
 
-#### Build Plan Tools (services/mcp/tools/build_plan_tools.py)
+#### Build Plan Tools (services/mcp/tools/specter-build_plan_tools.py)
 - **`create_build_plan`**: Create structured implementation plans
 - **`store_build_plan`**: Associate build plans with specification loops
 - **`get_build_plan_markdown`**: Generate implementation documentation
@@ -320,9 +320,9 @@ The MCP server provides **30 production MCP tools** across 6 modules (1,264+ lin
 ### Markdown Integration
 
 **File-Based Specifications**:
-- Strategic plans → `docs/plans/[project-name].md`
-- Technical specifications → `docs/specs/[spec-name].md`
-- Implementation plans → `docs/builds/[build-name].md`
+- Strategic plans → `docs/specter-plans/[project-name].md`
+- Technical specifications → `docs/specter-specs/[spec-name].md`
+- Implementation plans → `docs/specter-builds/[build-name].md`
 - Quality reports → `docs/quality/[assessment-name].md`
 
 **Version Control Integration**:
@@ -339,11 +339,11 @@ The workflow follows a **tightening and deepening of information** progression w
 
 **ProjectPlan** → **FeatureRequirements** → **Roadmap** → **TechnicalSpec** → **BuildPlan**
 
-#### Stage 1: Strategic Planning (`/plan`)
+#### Stage 1: Strategic Planning (`/specter-plan`)
 **Input**: Natural language business requirements
 **Process**: Dual-loop orchestration workflow
 1. **Initialize Planning Loop**: MCP state management setup
-2. **Conversational Requirements**: `/plan-conversation` command guides discovery
+2. **Conversational Requirements**: `/specter-plan-conversation` command guides discovery
 3. **Strategic Plan Creation**: Main Agent processes conversation context using template
 4. **Plan Quality Assessment**: `plan-critic` evaluates against FSDD framework
 5. **Plan Refinement Loop**: MCP manages plan refinement iterations
@@ -365,21 +365,21 @@ The workflow follows a **tightening and deepening of information** progression w
 **Quality Gate**: Requirements completeness and clarity validation
 **Output**: Technical translation of business needs defining intent and constraints on what is to be built
 
-#### Stage 3: Implementation Roadmap (`/plan-roadmap`)
+#### Stage 3: Implementation Roadmap (`/specter-roadmap`)
 **Input**: Feature requirements + optional phasing preferences
 **Process**: Quality-driven roadmap decomposition workflow
 1. **Requirements Analysis**: Extract technical constraints and dependencies from feature requirements
 2. **Phase Decomposition**: Break down implementation into 3-7 discrete phases based on constraints
 3. **Dependency Mapping**: Establish logical phase sequencing ensuring requirements are met
 4. **Roadmap Quality Loop**: MCP manages roadmap refinement iterations
-   - `plan-roadmap` agent creates phase breakdown
+   - `roadmap` agent creates phase breakdown
    - `roadmap-critic` evaluates phase scoping and dependencies
 5. **Spec Scaffolding**: Create initial technical specifications for each phase
 6. **Platform Integration**: Store roadmap and scaffolded specs in chosen platform
 **Quality Gate**: MCP Server-determined thresholds for roadmap completeness
 **Output**: High-level implementation roadmap organizing Specs in step-by-step manner with phase foundations
 
-#### Stage 4: Technical Specification (`/spec`)
+#### Stage 4: Technical Specification (`/specter-spec`)
 **Input**: Scaffolded specification from roadmap + technical focus area
 **Process**: Enhanced specification workflow with pre-structured context
 1. **Scaffolded Spec Analysis**: Review phase-specific specification template with requirements context
@@ -391,7 +391,7 @@ The workflow follows a **tightening and deepening of information** progression w
 **Quality Gate**: MCP Server-determined thresholds for technical specifications
 **Output**: System Architecture Design - first Engineering-forward step creating Project System Design and identifying research needs
 
-#### Stage 5: Build Planning (`/build`)
+#### Stage 5: Build Planning (`/specter-build`)
 **Input**: Technical specification identifier
 **Process**: Detailed implementation planning workflow
 - **Technology Environment Discovery**: Detect current project technology stack

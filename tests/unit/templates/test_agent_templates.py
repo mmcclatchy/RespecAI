@@ -1,9 +1,9 @@
 """Tests for agent template generation functions."""
 
-from services.platform.models import PlanRoadmapAgentTools, CreateSpecAgentTools
+from services.platform.models import CreateSpecAgentTools, PlanRoadmapAgentTools
+from services.templates.agents.create_spec import generate_create_spec_template
 from services.templates.agents.plan_roadmap import generate_plan_roadmap_template
 from services.templates.agents.roadmap_critic import generate_roadmap_critic_template
-from services.templates.agents.create_spec import generate_create_spec_template
 
 
 class TestPlanRoadmapTemplate:
@@ -13,7 +13,7 @@ class TestPlanRoadmapTemplate:
 
         # Check YAML frontmatter
         assert '---' in template
-        assert 'name: plan-roadmap' in template
+        assert 'name: specter-roadmap' in template
         assert 'description:' in template
         assert 'model: sonnet' in template
         assert 'tools:' in template
@@ -63,7 +63,7 @@ class TestRoadmapCriticTemplate:
 
         # Check YAML frontmatter
         assert '---' in template
-        assert 'name: roadmap-critic' in template
+        assert 'name: specter-roadmap-critic' in template
         assert 'description:' in template
         assert 'model: sonnet' in template
         assert 'tools:' in template
@@ -113,7 +113,7 @@ class TestCreateSpecTemplate:
 
         # Check YAML frontmatter
         assert '---' in template
-        assert 'name: create-spec' in template
+        assert 'name: specter-create-spec' in template
         assert 'description:' in template
         assert 'model: sonnet' in template
         assert 'tools:' in template

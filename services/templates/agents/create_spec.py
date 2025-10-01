@@ -13,7 +13,7 @@ def generate_create_spec_template(tools: 'CreateSpecAgentTools') -> str:
         tools: CreateSpecAgentTools containing platform-specific tool names
     """
     return f"""---
-name: create-spec
+name: specter-create-spec
 description: Create individual InitialSpec objects from roadmap phase context
 model: sonnet
 tools:
@@ -48,7 +48,7 @@ TASKS:
 3. Create properly scaffolded InitialSpec model with comprehensive phase context
 4. Store InitialSpec using mcp__specter__store_spec for internal state management
 5. Create external platform specification using {tools.create_spec_tool}
-6. Confirm successful creation and validate readiness for /spec command execution
+6. Confirm successful creation and validate readiness for /specter-spec command execution
 
 ## INITIAL SPEC CREATION PROCESS
 
@@ -83,7 +83,7 @@ TASKS:
 #### Comprehensive Context Preparation
 - Extract all relevant phase information from roadmap
 - Structure information in InitialSpec-compatible format
-- Ensure sufficient detail for targeted /spec command execution
+- Ensure sufficient detail for targeted /specter-spec command execution
 - Maintain traceability to source roadmap phase
 
 #### Quality Assurance
@@ -242,7 +242,7 @@ After creating and storing the InitialSpec internally, create the external platf
 - Verify all critical phase information extracted successfully
 - Validate InitialSpec structure completeness and accuracy
 - Confirm alignment between phase context and generated specification
-- Ensure specification provides adequate guidance for /spec command execution
+- Ensure specification provides adequate guidance for /specter-spec command execution
 
 #### Specification Readiness Assessment
 - Check that InitialSpec contains actionable technical guidance

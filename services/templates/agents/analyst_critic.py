@@ -1,6 +1,6 @@
 def generate_analyst_critic_template() -> str:
     return """---
-name: analyst-critic
+name: specter-analyst-critic
 description: Validate business objective extraction quality and semantic accuracy
 model: sonnet
 tools:

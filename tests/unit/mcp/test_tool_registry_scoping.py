@@ -1,7 +1,7 @@
 import pytest
 
-from services.platform.tool_registry import ToolRegistry
 from services.platform.platform_selector import PlatformType
+from services.platform.tool_registry import ToolRegistry
 
 
 class TestToolRegistryScoping:
@@ -21,15 +21,15 @@ class TestToolRegistryScoping:
         markdown_tools = tool_registry.get_all_tools_for_platform(PlatformType.MARKDOWN)
 
         expected_tool_patterns = {
-            'create_spec_tool': 'Write(.specter/projects/*/specs/*.md)',
-            'get_spec_tool': 'Read(.specter/projects/*/specs/*.md)',
-            'update_spec_tool': 'Edit(.specter/projects/*/specs/*.md)',
-            'comment_spec_tool': 'Edit(.specter/projects/*/specs/*.md)',
+            'create_spec_tool': 'Write(.specter/projects/*/specter-specs/*.md)',
+            'get_spec_tool': 'Read(.specter/projects/*/specter-specs/*.md)',
+            'update_spec_tool': 'Edit(.specter/projects/*/specter-specs/*.md)',
+            'comment_spec_tool': 'Edit(.specter/projects/*/specter-specs/*.md)',
             'create_project_external': 'Write(.specter/projects/*/project_plan.md)',
             'create_project_completion_external': 'Write(.specter/projects/*/project_completion.md)',
             'get_project_plan_tool': 'Read(.specter/projects/*/project_plan.md)',
             'update_project_plan_tool': 'Edit(.specter/projects/*/project_plan.md)',
-            'list_project_specs_tool': 'Glob(.specter/projects/*/specs/*.md)',
+            'list_project_specs_tool': 'Glob(.specter/projects/*/specter-specs/*.md)',
         }
 
         for abstract_tool, expected_pattern in expected_tool_patterns.items():
@@ -76,7 +76,7 @@ class TestToolRegistryScoping:
 
         for tool_name in spec_tools:
             tool_path = markdown_tools[tool_name]
-            assert '/specs/' in tool_path, f'Spec tool {tool_name} not scoped to specs directory: {tool_path}'
+            assert '/specter-specs/' in tool_path, f'Spec tool {tool_name} not scoped to specs directory: {tool_path}'
             assert '.md' in tool_path, f'Spec tool {tool_name} should target .md files: {tool_path}'
 
     def test_project_tools_are_scoped_to_project_files(self, tool_registry: ToolRegistry) -> None:
@@ -92,7 +92,7 @@ class TestToolRegistryScoping:
         for tool_name, expected_file in project_file_tools.items():
             tool_path = markdown_tools[tool_name]
             assert expected_file in tool_path, f'Project tool {tool_name} should target {expected_file}: {tool_path}'
-            assert '/specs/' not in tool_path, (
+            assert '/specter-specs/' not in tool_path, (
                 f'Project tool {tool_name} should not target specs directory: {tool_path}'
             )
 

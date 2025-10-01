@@ -8,7 +8,7 @@ The `plan-analyst` agent extracts and structures business objectives from conver
 **Name**: `plan-analyst`  
 **Type**: Business objective extraction specialist  
 **Model**: Claude Sonnet  
-**Invoked By**: Main Agent via `/plan` command  
+**Invoked By**: Main Agent via `/specter-plan` command  
 **Phase**: Strategic Planning (Post-Loop Extraction)  
 
 ## Invocation Context
@@ -41,7 +41,7 @@ response = Task(
                                                             ↓
                                                     Structured Objectives
                                                             ↓
-                                                    Ready for /spec
+                                                    Ready for /specter-spec
 ```
 
 ### Role in Planning Phase
@@ -401,7 +401,7 @@ Proceeding with documented assumptions...
 - Sets clear targets
 
 ## Related Documentation
-- **Command**: [`/plan` Command Specification](../commands/plan.md)
+- **Command**: [`/specter-plan` Command Specification](../commands/specter-plan.md)
 - **Generator**: [`plan-generator` Agent Specification](plan-generator.md)
 - **Critic**: [`plan-critic` Agent Specification](plan-critic.md)
 - **Next Phase**: [`spec-architect` Agent Specification](spec-architect.md)

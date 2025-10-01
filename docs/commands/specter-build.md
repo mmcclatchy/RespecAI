@@ -1,11 +1,11 @@
-# /build Command Specification
+# /specter-build Command Specification
 
 ## Overview
-The `/build` command orchestrates the complete implementation workflow, transforming technical specifications into production-ready code through parallel research synthesis, implementation planning, and code development with comprehensive quality validation.
+The `/specter-build` command orchestrates the complete implementation workflow, transforming technical specifications into production-ready code through parallel research synthesis, implementation planning, and code development with comprehensive quality validation.
 
 ## Command Metadata
 
-**Name**: `/build`  
+**Name**: `/specter-build`  
 **Type**: User-invoked workflow command  
 **Phase**: Implementation (Phases 3-4 of 4)  
 **Model**: Claude Sonnet (default)  
@@ -14,18 +14,18 @@ The `/build` command orchestrates the complete implementation workflow, transfor
 
 ### Who Invokes It
 - **Primary**: End user via Claude Code CLI
-- **Context**: After successful completion of `/spec` command
+- **Context**: After successful completion of `/specter-spec` command
 - **Prerequisites**: Completed technical specification with research requirements
 
 ### Trigger Format
 ```text
-/build [specification-identifier]
+/specter-build [specification-identifier]
 ```
 
 ## Workflow Position
 
 ```text
-Technical Spec → /build → Parallel Research → Planning Loop → Coding Loop → Implementation
+Technical Spec → /specter-build → Parallel Research → Planning Loop → Coding Loop → Implementation
                     │              │               │               │
                     │              ↓               ↓               ↓
                     │         Documentation    Build Plan     Production Code
@@ -84,7 +84,7 @@ Technical Spec → /build → Parallel Research → Planning Loop → Coding Loo
 
 ### Complete Workflow Orchestration
 ```text
-Main Agent (via /build)
+Main Agent (via /specter-build)
     │
     ├── 1. Retrieve Specification
     │   └── mcp_tool: get_technical_spec_markdown(spec_loop_id)
@@ -204,7 +204,7 @@ Main Agent identifies 4 research items:
 ## Structured Data Models
 
 ### BuildPlan Model
-The `/build` command creates and stores structured BuildPlan models:
+The `/specter-build` command creates and stores structured BuildPlan models:
 ```python
 class BuildPlan(MCPModel):
     project_name: str
@@ -248,7 +248,7 @@ class CriticFeedback(MCPModel):
 ## Input/Output Specifications
 
 ### Input Requirements
-- **TechnicalSpec**: Specification model from `/spec` phase via `get_technical_spec_markdown()`
+- **TechnicalSpec**: Specification model from `/specter-spec` phase via `get_technical_spec_markdown()`
 - **Research Requirements**: Structured section in TechnicalSpec for documentation gathering
 - **Environment Context**: Technology stack detection via detect-packages.sh
 
@@ -316,7 +316,7 @@ class CriticFeedback(MCPModel):
 
 ### Complete Workflow Example
 ```text
-User: /build SPEC-1234
+User: /specter-build SPEC-1234
 
 Main Agent: I'll coordinate the implementation of specification SPEC-1234. Let me start by retrieving it and setting up the workflow.
 
@@ -423,7 +423,7 @@ Summary:
 
 ### MCP Tools Used
 **Specification Retrieval:**
-- `get_technical_spec_markdown(spec_loop_id)` - Retrieve TechnicalSpec from /spec phase
+- `get_technical_spec_markdown(spec_loop_id)` - Retrieve TechnicalSpec from /specter-spec phase
 
 **Build Planning Loop (build_plan):**
 - `initialize_refinement_loop(loop_type='build_plan')` - Create build planning loop
@@ -468,8 +468,8 @@ Summary:
 - **Performance**: Meeting specification benchmarks
 
 ## Related Documentation
-- **Previous Phase**: [`/spec` Command Specification](spec.md)
-- **Planning Agent**: [`build-planner` Agent Specification](../agents/build-planner.md)
-- **Coding Agent**: [`build-coder` Agent Specification](../agents/build-coder.md)
+- **Previous Phase**: [`/specter-spec` Command Specification](spec.md)
+- **Planning Agent**: [`build-planner` Agent Specification](../agents/specter-build-planner.md)
+- **Coding Agent**: [`build-coder` Agent Specification](../agents/specter-build-coder.md)
 - **Research Agent**: [`research-synthesizer` Agent Specification](../agents/research-synthesizer.md)
 - **Refinement**: [`/refine-build-plan` Command](refine-build-plan.md) and [`/refine-build-code` Command](refine-build-code.md)

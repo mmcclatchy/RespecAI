@@ -1,11 +1,11 @@
-# /spec Command Specification
+# /specter-spec Command Specification
 
 ## Overview
-The `/spec` command transforms strategic plans into detailed technical specifications. It orchestrates technical architecture design, research integration, and platform-specific specification creation through a quality-driven refinement loop.
+The `/specter-spec` command transforms strategic plans into detailed technical specifications. It orchestrates technical architecture design, research integration, and platform-specific specification creation through a quality-driven refinement loop.
 
 ## Command Metadata
 
-**Name**: `/spec`  
+**Name**: `/specter-spec`  
 **Type**: User-invoked workflow command  
 **Phase**: Technical Specification (Phase 2 of 4)  
 **Model**: Claude Sonnet (default)  
@@ -14,31 +14,31 @@ The `/spec` command transforms strategic plans into detailed technical specifica
 
 ### Who Invokes It
 - **Primary**: End user via Claude Code CLI
-- **Context**: After successful completion of `/plan` command
+- **Context**: After successful completion of `/specter-plan` command
 - **Prerequisites**: Completed strategic plan document
 
 ### Trigger Format
 ```text
-/spec [optional: specific technical area focus]
+/specter-spec [optional: specific technical area focus]
 ```
 
 ## Workflow Position
 
 ```text
-Strategic Plan → /spec → [spec-architect ↔ spec-critic loop] → Technical Specification
+Strategic Plan → /specter-spec → [spec-architect ↔ spec-critic loop] → Technical Specification
                               ↓
                     Research identification
                               ↓
                     Platform-specific storage
                               ↓
-                    Ready for /build command
+                    Ready for /specter-build command
 ```
 
 ### Position in End-to-End Flow
 1. **Second Phase**: Follows strategic planning phase
-2. **Precedes**: Implementation planning (`/build`) phase
+2. **Precedes**: Implementation planning (`/specter-build`) phase
 3. **Dependencies**: Requires completed strategic plan
-4. **Output Used By**: `/build` command and `build-planner` agent
+4. **Output Used By**: `/specter-build` command and `build-planner` agent
 
 ## Primary Responsibilities
 
@@ -72,7 +72,7 @@ Strategic Plan → /spec → [spec-architect ↔ spec-critic loop] → Technical
 
 ### Agent Coordination Flow
 ```text
-Main Agent (via /spec)
+Main Agent (via /specter-spec)
     │
     ├── 1. Initialize MCP Loop
     │   └── mcp_tool: initialize_refinement_loop(loop_type='spec')
@@ -94,7 +94,7 @@ Main Agent (via /spec)
     │
     └── 5. Store Specification & Prepare for Build
         ├── mcp_tool: get_technical_spec_markdown(spec_loop_id)
-        └── TechnicalSpec ready for /build command
+        └── TechnicalSpec ready for /specter-build command
 ```
 
 ### Data Flow Between Components
@@ -107,7 +107,7 @@ Main Agent (via /spec)
 - **Main Agent → MCP Server**: `store_critic_feedback(feedback_markdown)` - Store feedback model
 - **Main Agent → MCP Server**: `decide_loop_next_action(spec_loop_id, quality_score)` - Decision logic
 - **MCP Server → Main Agent**: Next action (refine/complete/user_input) with loop state
-- **Main Agent → MCP Server**: `get_technical_spec_markdown(spec_loop_id)` - Final retrieval for /build
+- **Main Agent → MCP Server**: `get_technical_spec_markdown(spec_loop_id)` - Final retrieval for /specter-build
 
 ## Quality Gates
 
@@ -188,7 +188,7 @@ platform = get_active_platform()  # Returns: 'linear' | 'github' | 'markdown'
 
 ### Markdown Platform
 - **Storage Tool**: `Write`
-- **Specification Location**: `docs/specs/[timestamp]-[project].md`
+- **Specification Location**: `docs/specter-specs/[timestamp]-[project].md`
 - **Research Section**: Embedded in document
 - **Version Control**: Git-tracked changes
 - **Cross-references**: Links to strategic plan
@@ -196,7 +196,7 @@ platform = get_active_platform()  # Returns: 'linear' | 'github' | 'markdown'
 ## Structured Data Models
 
 ### TechnicalSpec Model
-The `/spec` command creates and stores structured TechnicalSpec models:
+The `/specter-spec` command creates and stores structured TechnicalSpec models:
 ```python
 class TechnicalSpec(MCPModel):
     id: str = Field(default_factory=lambda: str(uuid4())[:8])
@@ -235,13 +235,13 @@ class CriticFeedback(MCPModel):
 ## Input/Output Specifications
 
 ### Input Requirements
-- **Strategic Plan**: ProjectPlan model from `/plan` phase via `get_project_plan_markdown()`
+- **Strategic Plan**: ProjectPlan model from `/specter-plan` phase via `get_project_plan_markdown()`
 - **Technical Focus**: Optional area of emphasis
 - **Format**: TechnicalSpec markdown structure
 
 ### Output Specifications
 - **Primary Output**: TechnicalSpec model stored in MCP Server + technical specification markdown
-- **Structured Storage**: TechnicalSpec with validated fields for `/build` consumption
+- **Structured Storage**: TechnicalSpec with validated fields for `/specter-build` consumption
 - **Markdown Format**:
   ```markdown
   # Technical Specification: [Phase Name]
@@ -269,13 +269,13 @@ class CriticFeedback(MCPModel):
 
 1. **Missing Strategic Plan**
    - **Error**: "No strategic plan found"
-   - **Recovery**: Request plan location or invoke `/plan`
-   - **User Message**: "Please provide the strategic plan or run /plan first"
+   - **Recovery**: Request plan location or invoke `/specter-plan`
+   - **User Message**: "Please provide the strategic plan or run /specter-plan first"
 
 2. **Platform Detection Failure**
    - **Error**: "Cannot determine active platform"
-   - **Recovery**: Fallback to Markdown, prompt for `/spec-setup`
-   - **User Message**: "Platform not configured. Using Markdown. Run /spec-setup to configure."
+   - **Recovery**: Fallback to Markdown, prompt for `/specter-spec-setup`
+   - **User Message**: "Platform not configured. Using Markdown. Run /specter-spec-setup to configure."
 
 3. **Research Archive Unavailable**
    - **Error**: "Cannot access best-practices archive"
@@ -296,7 +296,7 @@ class CriticFeedback(MCPModel):
 
 ### Typical Invocation
 ```text
-User: /spec
+User: /specter-spec
 
 Main Agent: I'll transform your strategic plan into a detailed technical specification. Let me retrieve the plan and begin the architecture design process.
 
@@ -331,12 +331,12 @@ Main Agent: Technical specification completed!
 - Issue created: SPEC-1234
 - Research requirements documented
 
-The specification is ready for implementation planning. Use /build to proceed.
+The specification is ready for implementation planning. Use /specter-build to proceed.
 ```
 
 ### With Technical Focus
 ```text
-User: /spec focus on API design and integration patterns
+User: /specter-spec focus on API design and integration patterns
 
 Main Agent: I'll create a technical specification with special emphasis on API design and integration patterns.
 
@@ -383,11 +383,11 @@ Main Agent: I'll create a technical specification with special emphasis on API d
 ### MCP Tools Used
 **Technical Specification Workflow:**
 - `initialize_refinement_loop(loop_type='spec')` - Create specification refinement loop
-- `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan from /plan phase
+- `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan from /specter-plan phase
 - `store_technical_spec(spec_loop_id, technical_spec_markdown)` - Store TechnicalSpec model
 - `store_critic_feedback(feedback_markdown)` - Store structured CriticFeedback
 - `decide_loop_next_action(spec_loop_id, current_score)` - Loop decision engine
-- `get_technical_spec_markdown(spec_loop_id)` - Retrieve final specification for /build
+- `get_technical_spec_markdown(spec_loop_id)` - Retrieve final specification for /specter-build
 - `get_loop_status(spec_loop_id)` - Monitor loop state (optional)
 - `get_feedback_history(spec_loop_id, count)` - Retrieve recent feedback for context
 - `list_technical_specs(count)` - List existing specifications
@@ -414,8 +414,8 @@ Main Agent: I'll create a technical specification with special emphasis on API d
 - **Platform Integration**: Seamless storage and retrieval
 
 ## Related Documentation
-- **Previous Phase**: [`/plan` Command Specification](plan.md)
-- **Next Phase**: [`/build` Command Specification](build.md)
-- **Primary Agent**: [`spec-architect` Agent Specification](../agents/spec-architect.md)
-- **Quality Agent**: [`spec-critic` Agent Specification](../agents/spec-critic.md)
-- **Platform Setup**: [`/spec-setup` Command Specification](spec-setup.md)
+- **Previous Phase**: [`/specter-plan` Command Specification](plan.md)
+- **Next Phase**: [`/specter-build` Command Specification](build.md)
+- **Primary Agent**: [`spec-architect` Agent Specification](../agents/specter-spec-architect.md)
+- **Quality Agent**: [`spec-critic` Agent Specification](../agents/specter-spec-critic.md)
+- **Platform Setup**: [`/specter-spec-setup` Command Specification](spec-setup.md)

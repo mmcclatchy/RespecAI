@@ -8,7 +8,7 @@ The `plan-critic` agent evaluates strategic plans against the FSDD (FastSpec-Dri
 **Name**: `plan-critic`  
 **Type**: Strategic plan quality assessment specialist  
 **Model**: Claude Sonnet  
-**Invoked By**: Main Agent via `/plan` command  
+**Invoked By**: Main Agent via `/specter-plan` command  
 **Phase**: Strategic Planning (Loop 1 - Assessment)  
 
 ## Invocation Context
@@ -354,7 +354,7 @@ We're close to a comprehensive plan that will translate smoothly into technical 
 - Supports stagnation detection
 
 ## Related Documentation
-- **Command**: [`/plan` Command Specification](../commands/plan.md)
+- **Command**: [`/specter-plan` Command Specification](../commands/specter-plan.md)
 - **Generator**: [`plan-generator` Agent Specification](plan-generator.md)
 - **Extractor**: [`plan-analyst` Agent Specification](plan-analyst.md)
 - **MCP Tools**: [MCP Tools Specification](../MCP_TOOLS_SPECIFICATION.md)

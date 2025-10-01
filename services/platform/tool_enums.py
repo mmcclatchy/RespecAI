@@ -146,11 +146,11 @@ class AbstractOperation(Enum):
 
 
 class CommandTemplate(Enum):
-    PLAN = 'plan'
-    SPEC = 'spec'
-    BUILD = 'build'
-    PLAN_ROADMAP = 'plan-roadmap'
-    PLAN_CONVERSATION = 'plan-conversation'
+    PLAN = 'specter-plan'
+    SPEC = 'specter-spec'
+    BUILD = 'specter-build'
+    PLAN_ROADMAP = 'specter-roadmap'
+    PLAN_CONVERSATION = 'specter-plan-conversation'
 
 
 ToolEnums = ExternalPlatformTool | BuiltInTool | SpecterMCPTool

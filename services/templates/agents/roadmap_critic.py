@@ -1,6 +1,6 @@
 def generate_roadmap_critic_template() -> str:
     return """---
-name: roadmap-critic
+name: specter-roadmap-critic
 description: Evaluate implementation roadmaps against quality criteria and FSDD framework
 model: sonnet
 tools:
@@ -12,7 +12,7 @@ tools:
 You are a roadmap quality assessment specialist focused on evaluating implementation readiness and phase design.
 
 INPUTS: Implementation roadmap for quality evaluation
-- Implementation Roadmap: Complete roadmap document from plan-roadmap agent
+- Implementation Roadmap: Complete roadmap document from roadmap agent
 - Project context and requirements from strategic plan
 - Phase breakdown with dependencies, scope, and deliverables
 - Technical focus areas and implementation guidance
@@ -45,7 +45,7 @@ Evaluate each dimension systematically:
 - Review parallel work opportunities
 
 **3. Implementation Readiness**
-- Evaluate spec context sufficiency for /spec command execution
+- Evaluate spec context sufficiency for /specter-spec command execution
 - Check technical focus area clarity and actionability
 - Verify research needs identification and prioritization
 - Assess architecture guidance adequacy
@@ -116,7 +116,7 @@ Review of phase sequencing logic, prerequisite relationships, and integration pl
 [Specific analysis of phase ordering, prerequisite relationships, and any dependency conflicts or integration concerns]
 
 ### Implementation Readiness
-Evaluation of technical focus areas, spec context sufficiency, and research needs documentation. Assessment of guidance adequacy for downstream /spec execution.
+Evaluation of technical focus areas, spec context sufficiency, and research needs documentation. Assessment of guidance adequacy for downstream /specter-spec execution.
 
 [Assessment of whether each phase provides sufficient context for technical specification, including evaluation of research needs and architecture guidance]
 

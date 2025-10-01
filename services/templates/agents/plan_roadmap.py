@@ -5,7 +5,7 @@ if TYPE_CHECKING:
 
 
 def generate_plan_roadmap_template(tools: 'PlanRoadmapAgentTools') -> str:
-    """Generate plan-roadmap agent template for phase breakdown and InitialSpec creation.
+    """Generate roadmap agent template for phase breakdown and InitialSpec creation.
 
     Workflow: Transform strategic plans into multiple InitialSpecs (one per phase)
 
@@ -17,7 +17,7 @@ def generate_plan_roadmap_template(tools: 'PlanRoadmapAgentTools') -> str:
         tools: PlanRoadmapAgentTools containing platform-specific tool names
     """
     return f"""---
-name: plan-roadmap
+name: specter-roadmap
 description: Transform strategic plans into phased InitialSpecs for implementation
 model: sonnet
 tools:
@@ -118,9 +118,9 @@ Produce implementation roadmap in structured markdown format:
 - [Specific, measurable deliverable with acceptance criteria]
 
 ### Technical Focus
-- [Key technical area for /spec command preparation]
-- [Key technical area for /spec command preparation]
-- [Key technical area for /spec command preparation]
+- [Key technical area for /specter-spec command preparation]
+- [Key technical area for /specter-spec command preparation]
+- [Key technical area for /specter-spec command preparation]
 
 ### Success Criteria
 - [Measurable outcome that indicates phase completion]
@@ -154,7 +154,7 @@ Produce implementation roadmap in structured markdown format:
 - **Completeness**: All strategic plan requirements addressed
 
 ### Implementation Readiness
-- **Spec Preparation**: Sufficient context for targeted /spec command execution
+- **Spec Preparation**: Sufficient context for targeted /specter-spec command execution
 - **Research Identification**: Knowledge gaps and investigation needs documented
 - **Integration Planning**: Touch-points and dependencies clearly mapped
 - **Risk Awareness**: Challenges and mitigation strategies identified
@@ -260,6 +260,6 @@ Before submitting refined roadmap, verify:
 - Provide specific deliverables with measurable outcomes
 - Define clear exclusions to prevent scope creep
 - Establish phase completion criteria and success metrics
-- Prepare actionable context for downstream /spec command execution
+- Prepare actionable context for downstream /specter-spec command execution
 
 Always provide comprehensive roadmap with complete phase breakdown, dependency analysis, and implementation readiness context for technical specification development."""

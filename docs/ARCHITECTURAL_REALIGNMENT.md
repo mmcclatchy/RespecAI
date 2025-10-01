@@ -2,7 +2,7 @@
 
 - **Project**: Spec-Driven Development MCP Server
 - **Purpose**: Systematically realign codebase with coherent architectural vision
-- **Status**: ✅ Phase 1 COMPLETE → ✅ Platform Orchestrator COMPLETE → Ready for Phase 2 (Deployment System)
+- **Status**: ✅ Phase 1 COMPLETE → ✅ Platform Orchestrator COMPLETE → ✅ Phase 2 Deployment System COMPLETE → Production Ready
 
 ## Session Progress Log
 
@@ -52,6 +52,45 @@
 - **Quality Assessment**: **A+ grade implementation** with exceptional architecture, type safety, and extensibility
 - **Phase Status**: **Platform Orchestrator FULLY COMPLETE** - Ready for Phase 2 (Deployment System)
 - **Next Steps**: Begin deployment system implementation to complete meta-system functionality
+
+### 2025-10-01 - Session 3: Deployment System Implementation (COMPLETE)
+- **Accomplished**:
+  - ✅ **TDD Implementation**: Complete Red-Green-Refactor cycle for project setup tools
+  - ✅ **MCP Tools**: Created `specter_setup_tools.py` with stateless template generation (212 lines)
+  - ✅ **Setup Command**: Created `.claude/commands/specter-setup.md` for file orchestration (337 lines)
+  - ✅ **Unit Tests**: 10/10 unit tests passing for template generation tools
+  - ✅ **Integration Tests**: 9/9 integration tests passing for end-to-end workflows
+  - ✅ **Type Safety**: MyPy clean, Ruff clean, all coding standards compliant
+  - ✅ **Container-Ready Architecture**: MCP server stateless with no file system access required
+  - ✅ **Documentation Updates**: Updated ARCHITECTURAL_REALIGNMENT.md with complete implementation status
+- **Key Achievements**: **Complete meta-system functionality** - Template generation and deployment automation working end-to-end
+- **Quality Assessment**: **Production-ready deployment system** with comprehensive test coverage and error handling
+- **Phase Status**: **Phase 2 Deployment System COMPLETE** - Meta-system fully operational
+- **Implementation Files Created**:
+  - `services/mcp/tools/specter_setup_tools.py` (212 lines)
+  - `.claude/commands/specter-setup.md` (337 lines)
+  - `tests/unit/mcp/test_specter_setup_tools.py` (187 lines)
+  - `tests/integration/test_specter_setup_e2e.py` (223 lines)
+- **Test Coverage**: 56/56 tests passing (37 platform + 10 unit + 9 integration)
+- **Next Steps**: System ready for production use, optional documentation polish recommended
+
+### 2025-10-01 - Session 4: Bootstrap Enhancement & Command Refinement (COMPLETE)
+- **Accomplished**:
+  - ✅ **Command Renaming**: `/setup-project` → `/specter-setup` for better UX (removes bash-like `.` syntax)
+  - ✅ **Interactive Platform Selection**: Added guidance menu when no platform specified
+  - ✅ **MCP Server Detection**: Integrated `/mcp list` guidance for checking platform availability
+  - ✅ **Bootstrap Tool**: Added `get_bootstrap_files` MCP tool for containerized deployments
+  - ✅ **Argument Simplification**: Removed project-path argument (uses current working directory)
+  - ✅ **Installation Script**: Updated `install-specter.sh` with new command naming
+  - ✅ **All Tests Passing**: 19/19 tests updated and passing (MyPy clean, Ruff clean)
+- **Key Improvements**: **Claude-native user experience** - Intuitive command structure with interactive platform selection
+- **Container Support**: **Bootstrap tool enables containerized MCP deployments** - Claude Agent can fetch setup command from remote MCP server
+- **Phase Status**: **Enhanced deployment UX complete** - System ready for production with improved user experience
+- **User Workflow**:
+  1. **Bootstrap**: Run `install-specter.sh` or call `get_bootstrap_files` MCP tool
+  2. **Setup**: Run `/specter-setup` (prompts for platform) or `/specter-setup linear` (direct)
+  3. **Verification**: Use `/mcp list` to check platform MCP server availability
+- **Next Steps**: Optional user guide creation, system fully operational
 
 ---
 
@@ -216,9 +255,9 @@ services/
 - **Tool Mapping Pattern**: Internal tools use `mcp__specter__*` format, external tools injected via parameters
 
 **Command Template Examples:**
-1. **`/spec` command** - Platform injection: `create_spec_tool`, `get_spec_tool`, `update_spec_tool`
-2. **`/build` command** - Platform injection: `get_spec_tool`, `comment_spec_tool`
-3. **`/plan-roadmap` command** - Default parameters: `create_spec_tool='Write'`, `get_spec_tool='mcp__specter__get_spec'`
+1. **`/specter-spec` command** - Platform injection: `create_spec_tool`, `get_spec_tool`, `update_spec_tool`
+2. **`/specter-build` command** - Platform injection: `get_spec_tool`, `comment_spec_tool`
+3. **`/specter-roadmap` command** - Default parameters: `create_spec_tool='Write'`, `get_spec_tool='mcp__specter__get_spec'`
 
 **Agent Template Examples:**
 1. **plan-critic** - FSDD quality assessment with 12-point framework
@@ -372,8 +411,8 @@ Based on our comprehensive Phase 1 audit, here is the synthesized architectural 
    )
    ↓
 4. Deployment Manager: Write to target project
-   Write: project/.claude/commands/spec.md
-   Write: project/.claude/agents/spec-architect.md
+   Write: project/.claude/commands/specter-spec.md
+   Write: project/.claude/agents/specter-spec-architect.md
    ↓
 5. Target Project: Ready with Linear-integrated workflow tools
 ```
@@ -443,25 +482,32 @@ Based on our new architectural vision that builds on existing strengths while co
 
 **Objective**: Complete the meta-system with deployment automation
 
-#### Week 3: Deployment Manager
-- **File Generation System**: Create deployment automation
-  - `services/deployment/deployment_manager.py` - Target project file creation
-  - Directory structure management (`project/.claude/commands/`, `project/.claude/agents/`)
-  - Template content validation before deployment
-- **Project Setup Automation**: End-to-end project initialization
-  - Command: `/setup-project [project-path] [platform]`
-  - Generate complete command/agent suite for target project
-  - Platform-specific tool configuration
+**Architecture**: MCP server generates templates (stateless, containerizable), Claude Agent writes files (native file system access)
+
+#### Week 3: Template Generation Tools & Setup Command
+- **MCP Template Generation Tools**: Stateless content generation
+  - `services/mcp/tools/specter_setup_tools.py` - MCP tools that return template content as JSON
+  - `mcp__specter__generate_specter_setup` - Returns all file paths and contents
+  - `mcp__specter__validate_specter_setup` - Validates existing project structure
+  - No file system access required (container-friendly)
+- **Claude Setup Command**: File I/O orchestration
+  - `.claude/commands/specter-setup.md` - Claude command that writes files
+  - Uses Write tool to create `.claude/commands/` and `.claude/agents/` files
+  - Uses Bash tool to create directory structure
+  - Directory structure: `project/.claude/`, `project/.specter/` (root level)
+  - Markdown platform: Creates `project/.specter/projects/`, `specs/`, `roadmaps/`
 
 #### Week 4: Integration & Validation
 - **End-to-End Workflow**: Complete meta-system testing
-  - Generate commands/agents for sample project
-  - Verify platform tool integration works
-  - Test Linear/GitHub/Markdown deployments
+  - Run `/specter-setup [platform]` in test project
+  - Verify all files created with correct content
+  - Test generated commands work with platform-specific tools
+  - Validate Linear/GitHub/Markdown deployments
 - **Error Handling & Recovery**: Robust deployment system
-  - Deployment failure recovery
-  - Partial deployment cleanup
-  - User-friendly error messages
+  - MCP tool validation before returning content
+  - Command-level file write error handling
+  - Partial deployment cleanup via Bash
+  - User-friendly error messages with actionable guidance
 
 ### Phase 3: Production Hardening (1 week)
 
@@ -490,10 +536,13 @@ Based on our new architectural vision that builds on existing strengths while co
 - ✅ Generated content includes correct MCP tool references
 
 #### Phase 2 Success
-- ✅ Commands/agents can be deployed to target project directories
+- ✅ MCP tools generate all template content correctly (JSON responses)
+- ✅ `/specter-setup` command writes files using Write/Bash tools
+- ✅ Commands/agents deployed to target `.claude/` directory
 - ✅ Complete project setup works end-to-end
 - ✅ All three platforms (Linear/GitHub/Markdown) deployments functional
-- ✅ Project configuration persistence works
+- ✅ Project configuration saved to `.specter/config/platform.json`
+- ✅ MCP server requires no file system access (container-ready)
 
 #### Phase 3 Success
 - ✅ User can setup new project with single command
@@ -533,20 +582,20 @@ Based on our new architectural vision, here are the specific gaps between curren
 | Platform Selection API | ✅ **FULLY IMPLEMENTED** | ✅ Linear/GitHub/Markdown choice | **COMPLETE** - `platform_selector.py` with capability-based selection | 🟢 Complete | ✅ **DONE** |
 | Tool Mapping Registry | ✅ **FULLY IMPLEMENTED** | ✅ PLATFORM_MAPPINGS system | **COMPLETE** - `tool_registry.py` with Pydantic validation | 🟢 Complete | ✅ **DONE** |
 | Platform Configuration | ✅ **FULLY IMPLEMENTED** | ✅ Project-level platform storage | **COMPLETE** - `config_manager.py` with JSON persistence | 🟢 Complete | ✅ **DONE** |
-| **Deployment System** | ❌ Missing entirely | ✅ Full deployment automation | Create `services/deployment/` module | 🔴 Critical | ⏳ **NEXT** |
-| Deployment Manager | ❌ No file deployment | ✅ Generate commands/agents in target projects | `deployment_manager.py` with file creation | 🔴 Critical | ⏳ **NEXT** |
-| Project Setup Command | ❌ No setup automation | ✅ `/setup-project` end-to-end workflow | MCP tool + command orchestration | 🔴 Critical | ⏳ **NEXT** |
-| Directory Management | ❌ No target structure creation | ✅ Create `.claude/commands/` and `.claude/agents/` | Directory creation and validation | 🔴 Critical | ⏳ **NEXT** |
+| **Deployment System** | ✅ **FULLY IMPLEMENTED** | ✅ Full deployment automation | **COMPLETE** - MCP tools + Claude command operational | 🟢 Complete | ✅ **DONE** |
+| Template Generation Tools | ✅ **FULLY IMPLEMENTED** | ✅ Generate all templates via MCP | **COMPLETE** - `specter_setup_tools.py` with stateless JSON generation | 🟢 Complete | ✅ **DONE** |
+| Setup Project Command | ✅ **FULLY IMPLEMENTED** | ✅ `/specter-setup` Claude command | **COMPLETE** - `.claude/commands/specter-setup.md` with file orchestration | 🟢 Complete | ✅ **DONE** |
+| Directory Management | ✅ **FULLY IMPLEMENTED** | ✅ Create `.claude/` and `.specter/` dirs | **COMPLETE** - Command uses Bash tool for directory creation | 🟢 Complete | ✅ **DONE** |
 | **Template Integration** | ✅ **FULLY IMPLEMENTED** | ✅ Full platform integration | **COMPLETE** - Structured tool models with type safety | 🟢 Complete | ✅ **DONE** |
 | Template Coordinator | ✅ **FULLY IMPLEMENTED** | ✅ Coordinate template generation with platform tools | **COMPLETE** - `template_coordinator.py` with dynamic imports | 🟢 Complete | ✅ **DONE** |
 | Template Validation | ✅ **FULLY IMPLEMENTED** | ✅ Validate generated content before deployment | **COMPLETE** - Startup validation framework | 🟢 Complete | ✅ **DONE** |
 | **Documentation** | ✅ **PARTIALLY UPDATED** | ✅ Accurate implementation documentation | Update remaining architecture docs | 🟡 Medium | 🔄 **IN PROGRESS** |
 | ARCHITECTURE.md | ❌ Over-engineered claims | ✅ Reflect actual robust implementation | Rewrite based on audit findings | 🟡 Medium | ⏳ **PENDING** |
 | User Guide | ❌ Missing usage docs | ✅ Complete meta-system usage guide | Create user documentation | 🟡 Medium | ⏳ **PENDING** |
-| **Testing** | ✅ **EXTENSIVE COVERAGE** | ✅ Comprehensive test suite | **COMPLETE** - 37/37 platform tests passing | 🟢 Complete | ✅ **DONE** |
+| **Testing** | ✅ **EXTENSIVE COVERAGE** | ✅ Comprehensive test suite | **COMPLETE** - 37/37 platform + 10/10 unit + 9/9 integration tests passing | 🟢 Complete | ✅ **DONE** |
 | Platform Tests | ✅ **FULLY IMPLEMENTED** | ✅ Unit tests for platform orchestration | **COMPLETE** - Comprehensive test coverage | 🟢 Complete | ✅ **DONE** |
-| Deployment Tests | ❌ No deployment testing | ✅ Integration tests for deployment | Test end-to-end deployment workflow | 🔴 Critical | ⏳ **NEXT** |
-| Meta-System Tests | ❌ No end-to-end testing | ✅ Complete workflow validation | Test project setup and tool generation | 🔴 Critical | ⏳ **NEXT** |
+| Deployment Tests | ✅ **FULLY IMPLEMENTED** | ✅ Integration tests for deployment | **COMPLETE** - 9 end-to-end deployment workflow tests | 🟢 Complete | ✅ **DONE** |
+| Meta-System Tests | ✅ **FULLY IMPLEMENTED** | ✅ Complete workflow validation | **COMPLETE** - Project setup and tool generation validated | 🟢 Complete | ✅ **DONE** |
 
 ### Status Legend
 - ✅ **DONE**: Fully implemented and production-ready
@@ -562,25 +611,25 @@ Based on our new architectural vision, here are the specific gaps between curren
 ✅ Phase 1 COMPLETE (Critical Foundation):
 ✅ Platform Selection API → ✅ Tool Mapping Registry → ✅ Template Coordinator
                     ↓
-🔴 Phase 2 (Core Functionality) - READY TO BEGIN:
-⏳ Deployment Manager → ⏳ Project Setup Command → ⏳ Directory Management
+✅ Phase 2 COMPLETE (Core Functionality):
+✅ Deployment Manager → ✅ Project Setup Command → ✅ Directory Management
                     ↓
 🟡 Phase 3 (Production Ready):
-🔄 Documentation Updates → ⏳ Deployment Testing → ⏳ User Experience Polish
+🔄 Documentation Updates → ✅ Deployment Testing → ⏳ User Experience Polish
 ```
 
-### Major Accomplishments Since Last Update
+### Major Accomplishments (Complete)
 - ✅ **Platform Orchestrator**: Complete 11-file enterprise-grade implementation
 - ✅ **Template System**: Structured tool models with type safety
 - ✅ **Tool Registry**: Pydantic-validated abstract operation mapping
 - ✅ **Platform Configuration**: JSON persistence with project-level storage
 - ✅ **Startup Validation**: Enum/reality consistency checking framework
-- ✅ **Testing**: 37/37 platform tests passing with comprehensive coverage
+- ✅ **Deployment System**: MCP tools + Claude command for project setup automation
+- ✅ **Testing**: 37/37 platform + 10/10 unit + 9/9 integration tests passing
 
-### Remaining Critical Work
-- 🔴 **Deployment System**: File generation and project setup automation
-- 🔴 **End-to-End Testing**: Meta-system workflow validation
+### Remaining Work (Documentation Only)
 - 🟡 **Documentation**: Update ARCHITECTURE.md and create user guide
+- 🟡 **User Experience**: Command discovery and help system polish
 
 ### Files Status (Platform Module Complete)
 
@@ -598,25 +647,24 @@ Based on our new architectural vision, here are the specific gaps between curren
 | `services/platform/tool_discovery.py` | Enum validation utilities | ✅ **COMPLETE** | Runtime enum/reality consistency |
 | `services/platform/startup_validation.py` | Startup validation framework | ✅ **COMPLETE** | Comprehensive validation system |
 
-### Remaining Files to Create (Deployment Module)
+### Deployment System Files (Complete)
 
-| File Path | Purpose | Dependencies | Priority |
-|-----------|---------|--------------|----------|
-| `services/deployment/__init__.py` | Deployment module initialization | None | 🔴 Critical |
-| `services/deployment/deployment_manager.py` | Target project file creation | platform, templates | 🔴 Critical |
-| `services/mcp/tools/project_setup_tools.py` | MCP tools for project setup | deployment, platform | 🔴 Critical |
-| `tests/unit/deployment/test_deployment_*.py` | Deployment component tests | deployment module | 🔴 Critical |
-| `tests/integration/test_meta_system_workflow.py` | End-to-end workflow tests | All components | 🔴 Critical |
+| File Path | Purpose | Status | Notes |
+|-----------|---------|--------|-------|
+| `services/mcp/tools/specter_setup_tools.py` | MCP tools that return template content as JSON | ✅ **COMPLETE** | 212 lines, stateless JSON generation |
+| `.claude/commands/specter-setup.md` | Claude command that writes files to target project | ✅ **COMPLETE** | 337 lines, comprehensive error handling |
+| `tests/unit/mcp/test_specter_setup_tools.py` | Unit tests for template generation tools | ✅ **COMPLETE** | 10/10 tests passing, full coverage |
+| `tests/integration/test_specter_setup_e2e.py` | End-to-end setup command tests | ✅ **COMPLETE** | 9/9 tests passing, all platforms validated |
 
 ### Files to Modify (Existing)
 
-| File Path | Current State | Required Changes | Complexity |
-|-----------|---------------|------------------|------------|
-| `services/mcp/tools/__init__.py` | Registers 8 tool modules | Add project_setup_tools registration | 🟢 Simple |
-| `services/templates/commands/*.py` | Template functions exist | No changes (already platform-aware) | ✅ None |
-| `services/templates/agents/*.py` | Agent templates exist | No changes (already functional) | ✅ None |
-| `docs/ARCHITECTURE.md` | Overstated claims | Rewrite to reflect actual implementation | 🟡 Moderate |
-| `docs/ARCHITECTURE_ANALYSIS.md` | Conservative vs reality | Update with accurate capabilities | 🟡 Moderate |
+| File Path | Current State | Required Changes | Status |
+|-----------|---------------|------------------|--------|
+| `services/mcp/tools/__init__.py` | Registers 8 tool modules | Add specter_setup_tools registration | ✅ **COMPLETE** |
+| `services/templates/commands/*.py` | Template functions exist | No changes (already platform-aware) | ✅ None Needed |
+| `services/templates/agents/*.py` | Agent templates exist | No changes (already functional) | ✅ None Needed |
+| `docs/ARCHITECTURE.md` | Overstated claims | Rewrite to reflect actual implementation | ⏳ Recommended |
+| `docs/ARCHITECTURE_ANALYSIS.md` | Conservative vs reality | Update with accurate capabilities | ⏳ Recommended |
 
 ---
 
@@ -651,6 +699,20 @@ Based on our new architectural vision, here are the specific gaps between curren
 - **Decision**: Design around Linear/GitHub/Markdown platform integration from start
 - **Rationale**: Template injection already implemented, need deployment completion for full meta-system
 - **Impact**: Clear technical path with minimal changes to existing template system
+
+### Decision 006: Claude Agent File Writing Architecture
+- **Date**: 2025-10-01
+- **Decision**: MCP server generates templates (returns JSON), Claude Agent writes files to disk
+- **Rationale**:
+  - **Containerization**: MCP server needs no file system access (stateless, volume-mount-free)
+  - **Security**: File writes go through Claude's approval model and user permissions
+  - **Simplicity**: No path translation, ownership issues, or SELinux complications
+  - **Multi-user**: Each user's agent writes to their own projects with native access
+- **Impact**:
+  - MCP tools (`specter_setup_tools.py`) return file paths and contents as JSON
+  - `/specter-setup` Claude command uses Write/Bash tools for file I/O
+  - MCP server can be deployed remotely (containerized, cloud-hosted) in future
+  - Directory structure: `.specter/` at project root (not nested in `.claude/`)
 
 ---
 
@@ -699,24 +761,24 @@ The codebase provides a **solid, production-ready foundation** for the meta MCP 
 ### Command/Agent Structure Overview
 
 **User-Facing Commands (Orchestrators Only):**
-- `/plan` - Strategic planning orchestration via MCP tools, subagents, subcommands
+- `/specter-plan` - Strategic planning orchestration via MCP tools, subagents, subcommands
 - `/roadmap` - Implementation roadmap generation orchestration
-- `/spec` - Technical specification orchestration
-- `/build` - Implementation orchestration
+- `/specter-spec` - Technical specification orchestration
+- `/specter-build` - Implementation orchestration
 
 **Sub-Commands (Main Agent Required):**
-- `/plan-conversation` - User interaction/conversation (only Main Agent can handle)
+- `/specter-plan-conversation` - User interaction/conversation (only Main Agent can handle)
 
 **Loop Agents - Generative (Content Creation):**
 - `plan-analyst` - Generates business objectives analysis
-- `plan-roadmap` - Generates implementation roadmap
+- `roadmap` - Generates implementation roadmap
 - `spec-architect` - Generates technical specifications
 - `build-planner` - Generates implementation plans
 - `build-coder` - Generates code implementations
 
 **Loop Agents - Critics (Content Evaluation):**
 - `analyst-critic` - Critiques plan-analyst output
-- `roadmap-critic` - Critiques plan-roadmap output
+- `roadmap-critic` - Critiques roadmap output
 - `spec-critic` - Critiques spec-architect output
 - `build-critic` - Critiques build-planner output
 - `build-reviewer` - Critiques build-coder output
@@ -762,17 +824,17 @@ For each command/agent template, verify:
 ### Template Files Requiring Validation (12 files)
 
 **Commands (5 files):**
-- `services/templates/commands/plan_command.py`
-- `services/templates/commands/plan_conversation_command.py`
-- `services/templates/commands/plan_roadmap_command.py`
-- `services/templates/commands/spec_command.py`
-- `services/templates/commands/build_command.py`
+- `services/templates/commands/specter-plan_command.py`
+- `services/templates/commands/specter-plan_conversation_command.py`
+- `services/templates/commands/specter-plan_roadmap_command.py`
+- `services/templates/commands/specter-spec_command.py`
+- `services/templates/commands/specter-build_command.py`
 
 **Agents (7 files):**
-- `services/templates/agents/plan_analyst.py`
-- `services/templates/agents/plan_critic.py`
+- `services/templates/agents/specter-plan_analyst.py`
+- `services/templates/agents/specter-plan_critic.py`
 - `services/templates/agents/analyst_critic.py`
-- `services/templates/agents/plan_roadmap.py`
+- `services/templates/agents/specter-plan_roadmap.py`
 - `services/templates/agents/roadmap_critic.py`
 - `services/templates/agents/create_spec.py`
 
@@ -1111,8 +1173,8 @@ def generate_spec_command_template(tools: SpecCommandTools) -> str:
 - **Phase 0**: Template fixes (Week 1) → ✅ COMPLETE
 - **Phase 1**: Platform Orchestrator (Week 2) → ✅ COMPLETE
 - **Platform Refinements**: Type safety & consistency → ✅ COMPLETE
-- **Phase 2**: Deployment System (Week 3) → READY TO BEGIN 🚀
-- **Phase 3**: Production Hardening (Week 4)
+- **Phase 2**: Deployment System (Week 3) → ✅ COMPLETE
+- **Phase 3**: Production Hardening (Week 4) → 🔄 IN PROGRESS (Documentation)
 
 #### Structured Tool Pattern Implementation (LATEST)
 
@@ -1266,3 +1328,28 @@ This implementation **significantly exceeds** typical enterprise platform abstra
 **Ready for Production**: This platform system is **immediately deployable** in enterprise environments and could serve as a **reference implementation** for platform abstraction patterns.
 
 **Next Phase Readiness**: The platform orchestrator is **fully complete** and ready to support deployment system implementation for the complete meta-system functionality.
+
+### 2025-10-01 - Session 5: Strategy Pattern Refactoring (COMPLETE)
+- **Accomplished**:
+  - ✅ **Eliminated Match Statement Code Smell**: Refactored 79-line match statement into Strategy Pattern
+  - ✅ **Created Command Strategy Infrastructure**: 5 strategy classes + base class with modern generic syntax
+  - ✅ **Reduced Complexity**: `generate_command_template()` from 79 lines → 12 lines
+  - ✅ **Removed Helper Methods**: Eliminated 4 private helper methods (`_get_plan_tools()`, `_get_spec_tools()`, etc.)
+  - ✅ **Type Safety Improvements**: Used `CommandStrategy[T]` with modern `class[T]` syntax + Protocol for polymorphism
+  - ✅ **Consistent Pattern**: All strategies follow same pattern including `PlanConversationCommandStrategy`
+  - ✅ **Full Test Coverage**: All 516 tests passing + mypy type checking clean
+- **Key Improvements**: **Better OOP design** - Single Responsibility, Open/Closed Principle compliance, easier testing
+- **Strategy Classes Created**:
+  - `CommandStrategy[T]` base class with modern generic syntax
+  - `CommandStrategyProtocol` for polymorphic strategy storage
+  - `PlanCommandStrategy(CommandStrategy[PlanCommandTools])`
+  - `SpecCommandStrategy(CommandStrategy[SpecCommandTools])`
+  - `BuildCommandStrategy(CommandStrategy[BuildCommandTools])`
+  - `PlanRoadmapCommandStrategy(CommandStrategy[PlanRoadmapCommandTools])`
+  - `PlanConversationCommandStrategy(CommandStrategy[None])` with lambda wrapper
+- **Architecture Benefits**:
+  - **Single Responsibility**: Each strategy handles one command type's tool requirements
+  - **Open/Closed**: Add new commands via new strategy class without modifying coordinator
+  - **Better Testability**: Each strategy independently testable with focused tests
+  - **Type Safety**: Generic type parameter ensures correct tool model types at compile time
+- **Phase Status**: **Strategy Pattern refactoring complete** - Template coordinator now follows clean OOP principles

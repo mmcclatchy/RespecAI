@@ -8,7 +8,7 @@ The `build-planner` agent creates detailed implementation plans from technical s
 **Name**: `build-planner`  
 **Type**: Implementation planning specialist  
 **Model**: Claude Sonnet  
-**Invoked By**: Main Agent via `/build` command  
+**Invoked By**: Main Agent via `/specter-build` command  
 **Phase**: Implementation Planning (Loop 3)  
 
 ## Invocation Context
@@ -254,7 +254,7 @@ const client = new ApolloClient({
 });
 ```
 
-#### Test Approach:
+#### Test Approach
 - Mock GraphQL responses with MSW
 - Test cache behavior
 - Verify error handling
@@ -265,7 +265,7 @@ const client = new ApolloClient({
 **Complexity**: Medium
 **Dependencies**: 2.1
 
-#### Tasks:
+#### Tasks
 - [ ] Create feedback service with CRUD operations
 - [ ] Implement analysis service
 - [ ] Add real-time subscription support
@@ -278,14 +278,14 @@ const client = new ApolloClient({
 **Complexity**: Medium
 **Dependencies**: Phase 2
 
-#### Tasks:
+#### Tasks
 - [ ] Create FeedbackList component with virtualization
 - [ ] Implement filtering and sorting
 - [ ] Add pagination with cursor-based approach
 - [ ] Create loading and error states
 - [ ] Implement optimistic updates
 
-#### Component Structure:
+#### Component Structure
 ```typescript
 // Based on research best practices
 const FeedbackList: React.FC = () => {
@@ -304,7 +304,7 @@ const FeedbackList: React.FC = () => {
 **Complexity**: High
 **Dependencies**: 3.1
 
-#### Tasks:
+#### Tasks
 - [ ] Create analysis trigger mechanism
 - [ ] Implement progress tracking
 - [ ] Add result visualization
@@ -318,7 +318,7 @@ const FeedbackList: React.FC = () => {
 **Complexity**: Medium
 **Dependencies**: All features
 
-#### Test Coverage Plan:
+#### Test Coverage Plan
 - Unit Tests: 85% coverage minimum
   - All utilities and helpers
   - Redux reducers and selectors
@@ -339,7 +339,7 @@ const FeedbackList: React.FC = () => {
 **Complexity**: Medium
 **Dependencies**: 4.1
 
-#### Optimization Tasks:
+#### Optimization Tasks
 - [ ] Implement code splitting
 - [ ] Add React.memo where beneficial
 - [ ] Optimize re-renders with useMemo/useCallback
@@ -586,7 +586,7 @@ Updated plan with enhanced detail...
 - Guides development sequence
 
 ## Related Documentation
-- **Command**: [`/build` Command Specification](../commands/build.md)
+- **Command**: [`/specter-build` Command Specification](../commands/specter-build.md)
 - **Critic**: [`build-critic` Agent Specification](build-critic.md)
 - **Implementation**: [`build-coder` Agent Specification](build-coder.md)
 - **Research**: Research documentation (external)

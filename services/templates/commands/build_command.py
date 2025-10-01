@@ -9,7 +9,7 @@ argument-hint: [specification-identifier]
 description: Transform technical specifications into production-ready code through parallel research, implementation planning, and TDD development
 ---
 
-# /build Command: Implementation Orchestration
+# /specter-build Command: Implementation Orchestration
 
 ## Overview
 Orchestrate the complete implementation workflow, transforming technical specifications into production-ready code through parallel research synthesis, implementation planning, and code development with comprehensive quality validation.
@@ -51,7 +51,7 @@ Orchestrate the complete implementation workflow, transforming technical specifi
 ## Orchestration Pattern
 
 ```text
-Main Agent (via /build)
+Main Agent (via /specter-build)
     │
     ├── 1. Retrieve Specification
     │   └── {tools.get_spec_tool} to retrieve specification

@@ -1,8 +1,8 @@
-# Command Development Lessons: /plan Command Analysis
+# Command Development Lessons: /specter-plan Command Analysis
 
 ## Executive Summary
 
-This document captures essential lessons learned from developing the `/plan` command within the Spec-Driven Development workflow system. Through iterative refinement and architectural evolution, several key patterns emerged that significantly improved command reliability, maintainability, and user experience. These insights provide actionable guidance for future command development.
+This document captures essential lessons learned from developing the `/specter-plan` command within the Spec-Driven Development workflow system. Through iterative refinement and architectural evolution, several key patterns emerged that significantly improved command reliability, maintainability, and user experience. These insights provide actionable guidance for future command development.
 
 ## Command Architecture Patterns
 
@@ -323,7 +323,7 @@ Expected Output Format:
 **Pattern**: Use ASCII diagrams to show data flow and agent relationships
 
 ```text
-/plan command → plan-generator → Strategic Plan → plan-critic
+/specter-plan command → plan-generator → Strategic Plan → plan-critic
        ↑                                              ↓
        └──────────── refinement loop ←───────────────┘
 ```
@@ -506,7 +506,7 @@ argument-hint: [plan-name] [starting-prompt]
 description: Create strategic plans through conversational discovery
 ---
 
-# /plan Command Template
+# /specter-plan Command Template
 [Static content - no platform-specific tools needed]
 """
 ```
@@ -742,7 +742,7 @@ Before creating a new command template, validate these architectural requirement
 
 ## Conclusion
 
-The `/plan` command development process revealed that successful multi-agent workflow systems require:
+The `/specter-plan` command development process revealed that successful multi-agent workflow systems require:
 
 1. **Clear Architecture**: Commands as orchestrators with specialized agents
 2. **Quality-Driven Development**: Measurable criteria and automatic refinement
@@ -755,7 +755,7 @@ These patterns provide a foundation for creating reliable, maintainable, and ext
 
 ## Related Documentation
 
-- [/plan Command Specification](commands/plan.md) - Complete command specification
+- [/specter-plan Command Specification](commands/specter-plan.md) - Complete command specification
 - [MCP Tools Specification](MCP_TOOLS_SPECIFICATION.md) - Loop state management tools
 - [Architecture Guide](ARCHITECTURE.md) - System architecture overview
 - [Agent Development Guidelines](AGENT_DEVELOPMENT_GUIDELINES.md) - Agent creation standards

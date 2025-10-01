@@ -8,7 +8,7 @@ The `build-coder` agent implements code following Test-Driven Development (TDD) 
 **Name**: `build-coder`  
 **Type**: Code implementation and development specialist  
 **Model**: Claude Sonnet  
-**Invoked By**: Main Agent via `/build` command  
+**Invoked By**: Main Agent via `/specter-build` command  
 **Phase**: Code Implementation (Loop 4)  
 
 ## Invocation Context
@@ -587,7 +587,7 @@ All feedback addressed. Ready for re-review.
 - Integrate smoothly
 
 ## Related Documentation
-- **Command**: [`/build` Command Specification](../commands/build.md)
+- **Command**: [`/specter-build` Command Specification](../commands/specter-build.md)
 - **Planner**: [`build-planner` Agent Specification](build-planner.md)
 - **Reviewer**: [`build-reviewer` Agent Specification](build-reviewer.md)
 - **Plan Critic**: [`build-critic` Agent Specification](build-critic.md)

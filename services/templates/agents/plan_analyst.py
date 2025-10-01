@@ -1,6 +1,6 @@
 def generate_plan_analyst_template() -> str:
     return """---
-name: plan-analyst
+name: specter-plan-analyst
 description: Extract structured objectives from strategic plans
 model: sonnet
 tools:

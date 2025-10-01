@@ -1,28 +1,28 @@
-# plan-roadmap Agent Specification
+# roadmap Agent Specification
 
 ## Overview
-The `plan-roadmap` agent transforms strategic plans and business objectives into phased implementation roadmaps. It analyzes requirements to create discrete, implementable phases that each deliver user value.
+The `roadmap` agent transforms strategic plans and business objectives into phased implementation roadmaps. It analyzes requirements to create discrete, implementable phases that each deliver user value.
 
 ## Agent Metadata
 
-**Name**: `plan-roadmap`  
+**Name**: `roadmap`  
 **Type**: Implementation planning specialist  
 **Model**: Claude Sonnet  
-**Invoked By**: Main Agent via `/plan-roadmap` command  
+**Invoked By**: Main Agent via `/specter-roadmap` command  
 **Phase**: Implementation Roadmap Generation
 
 ## Invocation Context
 
 ### When Invoked
-- **Initial**: Start of `/plan-roadmap` command with strategic plan
+- **Initial**: Start of `/specter-roadmap` command with strategic plan
 - **Refinement**: When roadmap-critic feedback requires phase restructuring
 - **User Guidance**: With specific phasing preferences provided
 
 ### Invocation Pattern
 ```text
-# Main Agent invokes plan-roadmap
+# Main Agent invokes roadmap
 Task(
-    agent="plan-roadmap",
+    agent="roadmap",
     prompt=f"""
     Strategic Plan: {strategic_plan}
     Structured Objectives: {objectives_analysis}
@@ -37,7 +37,7 @@ Task(
 ## Workflow Position
 
 ```text
-Strategic Plan → plan-roadmap → Implementation Roadmap → roadmap-critic
+Strategic Plan → roadmap → Implementation Roadmap → roadmap-critic
                       ↓                                          ↓
               Phase Breakdown                          Quality Assessment
                       ↓                                          ↓
@@ -107,7 +107,7 @@ Strategic Plan → plan-roadmap → Implementation Roadmap → roadmap-critic
 ### Initial Invocation Input
 ```markdown
 Strategic Plan:
-[Complete strategic plan document from /plan command]
+[Complete strategic plan document from /specter-plan command]
 
 Structured Objectives:
 [Business objectives analysis from plan-analyst]
@@ -170,7 +170,7 @@ Focus on: [specific areas needing improvement]
 - [Measurable outcome, e.g., "Core data models implemented"]
 
 ### Spec Context
-**Focus Areas**: [Technical domains for /spec command]
+**Focus Areas**: [Technical domains for /specter-spec command]
 **Key Decisions**: [Architecture choices needed]
 **Research Needs**: [Technologies to investigate]
 **Integration Points**: [External systems or APIs]
@@ -209,7 +209,7 @@ Focus on: [specific areas needing improvement]
 5. **Completeness**: All requirements addressed
 
 ### Technical Readiness
-1. **Spec Preparation**: Sufficient context for `/spec`
+1. **Spec Preparation**: Sufficient context for `/specter-spec`
 2. **Research Identification**: Knowledge gaps noted
 3. **Integration Planning**: Touchpoints documented
 4. **Risk Awareness**: Challenges identified
@@ -328,7 +328,7 @@ If timeline unrealistic:
 
 ### Initial Decomposition
 ```markdown
-plan-roadmap: Analyzing strategic plan for AI-powered feedback system.
+roadmap: Analyzing strategic plan for AI-powered feedback system.
 
 Identifying implementation phases based on:
 - Core requirements: feedback collection, AI analysis, routing
@@ -403,20 +403,20 @@ Clarifying Phase 3 dependencies:
 
 ## Integration Notes
 
-### Input from /plan Command
+### Input from /specter-plan Command
 - Receives complete strategic plan
 - Uses structured objectives analysis
 - Maintains business context
 - Preserves success criteria
 
-### Output for /spec Command
+### Output for /specter-spec Command
 - Provides phase-specific context
 - Identifies technical focus areas
 - Documents research needs
 - Enables targeted specification
 
 ## Related Documentation
-- [`/plan-roadmap` Command Specification](../commands/plan-roadmap.md)
+- [`/specter-roadmap` Command Specification](../commands/specter-roadmap.md)
 - [`roadmap-critic` Agent Specification](roadmap-critic.md)
-- [`/plan` Command Specification](../commands/plan.md)
-- [`/spec` Command Specification](../commands/spec.md)
+- [`/specter-plan` Command Specification](../commands/specter-plan.md)
+- [`/specter-spec` Command Specification](../commands/specter-spec.md)

@@ -91,7 +91,7 @@ All workflow data is stored in MCP Server using PROJECT_NAME as identifier for h
 
 ## Step 2: Conversational Requirements Gathering
 
-#### Use the /plan-conversation command to conduct conversational discovery.
+#### Use the /specter-plan-conversation command to conduct conversational discovery.
 
 Invoke the plan-conversation agent with initial context:
 ```
@@ -201,7 +201,7 @@ Present options to user:
 
 #### Your Options:
 
-1. **Continue conversation** - Add more details through additional /plan-conversation
+1. **Continue conversation** - Add more details through additional /specter-plan-conversation
    - Best if: Missing requirements, unclear scope, or need more context
    - Action: Return to conversational discovery for specific areas
 
@@ -239,7 +239,7 @@ Present options to user:
 
 **strategic plan creation failures:**
 1. **Empty or Invalid Context**: If CONVERSATION_CONTEXT is empty or malformed:
-   - Retry /plan-conversation command with same initial context
+   - Retry /specter-plan-conversation command with same initial context
    - If second attempt fails, continue with placeholder: "Plan creation failed - proceeding with basic template"
    - Update CURRENT_PLAN with failure notification for critic evaluation
 

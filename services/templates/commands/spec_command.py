@@ -9,7 +9,7 @@ argument-hint: [optional: technical-focus-area]
 description: Transform strategic plans into detailed technical specifications
 ---
 
-# /spec Command: Technical Specification Creation
+# /specter-spec Command: Technical Specification Creation
 
 ## Overview
 Transform strategic plans into detailed technical specifications through quality-driven refinement. This command orchestrates technical architecture design, research integration, and platform-specific specification storage.
@@ -17,7 +17,7 @@ Transform strategic plans into detailed technical specifications through quality
 ## Primary Responsibilities
 
 ### 1. Initialize Technical Design Process
-- Retrieve strategic plan from previous `/plan` phase
+- Retrieve strategic plan from previous `/specter-plan` phase
 - Launch spec-architect agent for technical architecture development
 - Initialize MCP refinement loop for specification phase
 
@@ -39,7 +39,7 @@ Transform strategic plans into detailed technical specifications through quality
 ## Orchestration Pattern
 
 ```text
-Main Agent (via /spec)
+Main Agent (via /specter-spec)
     │
     ├── 1. Retrieve Strategic Plan
     │   └── Access plan from previous phase or user input
@@ -69,7 +69,7 @@ mcp__specter__initialize_refinement_loop:
   loop_type: "spec"
 
 # Retrieve strategic plan context
-STRATEGIC_PLAN_CONTEXT = [Previous /plan output or user-provided plan]
+STRATEGIC_PLAN_CONTEXT = [Previous /specter-plan output or user-provided plan]
 TECHNICAL_FOCUS_AREA = [User argument if provided, otherwise "comprehensive architecture"]
 
 Invoke the plan-analyst agent with this input:
@@ -242,11 +242,11 @@ IF no strategic plan available:
   ERROR_RESPONSE = {{
     "error_type": "missing_plan",
     "error_message": "No strategic plan found for technical specification",
-    "recovery_action": "Prompting user for plan location or /plan execution",
-    "user_guidance": "Please provide the strategic plan document path or run /plan command first",
+    "recovery_action": "Prompting user for plan location or /specter-plan execution",
+    "user_guidance": "Please provide the strategic plan document path or run /specter-plan command first",
     "partial_output": "Technical specification template prepared"
   }}
-  → Request plan location OR suggest: "Run /plan [project-name] to create strategic plan first"
+  → Request plan location OR suggest: "Run /specter-plan [project-name] to create strategic plan first"
 ```
 
 #### 2. Archive Scanning Failure
@@ -281,7 +281,7 @@ IF platform storage tool fails:
   ERROR_RESPONSE = {{
     "error_type": "storage_failure",
     "error_message": "Failed to store specification in configured platform",
-    "recovery_action": "Saving to local Markdown backup at docs/specs/[timestamp]-spec.md",
+    "recovery_action": "Saving to local Markdown backup at docs/specter-specs/[timestamp]-spec.md",
     "user_guidance": "Platform storage failed. Specification saved locally. Check platform connectivity and configuration.",
     "partial_output": "Complete technical specification document"
   }}
@@ -379,5 +379,5 @@ Maintain conversation flow while processing complex backend refinement:
 - **Implementation Ready**: Sufficient detail for development teams
 - **Integration**: Seamless storage and retrieval
 
-The specification is ready for implementation planning. Recommend `/build` command for next phase.
+The specification is ready for implementation planning. Recommend `/specter-build` command for next phase.
 """

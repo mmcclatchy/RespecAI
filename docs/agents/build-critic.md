@@ -8,7 +8,7 @@ The `build-critic` agent evaluates implementation plans for completeness, feasib
 **Name**: `build-critic`  
 **Type**: Implementation plan assessment specialist  
 **Model**: Claude Sonnet  
-**Invoked By**: Main Agent via `/build` command  
+**Invoked By**: Main Agent via `/specter-build` command  
 **Phase**: Implementation Planning (Loop 3 - Assessment)  
 
 ## Invocation Context
@@ -489,7 +489,7 @@ Immediate focus needed:
 - Enables smooth coding
 
 ## Related Documentation
-- **Command**: [`/build` Command Specification](../commands/build.md)
+- **Command**: [`/specter-build` Command Specification](../commands/specter-build.md)
 - **Planner**: [`build-planner` Agent Specification](build-planner.md)
 - **Next Agent**: [`build-coder` Agent Specification](build-coder.md)
 - **MCP Tools**: [MCP Tools Specification](../MCP_TOOLS_SPECIFICATION.md)

@@ -1,11 +1,13 @@
-import pytest
 import tempfile
 from pathlib import Path
 from typing import Generator
 
+import pytest
+
 from services.platform.models import PlatformRequirements, ProjectSetupRequest, TemplateGenerationRequest
 from services.platform.platform_orchestrator import PlatformOrchestrator
 from services.platform.platform_selector import PlatformType
+from services.platform.tool_enums import CommandTemplate
 
 
 class TestMarkdownPlatformScoping:
@@ -31,15 +33,15 @@ class TestMarkdownPlatformScoping:
 
         # Verify all expected scoped tools are present
         expected_tools = {
-            'create_spec_tool': 'Write(.specter/projects/*/specs/*.md)',
-            'get_spec_tool': 'Read(.specter/projects/*/specs/*.md)',
-            'update_spec_tool': 'Edit(.specter/projects/*/specs/*.md)',
-            'comment_spec_tool': 'Edit(.specter/projects/*/specs/*.md)',
+            'create_spec_tool': 'Write(.specter/projects/*/specter-specs/*.md)',
+            'get_spec_tool': 'Read(.specter/projects/*/specter-specs/*.md)',
+            'update_spec_tool': 'Edit(.specter/projects/*/specter-specs/*.md)',
+            'comment_spec_tool': 'Edit(.specter/projects/*/specter-specs/*.md)',
             'create_project_external': 'Write(.specter/projects/*/project_plan.md)',
             'create_project_completion_external': 'Write(.specter/projects/*/project_completion.md)',
             'get_project_plan_tool': 'Read(.specter/projects/*/project_plan.md)',
             'update_project_plan_tool': 'Edit(.specter/projects/*/project_plan.md)',
-            'list_project_specs_tool': 'Glob(.specter/projects/*/specs/*.md)',
+            'list_project_specs_tool': 'Glob(.specter/projects/*/specter-specs/*.md)',
         }
 
         for abstract_tool, expected_concrete in expected_tools.items():
@@ -67,14 +69,15 @@ class TestMarkdownPlatformScoping:
         # Test each command template can be generated
         available_commands = orchestrator.get_available_commands()
 
-        for command in available_commands:
+        for command_str in available_commands:
             try:
-                request = TemplateGenerationRequest(project_path=Path(project_path), command_name=command)
+                command_enum = CommandTemplate(command_str)
+                request = TemplateGenerationRequest(project_path=Path(project_path), command_name=command_enum)
                 template = orchestrator.generate_command_template(request)
                 assert isinstance(template, str)
                 assert len(template) > 0
                 # Templates should reference the scoped tool names
-                if command in ['spec', 'build']:
+                if command_str in ['specter-spec', 'specter-build']:
                     assert any(tool in template for tool in ['Write(', 'Read(', 'Edit(', 'Glob('])
             except ValueError as e:
                 # Some commands may not be supported by Markdown platform
@@ -92,7 +95,7 @@ class TestMarkdownPlatformScoping:
         # Verify we have the correct scoped tools available
         assert 'create_spec_tool' in tools
         assert 'create_project_external' in tools
-        assert tools['create_spec_tool'] == 'Write(.specter/projects/*/specs/*.md)'
+        assert tools['create_spec_tool'] == 'Write(.specter/projects/*/specter-specs/*.md)'
         assert tools['create_project_external'] == 'Write(.specter/projects/*/project_plan.md)'
 
         # Test that the scoped path patterns are properly defined
@@ -170,7 +173,7 @@ class TestMarkdownPlatformScoping:
         # Should include all scoped tools
         assert len(info['platform_tools']) == 9
         assert 'create_spec_tool' in info['platform_tools']
-        assert info['platform_tools']['create_spec_tool'] == 'Write(.specter/projects/*/specs/*.md)'
+        assert info['platform_tools']['create_spec_tool'] == 'Write(.specter/projects/*/specter-specs/*.md)'
 
         # Project should be valid
         assert info['config_valid'] is True

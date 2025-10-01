@@ -26,7 +26,7 @@ Gap Analysis: spec-architect identifies missing external research
     ↓
 Research Prompt Creation: "Best practices when integrating [technologies] [current_year]"
     ↓
-/build command orchestrates parallel research-synthesizer calls
+/specter-build command orchestrates parallel research-synthesizer calls
     ↓
 research-synthesizer instances create documentation files → return file paths
     ↓
@@ -77,13 +77,13 @@ Critic Score → MCP Server State Management → Next Action Decision:
 
 ## Seven Refinement Loops Architecture
 
-### Loop 1: Strategic Planning (`/plan`)
+### Loop 1: Strategic Planning (`/specter-plan`)
 
 **Participants**: Main Agent orchestration with `plan-critic`, `plan-analyst`, `analyst-critic`
 
 **Process Flow**: Dual-loop orchestration workflow
 1. **Initialize Planning Loop**: MCP state management setup
-2. **Conversational Discovery**: `/plan-conversation` command guides natural language requirements gathering
+2. **Conversational Discovery**: `/specter-plan-conversation` command guides natural language requirements gathering
 3. **Strategic Plan Creation**: Main Agent processes conversation context using template
 4. **Plan Quality Assessment**: `plan-critic` evaluates against FSDD framework
 5. **Plan Refinement Loop**: MCP manages plan refinement iterations
@@ -110,9 +110,9 @@ Critic Score → MCP Server State Management → Next Action Decision:
 **Quality Gate**: Requirements completeness and clarity validation
 **Output**: Technical translation of business needs defining intent and constraints
 
-### Loop 3: Implementation Roadmap (`/plan-roadmap`)
+### Loop 3: Implementation Roadmap (`/specter-roadmap`)
 
-**Participants**: `plan-roadmap` ↔ `roadmap-critic`
+**Participants**: `roadmap` ↔ `roadmap-critic`
 
 **Process Flow**:
 1. **Feature Requirements Analysis**: Extract technical constraints and dependencies from feature requirements
@@ -126,7 +126,7 @@ Critic Score → MCP Server State Management → Next Action Decision:
 **Quality Gate**: MCP Server-determined thresholds for roadmap completeness and implementation readiness
 **Output**: Step-by-step roadmap organizing Specs with phase foundations
 
-### Loop 4: Technical Specification (`/spec`)
+### Loop 4: Technical Specification (`/specter-spec`)
 
 **Participants**: `spec-architect` ↔ `spec-critic`
 
@@ -142,7 +142,7 @@ Critic Score → MCP Server State Management → Next Action Decision:
 **Quality Gate**: MCP Server-determined thresholds for production readiness
 **Output**: System Architecture Design - first Engineering-forward step creating Project System Design
 
-### Loop 6: Implementation Planning (`/build` - Phase 1)
+### Loop 6: Implementation Planning (`/specter-build` - Phase 1)
 
 **Participants**: `build-planner` ↔ `build-critic`
 
@@ -155,7 +155,7 @@ Critic Score → MCP Server State Management → Next Action Decision:
 **Quality Gate**: Configurable threshold via environment variables
 **Output**: Detailed implementation plan with specific patterns and best-practices
 
-### Loop 7: Code Implementation (`/build` - Phase 2)
+### Loop 7: Code Implementation (`/specter-build` - Phase 2)
 
 **Participants**: `build-coder` ↔ `build-reviewer`
 
@@ -174,13 +174,13 @@ The workflow follows a **tightening and deepening of information** progression:
 
 **ProjectPlan** → **FeatureRequirements** → **Roadmap** → **TechnicalSpec** → **BuildPlan**
 
-### `/plan` Command - Strategic Planning
+### `/specter-plan` Command - Strategic Planning
 ```text
 User Input: Natural language business requirements
     ↓
 Dual-Loop Orchestration: Main Agent with MCP state management
 ├── Step 1: Initialize planning loop (MCP state setup)
-├── Step 2: /plan-conversation command (conversational discovery)
+├── Step 2: /specter-plan-conversation command (conversational discovery)
 ├── Step 3: Main Agent strategic plan creation (template processing)
 ├── Steps 4-5: plan-critic evaluation + MCP plan refinement loop
 ├── Steps 6-9: plan-analyst extraction + analyst-critic + MCP analyst loop
@@ -204,11 +204,11 @@ Requirements Translation Workflow: Main Agent analysis
 Output: Technical translation defining intent and constraints for implementation
 ```
 
-### `/plan-roadmap` Command - Implementation Roadmap
+### `/specter-roadmap` Command - Implementation Roadmap
 ```text
 Input: Feature requirements + optional phasing preferences
     ↓
-Roadmap Generation Loop: plan-roadmap ↔ roadmap-critic
+Roadmap Generation Loop: roadmap ↔ roadmap-critic
 ├── Step 1: Requirements analysis (extract constraints and dependencies)
 ├── Step 2: Phase decomposition (3-7 implementable phases based on constraints)
 ├── Step 3: Dependency mapping (logical sequencing ensuring requirements met)
@@ -219,7 +219,7 @@ Roadmap Generation Loop: plan-roadmap ↔ roadmap-critic
 Output: Step-by-step roadmap organizing Specs with phase foundations
 ```
 
-### `/spec` Command - Technical Specification
+### `/specter-spec` Command - Technical Specification
 ```text
 Input: Scaffolded specification from roadmap + technical focus area
     ↓
@@ -238,7 +238,7 @@ Architecture Design Loop: spec-architect ↔ spec-critic
 Output: System Architecture Design - first Engineering-forward step
 ```
 
-### `/build` Command - Implementation Planning
+### `/specter-build` Command - Implementation Planning
 ```text
 Input: Technical specification identifier
     ↓

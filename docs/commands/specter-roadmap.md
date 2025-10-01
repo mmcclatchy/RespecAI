@@ -1,11 +1,11 @@
-# /plan-roadmap Command Specification
+# /specter-roadmap Command Specification
 
 ## Overview
-The `/plan-roadmap` command transforms strategic plans into phased implementation roadmaps. It orchestrates the decomposition of high-level business objectives into discrete, spec-ready implementation phases through quality-driven refinement.
+The `/specter-roadmap` command transforms strategic plans into phased implementation roadmaps. It orchestrates the decomposition of high-level business objectives into discrete, spec-ready implementation phases through quality-driven refinement.
 
 ## Command Metadata
 
-**Name**: `/plan-roadmap`  
+**Name**: `/specter-roadmap`  
 **Type**: Implementation planning orchestrator  
 **Phase**: Strategic Planning → Implementation Roadmap (Bridge to Technical Specification)  
 **Model**: Claude Sonnet (default)
@@ -14,12 +14,12 @@ The `/plan-roadmap` command transforms strategic plans into phased implementatio
 
 ### Who Invokes It
 - **Primary**: End user via Claude Code CLI
-- **Context**: After successful completion of `/plan` command
+- **Context**: After successful completion of `/specter-plan` command
 - **Prerequisites**: Completed strategic plan document with structured objectives
 
 ### Trigger Format
 ```text
-/plan-roadmap [optional: phasing-preferences]
+/specter-roadmap [optional: phasing-preferences]
 ```
 
 ### Parameters
@@ -28,34 +28,34 @@ The `/plan-roadmap` command transforms strategic plans into phased implementatio
 ## Workflow Position
 
 ```text
-Strategic Plan → /plan-roadmap → [plan-roadmap ↔ roadmap-critic loop] → Implementation Roadmap
+Strategic Plan → /specter-roadmap → [roadmap ↔ roadmap-critic loop] → Implementation Roadmap
                                            ↓                                          ↓
                                    Phase Breakdown                          Quality Assessment
                                            ↓                                          ↓
                                    Dependency Mapping                      Refinement Decision
                                            ↓
-                                    Ready for /spec calls (per phase)
+                                    Ready for /specter-spec calls (per phase)
 ```
 
 ### Position in End-to-End Flow
 1. **Bridge Phase**: Connects strategic planning to technical specification
-2. **Precedes**: Multiple `/spec` command invocations (one per phase)
+2. **Precedes**: Multiple `/specter-spec` command invocations (one per phase)
 3. **Dependencies**: Requires completed strategic plan and objectives analysis
-4. **Output Used By**: `/spec` command for phase-specific technical specifications
+4. **Output Used By**: `/specter-spec` command for phase-specific technical specifications
 
 ## Primary Responsibilities
 
 ### Core Tasks
 
 1. **Strategic Plan Context Gathering**
-   - Access completed strategic plan from `/plan` command output
+   - Access completed strategic plan from `/specter-plan` command output
    - Retrieve structured objectives from plan-analyst processing
    - Capture optional user phasing preferences
    - Establish baseline for roadmap generation
 
 2. **Implementation Decomposition Orchestration**
    - Initialize MCP refinement loop for roadmap generation
-   - Launch `plan-roadmap` agent for phase breakdown
+   - Launch `roadmap` agent for phase breakdown
    - Manage iterative roadmap development process
    - Coordinate phase scoping and dependency mapping
 
@@ -66,14 +66,14 @@ Strategic Plan → /plan-roadmap → [plan-roadmap ↔ roadmap-critic loop] → 
    - Monitor iteration count and improvement trends
 
 4. **Refinement Cycle Coordination**
-   - Route critic feedback to plan-roadmap for improvements
+   - Route critic feedback to roadmap for improvements
    - Maintain roadmap context across iterations
    - Manage stagnation detection and user escalation
    - Ensure MCP Server completion criteria before finishing
 
 5. **Final Roadmap Preparation**
    - Validate completed roadmap structure and content
-   - Prepare phase-specific contexts for downstream `/spec` calls
+   - Prepare phase-specific contexts for downstream `/specter-spec` calls
    - Document implementation sequence and dependencies
    - Ensure smooth handoff to technical specification phase
 
@@ -81,7 +81,7 @@ Strategic Plan → /plan-roadmap → [plan-roadmap ↔ roadmap-critic loop] → 
 
 ### Complete Workflow Orchestration
 ```text
-Main Agent (via /plan-roadmap)
+Main Agent (via /specter-roadmap)
     │
     ├── 1. Retrieve Strategic Plan
     │   └── mcp_tool: get_project_plan_markdown(plan_loop_id)
@@ -90,38 +90,38 @@ Main Agent (via /plan-roadmap)
     │   └── mcp_tool: initialize_refinement_loop(loop_type='roadmap')
     │
     ├── 3. Roadmap Generation Loop
-    │   ├── Task: plan-roadmap (phase breakdown → roadmap markdown)
+    │   ├── Task: roadmap (phase breakdown → roadmap markdown)
     │   ├── mcp_tool: create_roadmap(project_id, roadmap_markdown)
     │   ├── Task: roadmap-critic (quality assessment → CriticFeedback)
     │   ├── mcp_tool: store_critic_feedback(critic_feedback_markdown)
     │   └── mcp_tool: decide_loop_next_action(roadmap_loop_id, quality_score)
     │
     ├── 4. Handle Loop Decision
-    │   ├── IF "refine" → Pass structured feedback to plan-roadmap
+    │   ├── IF "refine" → Pass structured feedback to roadmap
     │   ├── IF "complete" → Finalize Roadmap model and proceed
     │   └── IF "user_input" → Request roadmap clarification with feedback context
     │
     └── 5. Finalize & Prepare for Spec Phase
         ├── mcp_tool: get_roadmap(project_id)
-        └── Roadmap ready for multiple /spec command invocations
+        └── Roadmap ready for multiple /specter-spec command invocations
 ```
 
 ### Data Flow Between Components
 - **Main Agent → MCP Server**: `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan
-- **Main Agent → plan-roadmap**: Strategic plan + objectives + preferences
-- **plan-roadmap → Main Agent**: Implementation roadmap with phased breakdown (markdown)
+- **Main Agent → roadmap**: Strategic plan + objectives + preferences
+- **roadmap → Main Agent**: Implementation roadmap with phased breakdown (markdown)
 - **Main Agent → MCP Server**: `create_roadmap(project_id, roadmap_markdown)` - Create Roadmap model
 - **Main Agent → roadmap-critic**: Roadmap for FSDD assessment
 - **roadmap-critic → Main Agent**: Structured CriticFeedback (markdown format)
 - **Main Agent → MCP Server**: `store_critic_feedback(feedback_markdown)` - Store feedback model
 - **Main Agent → MCP Server**: `decide_loop_next_action(roadmap_loop_id, quality_score)` - Decision logic
 - **MCP Server → Main Agent**: Next action (refine/complete/user_input) with loop state
-- **Main Agent → MCP Server**: `get_roadmap(project_id)` - Final retrieval for /spec phase
+- **Main Agent → MCP Server**: `get_roadmap(project_id)` - Final retrieval for /specter-spec phase
 
 ## Structured Data Models
 
 ### Roadmap Model
-The `/plan-roadmap` command creates and stores structured Roadmap models:
+The `/specter-roadmap` command creates and stores structured Roadmap models:
 ```python
 class Roadmap(MCPModel):
     project_name: str
@@ -164,13 +164,13 @@ class CriticFeedback(MCPModel):
 ## Input/Output Specifications
 
 ### Input Requirements
-- **ProjectPlan**: ProjectPlan model from `/plan` phase via `get_project_plan_markdown()`
+- **ProjectPlan**: ProjectPlan model from `/specter-plan` phase via `get_project_plan_markdown()`
 - **Phasing Preferences**: Optional user guidance on phase structure and timing
 - **Format**: Roadmap markdown structure
 
 ### Output Specifications
 - **Primary Output**: Roadmap model stored in MCP Server + implementation roadmap markdown
-- **Structured Storage**: Roadmap with 18+ validated fields for `/spec` consumption
+- **Structured Storage**: Roadmap with 18+ validated fields for `/specter-spec` consumption
 - **Markdown Format**:
 ```markdown
 # Project Roadmap: [Project Name]
@@ -213,12 +213,12 @@ The roadmap-critic evaluates roadmaps against:
 1. **Phase Scoping** - Each phase delivers user value within reasonable timeframe
 2. **Dependency Management** - Clear sequencing and prerequisites without circular dependencies
 3. **Scope Clarity** - Specific deliverables and explicit boundaries per phase
-4. **Implementation Readiness** - Sufficient detail and context for `/spec` command processing
+4. **Implementation Readiness** - Sufficient detail and context for `/specter-spec` command processing
 5. **Resource Balance** - Realistic complexity distribution across phases
 6. **Risk Distribution** - Critical items appropriately phased with mitigation strategies
 7. **Timeline Feasibility** - Realistic duration estimates and milestone definitions
 8. **Success Criteria** - Clear, measurable outcomes for each phase
-9. **Specification Planning** - Adequate preparation for downstream `/spec` calls
+9. **Specification Planning** - Adequate preparation for downstream `/specter-spec` calls
 10. **Integration Strategy** - How phases connect and build upon each other
 11. **Quality Assurance** - Testing and validation approach per phase
 12. **Performance Targets** - Measurable performance criteria across phases
@@ -259,7 +259,7 @@ The roadmap-critic evaluates roadmaps against:
 - [Measurable outcome]
 
 ### Spec Context
-[Information needed for /spec command]
+[Information needed for /specter-spec command]
 - Focus Areas: [Technical domains]
 - Key Decisions: [Architecture choices needed]
 - Research Needs: [Knowledge gaps to address]
@@ -282,7 +282,7 @@ The roadmap-critic evaluates roadmaps against:
 [Measurable outcomes]
 
 ### Spec Context
-[/spec guidance]
+[/specter-spec guidance]
 
 [Additional phases following same structure]
 
@@ -295,7 +295,7 @@ The roadmap-critic evaluates roadmaps against:
 
 ## Agent Coordination
 
-### plan-roadmap Agent
+### roadmap Agent
 - **Input**: Strategic plan + structured objectives
 - **Output**: Multi-phase implementation roadmap
 - **Focus**: Breaking down requirements into implementable chunks
@@ -310,8 +310,8 @@ The roadmap-critic evaluates roadmaps against:
 ### Missing Strategic Plan
 ```text
 IF no strategic plan available:
-  Display: "No strategic plan found. Please run /plan command first."
-  Suggest: "/plan [project-name] to create strategic plan"
+  Display: "No strategic plan found. Please run /specter-plan command first."
+  Suggest: "/specter-plan [project-name] to create strategic plan"
   Exit gracefully
 ```
 
@@ -325,7 +325,7 @@ IF strategic plan format unrecognizable:
 
 ### Agent Failures
 ```text
-IF plan-roadmap fails:
+IF roadmap fails:
   Retry: Once with simplified input
   Fallback: Create basic 3-phase roadmap
   Document: Limitations in output
@@ -348,7 +348,7 @@ IF loop initialization fails:
 
 ### Complete Workflow Example
 ```text
-User: /plan-roadmap
+User: /specter-roadmap
 
 Main Agent: I'll transform your strategic plan into a phased implementation roadmap. Let me retrieve the plan and break it down into manageable phases.
 
@@ -356,9 +356,9 @@ Main Agent: I'll transform your strategic plan into a phased implementation road
 
 Analyzing strategic plan for AI-powered customer feedback system...
 
-[Invokes plan-roadmap agent]
+[Invokes roadmap agent]
 
-plan-roadmap: Creating phased roadmap based on business objectives and dependencies. Analyzing technical components for optimal sequencing...
+roadmap: Creating phased roadmap based on business objectives and dependencies. Analyzing technical components for optimal sequencing...
 
 Phase 1: Core Infrastructure (4 weeks)
 - Authentication & data models
@@ -392,7 +392,7 @@ Overall Score: 78% - needs better risk mitigation planning
 
 [Score: 78% - Main Agent receives "refine" decision from MCP Server]
 
-plan-roadmap: Improving risk assessment and mitigation strategies...
+roadmap: Improving risk assessment and mitigation strategies...
 
 Adding:
 - Buffer time for ML model training
@@ -408,12 +408,12 @@ Main Agent: Implementation roadmap completed!
 - 12 InitialSpec objects created
 - Ready for phase-specific technical specifications
 
-Use /spec to create technical specifications for each phase.
+Use /specter-spec to create technical specifications for each phase.
 ```
 
 ### With Phasing Preferences
 ```text
-User: /plan-roadmap "prefer 2-week sprints, MVP by month 3"
+User: /specter-roadmap "prefer 2-week sprints, MVP by month 3"
 
 Main Agent: Creating roadmap with 2-week sprint phases targeting MVP delivery in 3 months...
 ```
@@ -422,17 +422,17 @@ Main Agent: Creating roadmap with 2-week sprint phases targeting MVP delivery in
 
 ### Required Components
 - **MCP Server**: Loop state management and decision logic
-- **plan-roadmap agent**: Phase breakdown and roadmap generation
+- **roadmap agent**: Phase breakdown and roadmap generation
 - **roadmap-critic agent**: Quality assessment and feedback
 
 ### MCP Tools Used
 **Roadmap Generation Workflow:**
-- `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan from /plan phase
+- `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan from /specter-plan phase
 - `initialize_refinement_loop(loop_type='roadmap')` - Create roadmap refinement loop
 - `create_roadmap(project_id, roadmap_markdown)` - Store Roadmap model
 - `store_critic_feedback(feedback_markdown)` - Store structured CriticFeedback
 - `decide_loop_next_action(roadmap_loop_id, current_score)` - Loop decision engine
-- `get_roadmap(project_id)` - Retrieve final roadmap for /spec phase
+- `get_roadmap(project_id)` - Retrieve final roadmap for /specter-spec phase
 - `get_loop_status(roadmap_loop_id)` - Monitor loop state (optional)
 - `get_feedback_history(roadmap_loop_id, count)` - Retrieve recent feedback for context
 
@@ -453,13 +453,13 @@ Main Agent: Creating roadmap with 2-week sprint phases targeting MVP delivery in
 The command handles three MCP Server responses:
 
 1. **refine**:
-   - Pass critic feedback to plan-roadmap for improvements
+   - Pass critic feedback to roadmap for improvements
    - Continue refinement cycle with updated roadmap
    - Maintain context across iterations
 
 2. **complete**:
    - Accept current roadmap as final
-   - Prepare phase-specific contexts for downstream `/spec` calls  
+   - Prepare phase-specific contexts for downstream `/specter-spec` calls  
    - Present completed roadmap to user
 
 3. **user_input**:
@@ -469,17 +469,17 @@ The command handles three MCP Server responses:
 
 ## Integration Notes
 
-### With /plan Command
+### With /specter-plan Command
 - Consumes strategic plan output
 - Uses structured objectives from plan-analyst
 - Maintains context from planning phase
 
-### With /spec Command
+### With /specter-spec Command
 - Provides phase-specific context for targeted specification
 - Enables incremental development through phased specs
-- Supports multiple `/spec` cycles per roadmap
+- Supports multiple `/specter-spec` cycles per roadmap
 
-### With /build Command  
+### With /specter-build Command  
 - Enables phased implementation approach
 - Supports iterative delivery model
 - Facilitates progress tracking across phases
@@ -487,7 +487,7 @@ The command handles three MCP Server responses:
 ## Platform-Specific Behavior
 
 ### Platform-Agnostic Design
-The `/plan-roadmap` command operates identically across all platforms (Linear, GitHub, Markdown) as it produces platform-independent roadmaps. Platform-specific behavior only emerges in subsequent `/spec` and `/build` phases.
+The `/specter-roadmap` command operates identically across all platforms (Linear, GitHub, Markdown) as it produces platform-independent roadmaps. Platform-specific behavior only emerges in subsequent `/specter-spec` and `/specter-build` phases.
 
 ## Success Metrics
 
@@ -498,14 +498,14 @@ The `/plan-roadmap` command operates identically across all platforms (Linear, G
 - **Spec Generation Success**: Target >95%
 
 ### Qualitative Metrics
-- **Implementation Readiness**: All phases have sufficient detail for `/spec`
+- **Implementation Readiness**: All phases have sufficient detail for `/specter-spec`
 - **Dependency Clarity**: Clear sequencing without circular dependencies
 - **Risk Mitigation**: Comprehensive strategies for identified risks
 - **Value Delivery**: Each phase delivers measurable user value
 
 ## Related Documentation
-- **Previous Phase**: [`/plan` Command Specification](plan.md)
-- **Next Phase**: [`/spec` Command Specification](spec.md)
-- **Primary Agent**: [`plan-roadmap` Agent Specification](../agents/plan-roadmap.md)
+- **Previous Phase**: [`/specter-plan` Command Specification](plan.md)
+- **Next Phase**: [`/specter-spec` Command Specification](spec.md)
+- **Primary Agent**: [`roadmap` Agent Specification](../agents/specter-roadmap.md)
 - **Quality Agent**: [`roadmap-critic` Agent Specification](../agents/roadmap-critic.md)
 - **MCP Tools**: [MCP Tools Specification](../MCP_TOOLS_SPECIFICATION.md)

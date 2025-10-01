@@ -1,4 +1,7 @@
-def generate_plan_conversation_command_template() -> str:
+from typing import Any
+
+
+def generate_plan_conversation_command_template(_tools: Any = None) -> str:
     return """---
 allowed-tools: []
 argument-hint: [optional-context]
@@ -10,7 +13,7 @@ description: Conduct conversational requirements gathering
 ## Command Integration
 
 #### Purpose
-This command conducts structured conversation with the user to gather comprehensive project requirements. It operates as a sub-command called by `/plan` and returns structured context for strategic plan generation.
+This command conducts structured conversation with the user to gather comprehensive project requirements. It operates as a sub-command called by `/specter-plan` and returns structured context for strategic plan generation.
 
 #### Variable Management
 Store all conversation results in the variable `CONVERSATION_CONTEXT` for handoff back to the calling command.
@@ -136,7 +139,7 @@ After completing all conversation stages and meeting completion criteria, struct
 ```
 
 #### Handoff Protocol
-Once `CONVERSATION_CONTEXT` is populated, the calling `/plan` command will automatically proceed with strategic plan generation using this structured context.
+Once `CONVERSATION_CONTEXT` is populated, the calling `/specter-plan` command will automatically proceed with strategic plan generation using this structured context.
 
 ## Error Handling and Recovery
 

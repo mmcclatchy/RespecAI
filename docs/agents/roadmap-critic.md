@@ -8,13 +8,13 @@ The `roadmap-critic` agent evaluates implementation roadmaps against quality cri
 **Name**: `roadmap-critic`  
 **Type**: Implementation roadmap validation specialist  
 **Model**: Claude Sonnet  
-**Invoked By**: Main Agent via `/plan-roadmap` command  
+**Invoked By**: Main Agent via `/specter-roadmap` command  
 **Phase**: Implementation Roadmap Assessment  
 
 ## Invocation Context
 
 ### When Invoked
-- **After Each Generation**: Following plan-roadmap output
+- **After Each Generation**: Following roadmap output
 - **Quality Validation**: Assessment for refinement decisions
 - **Before Completion**: Final quality check
 
@@ -41,7 +41,7 @@ Task(
 ## Workflow Position
 
 ```text
-plan-roadmap → [Implementation Roadmap] → roadmap-critic → [Score + Feedback]
+roadmap → [Implementation Roadmap] → roadmap-critic → [Score + Feedback]
                                                     ↓
                                                MCP Decision
                                                     ↓
@@ -110,7 +110,7 @@ plan-roadmap → [Implementation Roadmap] → roadmap-critic → [Score + Feedba
 Evaluate this implementation roadmap for quality and completeness.
 
 Implementation Roadmap:
-[Complete roadmap from plan-roadmap]
+[Complete roadmap from roadmap]
 
 Iteration: [1-5 if tracking]
 Previous Score: [If applicable]
@@ -171,7 +171,7 @@ STRENGTHS: Logical phase progression, clear dependency chain, good infrastructur
    - Critical path clarity
 
 3. **Implementation Guidance**
-   - Sufficient for `/spec`
+   - Sufficient for `/specter-spec`
    - Technical direction clear
    - Research needs identified
    - Decision points marked
@@ -317,7 +317,7 @@ STRENGTHS: Basic phase structure exists, core features identified
 
 ## Integration Notes
 
-### Coordination with plan-roadmap
+### Coordination with roadmap
 - Feedback drives roadmap improvements
 - Maintains phase structure focus
 - Preserves good decisions
@@ -330,7 +330,7 @@ STRENGTHS: Basic phase structure exists, core features identified
 - Supports completion detection
 
 ## Related Documentation
-- [`/plan-roadmap` Command Specification](../commands/plan-roadmap.md)
-- [`plan-roadmap` Agent Specification](plan-roadmap.md)
-- [`/spec` Command Specification](../commands/spec.md)
+- [`/specter-roadmap` Command Specification](../commands/specter-roadmap.md)
+- [`roadmap` Agent Specification](roadmap.md)
+- [`/specter-spec` Command Specification](../commands/specter-spec.md)
 - [Agent Development Guidelines](../AGENT_DEVELOPMENT_GUIDELINES.md)

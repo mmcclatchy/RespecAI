@@ -28,12 +28,10 @@ class PlatformOrchestrator:
         return cls(default_config_dir)
 
     def setup_project(self, request: ProjectSetupRequest) -> ProjectConfig:
-        # Validate chosen platform meets requirements
         requirements_dict = request.requirements.model_dump()
         if not self.platform_selector.validate_platform_choice(request.platform, requirements_dict):
             raise ValueError(f'Platform {request.platform.value} does not meet requirements: {requirements_dict}')
 
-        # Create and save project configuration
         config = ProjectConfig(
             project_path=request.project_path,
             platform=request.platform,
@@ -48,7 +46,6 @@ class PlatformOrchestrator:
         requirements_dict = request.requirements.model_dump()
         platform = self.platform_selector.recommend_platform(requirements_dict)
 
-        # Create and save project configuration
         config = ProjectConfig(
             project_path=request.project_path, platform=platform, requirements=request.requirements, config_data={}
         )
@@ -65,14 +62,11 @@ class PlatformOrchestrator:
         return self.setup_project(request)
 
     def generate_command_template(self, request: TemplateGenerationRequest) -> str:
-        # Get project platform
         config = self.config_manager.load_project_config(request.project_path)
 
-        # Validate platform supports command
         if not self.template_coordinator.validate_template_generation(request.command_name, config.platform):
             raise ValueError(f'Platform {config.platform.value} does not support command: {request.command_name}')
 
-        # Generate template with platform-specific tools
         return self.template_coordinator.generate_command_template(request.command_name, config.platform)
 
     def get_project_platform(self, project_path: str) -> PlatformType:
@@ -83,18 +77,14 @@ class PlatformOrchestrator:
         return self.tool_registry.get_all_tools_for_platform(config.platform)
 
     def change_project_platform(self, request: ProjectPlatformChangeRequest) -> None:
-        # Load existing config to preserve other settings
         existing_config = self.config_manager.load_project_config(request.project_path)
 
-        # Use new requirements if provided, otherwise keep existing
         requirements = request.requirements or existing_config.requirements
 
-        # Validate new platform meets requirements
         requirements_dict = requirements.model_dump()
         if not self.platform_selector.validate_platform_choice(request.new_platform, requirements_dict):
             raise ValueError(f'Platform {request.new_platform.value} does not meet requirements: {requirements_dict}')
 
-        # Create updated configuration
         updated_config = ProjectConfig(
             project_path=request.project_path,
             platform=request.new_platform,
@@ -102,7 +92,6 @@ class PlatformOrchestrator:
             config_data=existing_config.config_data,
         )
 
-        # Save updated configuration
         self.config_manager.save_project_config(updated_config)
 
     def list_configured_projects(self) -> list[ProjectConfig]:
@@ -126,11 +115,9 @@ class PlatformOrchestrator:
         except ValueError:
             return False
 
-        # Validate platform still exists and is supported
         if config.platform not in self.get_available_platforms():
             return False
 
-        # Validate platform still meets requirements
         requirements_dict = config.requirements.model_dump()
         if not self.platform_selector.validate_platform_choice(config.platform, requirements_dict):
             return False

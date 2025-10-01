@@ -1,11 +1,11 @@
-# /plan-conversation Command Specification
+# /specter-plan-conversation Command Specification
 
 ## Overview
-The `/plan-conversation` command conducts structured conversational requirements gathering through natural dialogue with users. It operates as an interactive discovery tool that transforms business ideas into comprehensive structured context for strategic planning, emphasizing user comfort and natural conversation flow over formal requirements elicitation.
+The `/specter-plan-conversation` command conducts structured conversational requirements gathering through natural dialogue with users. It operates as an interactive discovery tool that transforms business ideas into comprehensive structured context for strategic planning, emphasizing user comfort and natural conversation flow over formal requirements elicitation.
 
 ## Command Metadata
 
-**Name**: `/plan-conversation`
+**Name**: `/specter-plan-conversation`
 **Type**: Interactive conversational discovery tool
 **Phase**: Requirements Gathering (Sub-phase of Strategic Planning)
 **Model**: Claude Sonnet (default)
@@ -14,13 +14,13 @@ The `/plan-conversation` command conducts structured conversational requirements
 ## Invocation
 
 ### Who Invokes It
-- **Primary**: `/plan` command during strategic planning workflow
+- **Primary**: `/specter-plan` command during strategic planning workflow
 - **Secondary**: Can be invoked independently for requirements exploration
 - **Context**: When comprehensive user requirements need to be gathered through dialogue
 
 ### Trigger Format
 ```text
-/plan-conversation [optional-context]
+/specter-plan-conversation [optional-context]
 ```
 
 ### Parameters
@@ -29,7 +29,7 @@ The `/plan-conversation` command conducts structured conversational requirements
 ## Workflow Position
 
 ```text
-/plan command → /plan-conversation → Structured Context → Strategic Plan Generation
+/specter-plan command → /specter-plan-conversation → Structured Context → Strategic Plan Generation
                        ↓
                [3-Stage Progressive Dialogue]
                        ↓
@@ -39,11 +39,11 @@ The `/plan-conversation` command conducts structured conversational requirements
 ```
 
 ### Position in Strategic Planning Flow
-1. **Sub-Command**: Called by `/plan` command for requirements gathering
+1. **Sub-Command**: Called by `/specter-plan` command for requirements gathering
 2. **Input**: Optional initial context or starting prompt
 3. **Process**: Interactive 3-stage conversation with user
 4. **Output**: Structured JSON context for strategic plan generation
-5. **Handoff**: Returns control to `/plan` command with conversation results
+5. **Handoff**: Returns control to `/specter-plan` command with conversation results
 
 ## Primary Responsibilities
 
@@ -202,7 +202,7 @@ After completing all conversation stages and meeting completion criteria, genera
 ```
 
 ### Handoff Protocol
-Once structured context is generated, return control to calling `/plan` command with:
+Once structured context is generated, return control to calling `/specter-plan` command with:
 - **CONVERSATION_CONTEXT**: Complete JSON structure populated with conversation insights
 - **Completion Status**: Confirmation that all stages were completed successfully
 - **Quality Assessment**: Engagement level and conversation effectiveness summary
@@ -254,18 +254,18 @@ If conversation cannot be completed due to persistent issues:
 - Populate `CONVERSATION_CONTEXT` with available information
 - Include detailed notes in `conversation_summary` about challenges encountered
 - Mark `user_engagement_level` as "low" with specific reasons
-- Return partial context to `/plan` command with completion status
+- Return partial context to `/specter-plan` command with completion status
 
-## Integration with /plan Command
+## Integration with /specter-plan Command
 
 ### Command Relationship
-- **Called By**: `/plan` command during Step 2 of strategic planning workflow
+- **Called By**: `/specter-plan` command during Step 2 of strategic planning workflow
 - **Purpose**: Replace direct requirements gathering with natural conversation
 - **Context Handoff**: Receives optional starting context, returns structured JSON
 - **Error Handling**: Reports completion status and engagement quality to caller
 
 ### Variable Integration
-- **Input Variable**: Uses starting context from `/plan` command's `$ARGUMENTS`
+- **Input Variable**: Uses starting context from `/specter-plan` command's `$ARGUMENTS`
 - **Output Variable**: Populates `CONVERSATION_CONTEXT` for strategic plan generation
 - **State Management**: Operates independently without MCP tools or persistent state
 
@@ -273,7 +273,7 @@ If conversation cannot be completed due to persistent issues:
 When conversation completes successfully:
 1. **Context Ready**: Structured JSON context prepared for strategic plan generation
 2. **Quality Validated**: All completion criteria met and user satisfaction confirmed
-3. **Handoff Clean**: Clear return to `/plan` command for strategic plan creation
+3. **Handoff Clean**: Clear return to `/specter-plan` command for strategic plan creation
 4. **Error Free**: No conversation issues or information gaps requiring escalation
 
 ## Implementation Notes
@@ -298,7 +298,7 @@ When conversation completes successfully:
 4. **Error Resilience**
    - Multiple recovery patterns for different conversation challenges
    - Graceful degradation when full completion isn't possible
-   - Clear escalation path to `/plan` command with partial results
+   - Clear escalation path to `/specter-plan` command with partial results
 
 5. **User Experience Focus**
    - Maintain conversational flow without feeling like form-filling
@@ -320,7 +320,7 @@ When conversation completes successfully:
 - **Strategic Plan Readiness**: Context sufficient for high-quality strategic plan generation
 
 ## Related Documentation
-- **Parent Command**: [`/plan` Command Specification](plan.md)
+- **Parent Command**: [`/specter-plan` Command Specification](plan.md)
 - **Output Usage**: Strategic plan generation and ProjectPlan model creation
 - **Quality Framework**: FSDD assessment preparation through comprehensive context
 - **Integration Pattern**: Sub-command invocation and structured context handoff

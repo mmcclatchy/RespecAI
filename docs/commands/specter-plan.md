@@ -1,11 +1,11 @@
-# /plan Command Specification
+# /specter-plan Command Specification
 
 ## Overview
-The `/plan` command orchestrates the strategic planning workflow through conversational requirements gathering and dual-loop quality assessment. It transforms natural language business requirements into validated strategic plans through human-in-the-loop conversation followed by automated quality refinement.
+The `/specter-plan` command orchestrates the strategic planning workflow through conversational requirements gathering and dual-loop quality assessment. It transforms natural language business requirements into validated strategic plans through human-in-the-loop conversation followed by automated quality refinement.
 
 ## Command Metadata
 
-**Name**: `/plan`
+**Name**: `/specter-plan`
 **Type**: Conversational workflow orchestrator
 **Phase**: Strategic Planning (Phase 1 of 4)
 **Model**: Claude Sonnet (default)
@@ -19,7 +19,7 @@ The `/plan` command orchestrates the strategic planning workflow through convers
 
 ### Trigger Format
 ```text
-/plan [plan-name] [starting-prompt]
+/specter-plan [plan-name] [starting-prompt]
 ```
 
 ### Parameters
@@ -29,27 +29,27 @@ The `/plan` command orchestrates the strategic planning workflow through convers
 ## Workflow Position
 
 ```text
-User starts → /plan → [/plan-conversation] → Strategic Plan → [plan-critic ↔ refinement loop]
+User starts → /specter-plan → [/specter-plan-conversation] → Strategic Plan → [plan-critic ↔ refinement loop]
                  ↓                                               ↓
         Conversational Discovery                        Quality Assessment
                  ↓                                               ↓
         Structured Context                              [plan-analyst ↔ analyst-critic loop]
                                                                  ↓
-                                              Ready for /plan-roadmap command
+                                              Ready for /specter-roadmap command
 ```
 
 ### Position in End-to-End Flow
 1. **First Phase**: Initial entry point for all development workflows
-2. **Precedes**: Implementation roadmap (`/plan-roadmap`) phase
+2. **Precedes**: Implementation roadmap (`/specter-roadmap`) phase
 3. **Dependencies**: None - can be invoked independently
-4. **Output Used By**: `/plan-roadmap` command and roadmap generation agents
+4. **Output Used By**: `/specter-roadmap` command and roadmap generation agents
 
 ## Primary Responsibilities
 
 ### Core Tasks
 
 1. **Conversational Requirements Orchestration**
-   - Invoke `/plan-conversation` command for user dialogue
+   - Invoke `/specter-plan-conversation` command for user dialogue
    - Manage conversation flow and completion validation
    - Process structured conversation context into strategic plan
 
@@ -79,10 +79,10 @@ User starts → /plan → [/plan-conversation] → Strategic Plan → [plan-crit
 
 ### Complete Workflow Orchestration
 ```text
-Main Agent (via /plan)
+Main Agent (via /specter-plan)
     │
     ├── 1. Conversational Requirements Gathering
-    │   ├── Command: /plan-conversation (3-stage dialogue)
+    │   ├── Command: /specter-plan-conversation (3-stage dialogue)
     │   ├── Process: Structured JSON context collection
     │   ├── User Control: User drives conversation pacing and completion
     │   └── State: mcp_tool: store_conversation_context(context_json)
@@ -99,7 +99,7 @@ Main Agent (via /plan)
     │   └── User Choice: Continue conversation | Refine plan | Accept plan
     │
     ├── 4. Handle User Decision
-    │   ├── IF "continue conversation" → Return to /plan-conversation with context
+    │   ├── IF "continue conversation" → Return to /specter-plan-conversation with context
     │   ├── IF "refine plan" → Generate new plan version with feedback
     │   └── IF "accept plan" → Proceed to analyst validation
     │
@@ -119,13 +119,13 @@ Main Agent (via /plan)
     │
     └── 8. Final Output and Handoff
         ├── Final Storage: mcp_tool: store_project_plan(project_plan_markdown)
-        └── ProjectPlan ready for /plan-roadmap command
+        └── ProjectPlan ready for /specter-roadmap command
 ```
 
 ### Data Flow Between Components
 **Human-Driven Conversation Phase:**
-- **Main Agent → /plan-conversation**: Initial context + conversation orchestration
-- **/plan-conversation → Main Agent**: Structured JSON context with requirements
+- **Main Agent → /specter-plan-conversation**: Initial context + conversation orchestration
+- **/specter-plan-conversation → Main Agent**: Structured JSON context with requirements
 - **Main Agent → Strategic Plan**: Template application and document generation
 - **Main Agent → plan-critic**: Strategic plan for FSDD assessment
 - **plan-critic → Main Agent**: Quality score (0-100) and structured feedback
@@ -143,7 +143,7 @@ Main Agent (via /plan)
 
 ### Conversation Phase Checkpoints
 ```text
-/plan-conversation execution:
+/specter-plan-conversation execution:
 ├── Stage 1: Vision Discovery → Progress: "Vision and context gathered"
 ├── Stage 2: Requirements Refinement → Progress: "Requirements and constraints defined"
 ├── Stage 3: Validation → Progress: "Understanding validated, conversation complete"
@@ -155,7 +155,7 @@ Main Agent (via /plan)
 Plan Generation and User Review:
 ├── Strategic Plan Created → Present to user with quality assessment
 ├── User Decision Point → Clear options presented:
-│   ├── "Continue conversation" → Return to /plan-conversation with context
+│   ├── "Continue conversation" → Return to /specter-plan-conversation with context
 │   ├── "Refine plan" → Generate new version with specific feedback
 │   └── "Accept plan" → Proceed to analyst validation
 ├── Quality Feedback → Show plan-critic assessment results:
@@ -222,7 +222,7 @@ ANALYST Loop (max 3 iterations, threshold varies by configuration):
 ## Structured Data Models
 
 ### ProjectPlan Model
-The `/plan` command creates and stores structured ProjectPlan models:
+The `/specter-plan` command creates and stores structured ProjectPlan models:
 ```python
 class ProjectPlan(MCPModel):
     project_name: str
@@ -255,7 +255,7 @@ class CriticFeedback(MCPModel):
 
 ### Input Requirements
 - **User Context**: Natural language business requirements through conversation
-- **Format**: Interactive dialogue through `/plan-conversation` command
+- **Format**: Interactive dialogue through `/specter-plan-conversation` command
 - **Scope**: Can range from high-level vision to detailed business constraints
 
 ### Output Specifications
@@ -269,7 +269,7 @@ class CriticFeedback(MCPModel):
 ### Common Failure Scenarios
 
 1. **Conversation Completion Failure**
-   - **Error**: `/plan-conversation` returns incomplete or invalid context
+   - **Error**: `/specter-plan-conversation` returns incomplete or invalid context
    - **Recovery**: Retry conversation with simplified prompts, continue with available context
    - **User Message**: "Conversation incomplete. Proceeding with available context. Some refinement may be needed."
 
@@ -297,21 +297,21 @@ class CriticFeedback(MCPModel):
 
 ### Complete Workflow Example
 ```text
-User: /plan customer-feedback-system
+User: /specter-plan customer-feedback-system
 
 Main Agent: I'll help you create a strategic plan for your customer feedback system. Let me start with conversational requirements gathering.
 
-[Invokes /plan-conversation command]
+[Invokes /specter-plan-conversation command]
 
-/plan-conversation: Hello! Let's explore your customer feedback system project. What's the main problem you're trying to solve with this system?
+/specter-plan-conversation: Hello! Let's explore your customer feedback system project. What's the main problem you're trying to solve with this system?
 
 User: We're getting overwhelmed with support tickets and can't prioritize them effectively. We need AI to help categorize and route tickets.
 
-/plan-conversation: That makes sense - automation for ticket triage. Tell me more about your current process and what you envision...
+/specter-plan-conversation: That makes sense - automation for ticket triage. Tell me more about your current process and what you envision...
 
 [3-stage conversation continues until completion criteria met]
 
-/plan-conversation: Perfect! I have comprehensive context covering your vision, requirements, and constraints. Let me structure this for strategic planning.
+/specter-plan-conversation: Perfect! I have comprehensive context covering your vision, requirements, and constraints. Let me structure this for strategic planning.
 
 Main Agent: Conversation complete! Creating strategic plan from your requirements...
 
@@ -368,10 +368,10 @@ Main Agent: Strategic planning complete!
 - **Plan Quality**: 81% (User-accepted after quality review)
 - **Objective Validation**: 87% (Automated extraction and validation complete)
 - **Conversation Archive**: 3-stage requirements gathering preserved with user decisions
-- **Ready for**: /plan-roadmap to create implementation phases
+- **Ready for**: /specter-roadmap to create implementation phases
 
 ## Next Steps
-Use `/plan-roadmap` to break this strategic plan into implementable phases.
+Use `/specter-roadmap` to break this strategic plan into implementable phases.
 ```
 
 ## Implementation Notes
@@ -379,7 +379,7 @@ Use `/plan-roadmap` to break this strategic plan into implementable phases.
 ### Key Considerations for Claude Code
 
 1. **Conversation Integration**
-   - Seamless handoff between `/plan` orchestration and `/plan-conversation` dialogue
+   - Seamless handoff between `/specter-plan` orchestration and `/specter-plan-conversation` dialogue
    - Preserve conversation context throughout workflow
    - Handle conversation completion validation and error recovery
 
@@ -407,7 +407,7 @@ Use `/plan-roadmap` to break this strategic plan into implementable phases.
 
 ### Required Components
 - **MCP Server**: Dual loop state management and decision logic
-- **/plan-conversation command**: Interactive requirements gathering
+- **/specter-plan-conversation command**: Interactive requirements gathering
 - **plan-critic agent**: FSDD quality assessment and feedback
 - **plan-analyst agent**: Business objective extraction
 - **analyst-critic agent**: Objective validation and quality assessment
@@ -446,11 +446,11 @@ Use `/plan-roadmap` to break this strategic plan into implementable phases.
 - **User Satisfaction**: Natural conversation flow maintained throughout
 - **Output Completeness**: All business objectives captured and validated
 - **Clarity**: Requirements unambiguous and actionable for technical roadmap
-- **Implementation Readiness**: Sufficient detail for `/plan-roadmap` without gaps
+- **Implementation Readiness**: Sufficient detail for `/specter-roadmap` without gaps
 
 ## Related Documentation
-- **Next Phase**: [`/plan-roadmap` Command Specification](plan-roadmap.md)
-- **Conversation Command**: [`/plan-conversation` Command Specification](plan-conversation.md)
-- **Quality Agent**: [`plan-critic` Agent Specification](../agents/plan-critic.md)
-- **Analysis Agent**: [`plan-analyst` Agent Specification](../agents/plan-analyst.md)
+- **Next Phase**: [`/specter-roadmap` Command Specification](roadmap.md)
+- **Conversation Command**: [`/specter-plan-conversation` Command Specification](plan-conversation.md)
+- **Quality Agent**: [`plan-critic` Agent Specification](../agents/specter-plan-critic.md)
+- **Analysis Agent**: [`plan-analyst` Agent Specification](../agents/specter-plan-analyst.md)
 - **Validation Agent**: [`analyst-critic` Agent Specification](../agents/analyst-critic.md)

@@ -8,7 +8,7 @@ The `spec-critic` agent evaluates technical specifications against FSDD quality 
 **Name**: `spec-critic`  
 **Type**: Technical specification validation specialist  
 **Model**: Claude Sonnet  
-**Invoked By**: Main Agent via `/spec` command  
+**Invoked By**: Main Agent via `/specter-spec` command  
 **Phase**: Technical Specification (Loop 2 - Assessment)  
 
 ## Invocation Context
@@ -450,7 +450,7 @@ Focus on data model and API specifications first - these are blocking implementa
 - Supports completion detection
 
 ## Related Documentation
-- **Command**: [`/spec` Command Specification](../commands/spec.md)
+- **Command**: [`/specter-spec` Command Specification](../commands/specter-spec.md)
 - **Architect**: [`spec-architect` Agent Specification](spec-architect.md)
 - **Next Phase**: [`build-planner` Agent Specification](build-planner.md)
 - **MCP Tools**: [MCP Tools Specification](../MCP_TOOLS_SPECIFICATION.md)

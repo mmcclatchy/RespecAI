@@ -46,9 +46,9 @@ class TemplateToolBuilder:
 def create_spec_command_tools(platform_tools: list[str]) -> str:
     builder = (
         TemplateToolBuilder()
-        .add_task_agent('spec-architect')
-        .add_task_agent('spec-critic')
-        .add_task_agent('plan-analyst')
+        .add_task_agent('specter-spec-architect')
+        .add_task_agent('specter-spec-critic')
+        .add_task_agent('specter-plan-analyst')
         .add_bash_script('~/.claude/scripts/research-advisor-archive-scan.sh:*')
         .add_specter_tool(SpecterMCPTool.INITIALIZE_REFINEMENT_LOOP)
         .add_specter_tool(SpecterMCPTool.DECIDE_LOOP_NEXT_ACTION)
@@ -67,10 +67,10 @@ def create_plan_command_tools(platform_tools: list[str]) -> str:
     """
     builder = (
         TemplateToolBuilder()
-        .add_task_agent('plan-conversation')
-        .add_task_agent('plan-critic')
-        .add_task_agent('plan-analyst')
-        .add_task_agent('analyst-critic')
+        .add_task_agent('specter-plan-conversation')
+        .add_task_agent('specter-plan-critic')
+        .add_task_agent('specter-plan-analyst')
+        .add_task_agent('specter-analyst-critic')
         .add_specter_tool(SpecterMCPTool.INITIALIZE_REFINEMENT_LOOP)
         .add_specter_tool(SpecterMCPTool.DECIDE_LOOP_NEXT_ACTION)
         .add_specter_tool(SpecterMCPTool.GET_PREVIOUS_OBJECTIVE_FEEDBACK)
@@ -94,11 +94,11 @@ def create_plan_command_tools(platform_tools: list[str]) -> str:
 def create_build_command_tools(platform_tools: list[str]) -> str:
     builder = (
         TemplateToolBuilder()
-        .add_task_agent('build-planner')
-        .add_task_agent('build-critic')
-        .add_task_agent('build-coder')
-        .add_task_agent('build-reviewer')
-        .add_task_agent('research-synthesizer')
+        .add_task_agent('specter-build-planner')
+        .add_task_agent('specter-build-critic')
+        .add_task_agent('specter-build-coder')
+        .add_task_agent('specter-build-reviewer')
+        .add_task_agent('specter-research-synthesizer')
         .add_bash_script('~/.claude/scripts/detect-packages.sh:*')
         .add_specter_tool(SpecterMCPTool.INITIALIZE_REFINEMENT_LOOP)
         .add_specter_tool(SpecterMCPTool.DECIDE_LOOP_NEXT_ACTION)
@@ -112,9 +112,9 @@ def create_build_command_tools(platform_tools: list[str]) -> str:
 def create_plan_roadmap_tools(platform_tools: list[str]) -> str:
     builder = (
         TemplateToolBuilder()
-        .add_task_agent('plan-roadmap')
-        .add_task_agent('roadmap-critic')
-        .add_task_agent('create-spec')
+        .add_task_agent('specter-roadmap')
+        .add_task_agent('specter-roadmap-critic')
+        .add_task_agent('specter-create-spec')
         .add_specter_tool(SpecterMCPTool.INITIALIZE_REFINEMENT_LOOP)
         .add_specter_tool(SpecterMCPTool.DECIDE_LOOP_NEXT_ACTION)
         .add_specter_tool(SpecterMCPTool.GET_LOOP_STATUS)
