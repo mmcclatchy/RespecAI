@@ -1,45 +1,10 @@
-def generate_plan_roadmap_command_template(
-    get_project_plan_tool: str = 'mcp__specter__get_project_plan_markdown',
-    update_project_plan_tool: str = 'mcp__specter__update_project_plan',
-    create_spec_tool: str = 'Write',
-    get_spec_tool: str = 'mcp__specter__get_spec',
-    update_spec_tool: str = 'mcp__specter__update_spec',
-) -> str:
-    """Generate plan-roadmap command template for orchestrating InitialSpec creation.
+from services.platform.models import PlanRoadmapCommandTools
 
-    Dual Tool Architecture:
-    - MCP Specter Tools: Explicitly defined for loop management and spec management
-    - Platform Tools: Injected for external spec creation (Markdown/Linear/GitHub)
-    """
-    # Safe Python list construction to prevent YAML injection
-    base_tools = [
-        'Task(plan-roadmap)',
-        'Task(roadmap-critic)',
-        'Task(create-spec)',
-        'mcp__specter__initialize_refinement_loop',
-        'mcp__specter__decide_loop_next_action',
-        'mcp__specter__get_loop_status',
-        'mcp__specter__get_project_plan_markdown',
-        'mcp__specter__add_spec',
-        'mcp__specter__list_specs',
-    ]
 
-    # Add platform tools with validation
-    platform_tools = [
-        get_project_plan_tool,
-        update_project_plan_tool,
-        create_spec_tool,
-        get_spec_tool,
-        update_spec_tool,
-    ]
-    all_tools = base_tools + platform_tools
-
-    # Convert to YAML with proper escaping
-    tools_yaml = '\n'.join(f'  - {tool}' for tool in all_tools)
-
+def generate_plan_roadmap_command_template(tools: PlanRoadmapCommandTools) -> str:
     return f"""---
 allowed-tools:
-{tools_yaml}
+{tools.tools_yaml}
 argument-hint: [project-name] [optional: phasing-preferences]
 description: Transform strategic plans into multiple InitialSpecs through quality-driven refinement
 ---
@@ -177,7 +142,7 @@ For each planned_spec in SPEC_CREATION_PLAN:
         Project ID: {{project_id}}
         Spec Name: {{planned_spec.name}}
         Phase Context: {{planned_spec.context}}
-        Platform Tools: {{planned_spec.platform_tools}}
+        Platform Tools: Use {tools.create_spec_tool} for spec creation
         Sprint Scope: {{planned_spec.scope_validation}}
         '''
     )

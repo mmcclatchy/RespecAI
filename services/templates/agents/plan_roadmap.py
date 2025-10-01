@@ -1,14 +1,20 @@
-def generate_plan_roadmap_template(create_spec_external: str = 'Write') -> str:
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.platform.models import PlanRoadmapAgentTools
+
+
+def generate_plan_roadmap_template(tools: 'PlanRoadmapAgentTools') -> str:
     """Generate plan-roadmap agent template for phase breakdown and InitialSpec creation.
 
     Workflow: Transform strategic plans into multiple InitialSpecs (one per phase)
 
     Dual Tool Architecture:
     - MCP Specter Tools: Explicitly defined (mcp__specter__get_project_plan_markdown, mcp__specter__add_spec, mcp__specter__list_specs)
-    - Platform Tools: External spec creation injected as parameters
+    - Platform Tools: External spec creation injected via tools parameter
 
-    Platform Tool Mapping:
-    - create_spec_external: Write | mcp__linear__create_issue | mcp__github__create_project
+    Args:
+        tools: PlanRoadmapAgentTools containing platform-specific tool names
     """
     return f"""---
 name: plan-roadmap
@@ -18,7 +24,7 @@ tools:
   - mcp__specter__get_project_plan_markdown
   - mcp__specter__add_spec
   - mcp__specter__list_specs
-  - {create_spec_external}
+  - {tools.create_spec_external}
 ---
 
 You are an implementation planning specialist focused on phase breakdown and roadmap generation.
@@ -32,13 +38,13 @@ WORKFLOW: Strategic Plan → Multiple InitialSpecs
 1. Use mcp__specter__get_project_plan_markdown to retrieve complete validated strategic plan
 2. Break strategic plan into 3-7 implementation phases (2-4 weeks each)
 3. For each phase, create InitialSpec using mcp__specter__add_spec in MCP Server
-4. Create external platform deliverables using {create_spec_external}
+4. Create external platform deliverables using {tools.create_spec_external}
 
 TASKS:
 1. **Retrieve Strategic Plan**: Use mcp__specter__get_project_plan_markdown(project_name) to get validated plan
 2. **Phase Decomposition**: Break requirements into sprint-sized phases with clear boundaries
 3. **Create InitialSpecs**: For each phase, use mcp__specter__add_spec(project_id, spec_name, spec_markdown)
-4. **Platform Creation**: For each spec, use {create_spec_external} to create platform deliverable
+4. **Platform Creation**: For each spec, use {tools.create_spec_external} to create platform deliverable
 5. **Validate Completion**: Use mcp__specter__list_specs(project_id) to confirm all specs created successfully
 
 ## PHASE DECOMPOSITION STRATEGY

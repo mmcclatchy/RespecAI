@@ -1,5 +1,6 @@
 from services.models.plan_completion_report import PlanCompletionReport
 from services.models.project_plan import ProjectPlan
+from services.platform.models import PlanCommandTools
 
 
 # Create template instance with instructional placeholders
@@ -50,41 +51,10 @@ plan_completion_template = PlanCompletionReport(
 ).build_markdown()
 
 
-def generate_plan_command_template(create_project_external: str, create_project_completion_external: str) -> str:
-    # Safe Python list construction to prevent YAML injection
-    base_tools = [
-        'Task(plan-conversation)',
-        'Task(plan-critic)',
-        'Task(plan-analyst)',
-        'Task(analyst-critic)',
-        'mcp__specter__initialize_refinement_loop',
-        'mcp__specter__decide_loop_next_action',
-        'mcp__specter__get_previous_objective_feedback',
-        'mcp__specter__store_current_objective_feedback',
-        'mcp__specter__store_project_plan',
-        'mcp__specter__get_project_plan_markdown',
-        'mcp__specter__get_conversation_context',
-        'mcp__specter__store_conversation_context',
-        'mcp__specter__store_critic_feedback',
-        'mcp__specter__get_previous_feedback',
-        'mcp__specter__store_current_analysis',
-        'mcp__specter__get_previous_analysis',
-        'mcp__specter__create_plan_completion_report',
-        'mcp__specter__store_plan_completion_report',
-        'mcp__specter__get_plan_completion_report_markdown',
-        'mcp__specter__update_plan_completion_report',
-    ]
-
-    # Add platform tools with validation
-    platform_tools = [create_project_external, create_project_completion_external]
-    all_tools = base_tools + platform_tools
-
-    # Convert to YAML with proper escaping
-    tools_yaml = '\n'.join(f'  - {tool}' for tool in all_tools)
-
+def generate_plan_command_template(tools: PlanCommandTools) -> str:
     return f"""---
 allowed-tools:
-{tools_yaml}
+{tools.tools_yaml}
 argument-hint: [plan-name] [starting-prompt]
 description: Orchestrate strategic planning workflow
 ---
@@ -166,7 +136,7 @@ Expected structured format from plan-conversation:
 #### Transform conversation context into a strategic plan document:
 
 Retrieve conversation context from MCP and create strategic plan:
-```
+```text
 Conversation context available via: mcp__specter__get_conversation_context(PROJECT_NAME)
 Previous feedback available via: mcp__specter__get_previous_feedback(PROJECT_NAME)
 ```
@@ -419,8 +389,8 @@ Use the MCP tool `mcp__specter__decide_loop_next_action`:
 - Store completion report: `mcp__specter__store_plan_completion_report(PROJECT_NAME, completion_report_markdown)`
 - Display completion message with final analyst score
 - Present final output using the stored completion report
-- Create external project using: {create_project_external}
-- Create external project completion using: {create_project_completion_external}
+- Create external project using {tools.create_project_external}
+- Create external project completion using {tools.create_project_completion_external}
 
 ## Final Output Format
 ```markdown

@@ -1,35 +1,25 @@
 """Tests for command template generation functions."""
 
-from services.templates.commands.plan_roadmap_command import generate_plan_roadmap_command_template
+from services.platform.template_coordinator import TemplateCoordinator
+from services.platform.platform_selector import PlatformType
 
 
 class TestPlanRoadmapCommandTemplate:
     def test_template_has_required_tools(self) -> None:
-        template = generate_plan_roadmap_command_template(
-            get_project_plan_tool='test_get_tool',
-            update_project_plan_tool='test_update_tool',
-            create_spec_tool='test_create_tool',
-            get_spec_tool='test_get_spec_tool',
-            update_spec_tool='test_update_spec_tool',
-        )
+        coordinator = TemplateCoordinator()
+        template = coordinator.generate_command_template('plan-roadmap', PlatformType.LINEAR)
 
         # Check YAML frontmatter tools
         assert '- Task(plan-roadmap)' in template
         assert '- Task(roadmap-critic)' in template
         assert '- Task(create-spec)' in template
-        assert '- test_get_tool' in template
-        assert '- test_create_tool' in template
+        assert '- mcp__linear-server__' in template  # Should contain Linear tools
         assert '- mcp__specter__initialize_refinement_loop' in template
         assert '- mcp__specter__decide_loop_next_action' in template
 
     def test_template_includes_required_yaml_sections(self) -> None:
-        template = generate_plan_roadmap_command_template(
-            get_project_plan_tool='test_get',
-            update_project_plan_tool='test_update',
-            create_spec_tool='test_create',
-            get_spec_tool='test_get_spec',
-            update_spec_tool='test_update_spec',
-        )
+        coordinator = TemplateCoordinator()
+        template = coordinator.generate_command_template('plan-roadmap', PlatformType.LINEAR)
 
         assert '---' in template
         assert 'allowed-tools:' in template
@@ -37,13 +27,8 @@ class TestPlanRoadmapCommandTemplate:
         assert 'description:' in template
 
     def test_template_is_orchestration_focused(self) -> None:
-        template = generate_plan_roadmap_command_template(
-            get_project_plan_tool='test_get',
-            update_project_plan_tool='test_update',
-            create_spec_tool='test_create',
-            get_spec_tool='test_get_spec',
-            update_spec_tool='test_update_spec',
-        )
+        coordinator = TemplateCoordinator()
+        template = coordinator.generate_command_template('plan-roadmap', PlatformType.LINEAR)
 
         # Should contain orchestration keywords
         orchestration_terms = ['Orchestration', 'Workflow', 'Coordination']
@@ -61,13 +46,8 @@ class TestPlanRoadmapCommandTemplate:
             assert detail not in template, f'Template should not contain detailed implementation: {detail}'
 
     def test_template_has_no_quality_thresholds(self) -> None:
-        template = generate_plan_roadmap_command_template(
-            get_project_plan_tool='test_get',
-            update_project_plan_tool='test_update',
-            create_spec_tool='test_create',
-            get_spec_tool='test_get_spec',
-            update_spec_tool='test_update_spec',
-        )
+        coordinator = TemplateCoordinator()
+        template = coordinator.generate_command_template('plan-roadmap', PlatformType.LINEAR)
 
         # Should not contain threshold percentages or direct threshold logic
         threshold_terms = ['85%', '90%', 'quality gate', 'threshold:', 'threshold =', 'if score >']
@@ -75,26 +55,16 @@ class TestPlanRoadmapCommandTemplate:
             assert term not in template, f'Template should not reference thresholds: {term}'
 
     def test_template_includes_parallel_spec_creation(self) -> None:
-        template = generate_plan_roadmap_command_template(
-            get_project_plan_tool='test_get',
-            update_project_plan_tool='test_update',
-            create_spec_tool='test_create',
-            get_spec_tool='test_get_spec',
-            update_spec_tool='test_update_spec',
-        )
+        coordinator = TemplateCoordinator()
+        template = coordinator.generate_command_template('plan-roadmap', PlatformType.LINEAR)
 
         # Should include create-spec agent and parallel coordination
         assert 'Task(create-spec)' in template
         assert 'parallel' in template.lower() or 'concurrent' in template.lower()
 
     def test_template_includes_mcp_action_handling(self) -> None:
-        template = generate_plan_roadmap_command_template(
-            get_project_plan_tool='test_get',
-            update_project_plan_tool='test_update',
-            create_spec_tool='test_create',
-            get_spec_tool='test_get_spec',
-            update_spec_tool='test_update_spec',
-        )
+        coordinator = TemplateCoordinator()
+        template = coordinator.generate_command_template('plan-roadmap', PlatformType.LINEAR)
 
         # Should include MCP action patterns
         mcp_actions = ['refine', 'complete', 'user_input']
@@ -102,13 +72,8 @@ class TestPlanRoadmapCommandTemplate:
             assert action in template, f'Template should handle MCP action: {action}'
 
     def test_template_size_is_reasonable(self) -> None:
-        template = generate_plan_roadmap_command_template(
-            get_project_plan_tool='test_get',
-            update_project_plan_tool='test_update',
-            create_spec_tool='test_create',
-            get_spec_tool='test_get_spec',
-            update_spec_tool='test_update_spec',
-        )
+        coordinator = TemplateCoordinator()
+        template = coordinator.generate_command_template('plan-roadmap', PlatformType.LINEAR)
 
         lines = template.split('\n')
         line_count = len(lines)
@@ -117,13 +82,8 @@ class TestPlanRoadmapCommandTemplate:
         assert 100 <= line_count <= 300, f'Template should be 100-300 lines, got {line_count}'
 
     def test_template_has_no_agent_behavioral_instructions(self) -> None:
-        template = generate_plan_roadmap_command_template(
-            get_project_plan_tool='test_get',
-            update_project_plan_tool='test_update',
-            create_spec_tool='test_create',
-            get_spec_tool='test_get_spec',
-            update_spec_tool='test_update_spec',
-        )
+        coordinator = TemplateCoordinator()
+        template = coordinator.generate_command_template('plan-roadmap', PlatformType.LINEAR)
 
         # Should not contain agent behavioral instructions
         behavioral_instructions = [
@@ -139,13 +99,8 @@ class TestPlanRoadmapCommandTemplate:
             assert instruction not in template, f'Template should not contain behavioral instruction: {instruction}'
 
     def test_template_includes_error_handling(self) -> None:
-        template = generate_plan_roadmap_command_template(
-            get_project_plan_tool='test_get',
-            update_project_plan_tool='test_update',
-            create_spec_tool='test_create',
-            get_spec_tool='test_get_spec',
-            update_spec_tool='test_update_spec',
-        )
+        coordinator = TemplateCoordinator()
+        template = coordinator.generate_command_template('plan-roadmap', PlatformType.LINEAR)
 
         # Should include error handling
         error_handling_terms = ['Error Handling', 'ERROR', 'failure', 'graceful']
@@ -153,15 +108,8 @@ class TestPlanRoadmapCommandTemplate:
         assert has_error_handling, 'Template should include error handling patterns'
 
     def test_template_maintains_platform_tool_injection(self) -> None:
-        template = generate_plan_roadmap_command_template(
-            get_project_plan_tool='mcp__linear__get_issue',
-            update_project_plan_tool='mcp__linear__update_issue',
-            create_spec_tool='mcp__linear__create_issue',
-            get_spec_tool='mcp__linear__get_issue',
-            update_spec_tool='mcp__linear__update_issue',
-        )
+        coordinator = TemplateCoordinator()
+        template = coordinator.generate_command_template('plan-roadmap', PlatformType.LINEAR)
 
         # Should properly inject platform tools
-        assert 'mcp__linear__get_issue' in template
-        assert 'mcp__linear__create_issue' in template
-        assert 'mcp__linear__update_issue' in template
+        assert 'mcp__linear-server__' in template  # Should contain Linear tools

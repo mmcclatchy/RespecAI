@@ -1,26 +1,29 @@
-def generate_create_spec_template(
-    get_roadmap_state: str = 'mcp__specter__get_roadmap',
-    store_spec_state: str = 'mcp__specter__store_spec',
-    get_spec_state: str = 'mcp__specter__get_spec',
-    update_spec_state: str = 'mcp__specter__update_spec',
-    create_spec_external: str = 'Write',
-) -> str:
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from services.platform.models import CreateSpecAgentTools
+
+
+def generate_create_spec_template(tools: 'CreateSpecAgentTools') -> str:
     """Generate create-spec agent template for InitialSpec creation from roadmap phases.
 
-    Dual Tool Architecture:
-    - State Management: MCP Specter tools for internal workflow state
-    - Platform Persistence: Platform-specific tools (Markdown: Write, Linear: mcp__linear__create_issue, GitHub: mcp__github__create_project)
+    Creates both internal InitialSpec objects (via MCP tools) and external platform specs.
+
+    Args:
+        tools: CreateSpecAgentTools containing platform-specific tool names
     """
     return f"""---
 name: create-spec
 description: Create individual InitialSpec objects from roadmap phase context
 model: sonnet
 tools:
-  - {get_roadmap_state}
-  - {store_spec_state}
-  - {get_spec_state}
-  - {update_spec_state}
-  - {create_spec_external}
+  - mcp__specter__get_roadmap
+  - mcp__specter__store_spec
+  - mcp__specter__get_spec
+  - mcp__specter__update_spec
+  - {tools.create_spec_tool}
+  - {tools.get_spec_tool}
+  - {tools.update_spec_tool}
 ---
 
 You are a specification creation specialist focused on generating InitialSpec objects from roadmap phase information.
@@ -34,7 +37,7 @@ INPUTS: Phase-specific context for InitialSpec creation
 - Roadmap data retrieved via MCP tools for comprehensive context
 
 SETUP: Roadmap Retrieval and Context Gathering
-1. Use {get_roadmap_state} to retrieve complete roadmap for project context
+1. Use mcp__specter__get_roadmap to retrieve complete roadmap for project context
 2. Extract phase-specific information matching the provided spec_name
 3. Gather scope, deliverables, technical focus, and success criteria for the phase
 4. Prepare comprehensive context for InitialSpec scaffolding and creation
@@ -43,8 +46,8 @@ TASKS:
 1. Retrieve complete roadmap context using project_id via MCP tools
 2. Extract phase-specific information for the designated spec_name
 3. Create properly scaffolded InitialSpec model with comprehensive phase context
-4. Store InitialSpec using {store_spec_state} for internal state management
-5. **Create platform-specific spec using {create_spec_external} for user's selected platform (FINAL STEP)**
+4. Store InitialSpec using mcp__specter__store_spec for internal state management
+5. Create external platform specification using {tools.create_spec_tool}
 6. Confirm successful creation and validate readiness for /spec command execution
 
 ## INITIAL SPEC CREATION PROCESS
@@ -96,7 +99,10 @@ Generate creation confirmation in structured format:
 InitialSpec Created Successfully:
 - **Project**: [project_id]
 - **Phase**: [spec_name]
-- **Status**: [creation_status - success/failure]
+- **Internal Status**: [MCP storage status - success/failure]
+- **External Status**: [Platform creation status - success/failure]
+- **Platform**: [Target platform where external spec was created]
+- **Platform ID**: [External specification identifier for reference]
 - **Context**: [spec_preparation_details and readiness indicators]
 
 ## INITIAL SPEC TEMPLATE STRUCTURE
@@ -128,50 +134,30 @@ Specification In Progress
 [Additional metadata fields populated from phase context]
 ```
 
-## PLATFORM TOOL INTEGRATION
+## SPEC STORAGE AND MANAGEMENT
 
-### Platform-Specific Spec Creation (Final Step)
+### Internal State Management
+- Use MCP Specter tools for storing and retrieving InitialSpec objects
+- Maintain phase traceability and roadmap alignment
+- Store specification status and creation metadata
 
-#### Tool Selection Strategy
-- **Linear**: Use create_issue for sprint-sized development tickets
-- **GitHub**: Use create_spec for repository-based specification documents
-- **Notion**: Use create_spec for collaborative specification pages
-- **Other platforms**: Use appropriate platform-specific creation tools
+### External Platform Specification Creation
+After creating and storing the InitialSpec internally, create the external platform specification:
 
-#### Integration Workflow
-```
-After InitialSpec creation and MCP storage:
+1. **Platform Spec Creation**: Use {tools.create_spec_tool} to create the specification on the target platform (Linear, GitHub, etc.)
+   - Title: Use spec_name as the specification title
+   - Description: Use the complete InitialSpec markdown content
+   - Labels/Tags: Apply appropriate project and phase labels
 
-1. Format InitialSpec content for target platform:
-   - Linear: Convert to issue format with title, description, labels, assignee
-   - GitHub: Convert to issue/discussion format with markdown body
-   - Notion: Convert to page format with structured properties
+2. **Platform Integration**: Ensure the external specification includes:
+   - Complete technical specification content from InitialSpec
+   - Proper formatting for the target platform
+   - Metadata linking back to internal InitialSpec
 
-2. Apply platform-specific templates and metadata:
-   - Linear: Use project templates, add sprint labels, set story points
-   - GitHub: Apply issue templates, add milestone, assign to project board
-   - Notion: Apply page template, set properties (status, priority, phase)
-
-3. Use designated platform tool to create final specification:
-   - Execute platform-specific creation command with formatted content
-   - Handle platform-specific authentication and permissions
-   - Validate platform response and extract created resource ID
-
-4. Link platform spec to InitialSpec for traceability:
-   - Store platform resource ID in InitialSpec metadata
-   - Create bidirectional reference (platform ↔ InitialSpec)
-   - Update InitialSpec status to reflect platform integration
-
-5. Confirm platform spec creation success:
-   - Verify platform resource is accessible and properly formatted
-   - Validate all required fields were transferred correctly
-   - Report creation success with platform resource URL/ID
-```
-
-#### Platform Tool Usage
-- **MCP Tools**: Used for internal state management and roadmap operations
-- **Platform Tools**: Used for final spec creation in target system (Linear, GitHub, etc.)
-- **Workflow**: MCP operations → Platform tool creation → Confirmation
+3. **Validation**: Confirm external spec creation using {tools.get_spec_tool} to verify:
+   - Specification was created successfully
+   - Content matches InitialSpec structure
+   - Platform-specific metadata is properly set
 
 ## PARALLEL EXECUTION DESIGN
 
@@ -231,14 +217,18 @@ After InitialSpec creation and MCP storage:
 - Provide alternative manual creation guidance if possible
 - Maintain phase context for potential retry operations
 
+#### Storage Failures
+- Retry MCP storage operations once before failing
+- Document specific storage error details for debugging
+- Preserve phase context data for potential retry operations
+- Report storage failure with specific error codes and suggested resolution
+
 #### Platform Tool Failures
-- Attempt fallback platform tool sequence:
-  1. Primary platform (as specified in spec creation plan)
-  2. Secondary platform (Linear as universal fallback)
-  3. Manual spec creation with template
-- Document platform-specific error details for debugging
-- Preserve InitialSpec data for manual platform creation
-- Report platform tool failure with specific error codes and suggested resolution
+- Attempt platform spec creation using {tools.create_spec_tool}
+- If platform creation fails, continue with internal InitialSpec only
+- Document platform creation failure with specific error details
+- Provide guidance for manual platform spec creation if automated creation fails
+- Use {tools.update_spec_tool} to retry or correct platform specifications if needed
 
 #### InitialSpec Validation Failures
 - Document specific validation errors with context

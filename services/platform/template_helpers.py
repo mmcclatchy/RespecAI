@@ -1,0 +1,126 @@
+from .models import ToolReference
+from .tool_enums import BuiltInTool, SpecterMCPTool
+
+
+class TemplateToolBuilder:
+    def __init__(self) -> None:
+        self.tools: list[ToolReference] = []
+
+    def add_task_agent(self, agent_name: str) -> 'TemplateToolBuilder':
+        self.tools.append(ToolReference(tool=BuiltInTool.TASK, parameters=agent_name))
+        return self
+
+    def add_bash_script(self, script_path: str) -> 'TemplateToolBuilder':
+        self.tools.append(ToolReference(tool=BuiltInTool.BASH, parameters=script_path))
+        return self
+
+    def add_specter_tool(self, tool: SpecterMCPTool) -> 'TemplateToolBuilder':
+        self.tools.append(ToolReference(tool=tool))
+        return self
+
+    def add_platform_tools(self, platform_tools: list[str]) -> 'TemplateToolBuilder':
+        for tool_string in platform_tools:
+            # For platform tools, we don't validate the enum since they're already processed
+            # Just store them as plain strings in the final tools list
+            self.tools.append(ToolReference(tool=BuiltInTool.TASK, parameters=f'__PLATFORM_TOOL__{tool_string}'))
+        return self
+
+    def build(self) -> list[str]:
+        tool_strings = []
+        for tool_ref in self.tools:
+            rendered = tool_ref.render()
+            # Handle special platform tool case
+            if rendered.startswith('Task(__PLATFORM_TOOL__') and rendered.endswith(')'):
+                # Extract the actual tool string
+                tool_string = rendered[len('Task(__PLATFORM_TOOL__') : -1]
+                tool_strings.append(tool_string)
+            else:
+                tool_strings.append(rendered)
+        return tool_strings
+
+    def render_yaml_tools(self, indent: str = '  ') -> str:
+        tool_strings = self.build()
+        return '\n'.join(f'{indent}- {tool}' for tool in tool_strings)
+
+
+def create_spec_command_tools(platform_tools: list[str]) -> str:
+    builder = (
+        TemplateToolBuilder()
+        .add_task_agent('spec-architect')
+        .add_task_agent('spec-critic')
+        .add_task_agent('plan-analyst')
+        .add_bash_script('~/.claude/scripts/research-advisor-archive-scan.sh:*')
+        .add_specter_tool(SpecterMCPTool.INITIALIZE_REFINEMENT_LOOP)
+        .add_specter_tool(SpecterMCPTool.DECIDE_LOOP_NEXT_ACTION)
+        .add_specter_tool(SpecterMCPTool.GET_LOOP_STATUS)
+        .add_platform_tools(platform_tools)
+    )
+
+    return builder.render_yaml_tools()
+
+
+def create_plan_command_tools(platform_tools: list[str]) -> str:
+    """Create validated tool list for plan command.
+
+    Note: Some conversation context tools referenced in plan_command.py are not yet
+    defined in SpecterMCPTool enum and need to be added.
+    """
+    builder = (
+        TemplateToolBuilder()
+        .add_task_agent('plan-conversation')
+        .add_task_agent('plan-critic')
+        .add_task_agent('plan-analyst')
+        .add_task_agent('analyst-critic')
+        .add_specter_tool(SpecterMCPTool.INITIALIZE_REFINEMENT_LOOP)
+        .add_specter_tool(SpecterMCPTool.DECIDE_LOOP_NEXT_ACTION)
+        .add_specter_tool(SpecterMCPTool.GET_PREVIOUS_OBJECTIVE_FEEDBACK)
+        .add_specter_tool(SpecterMCPTool.STORE_CURRENT_OBJECTIVE_FEEDBACK)
+        .add_specter_tool(SpecterMCPTool.STORE_PROJECT_PLAN)
+        .add_specter_tool(SpecterMCPTool.GET_PROJECT_PLAN_MARKDOWN)
+        .add_specter_tool(SpecterMCPTool.STORE_CRITIC_FEEDBACK)
+        .add_specter_tool(SpecterMCPTool.GET_PREVIOUS_FEEDBACK)
+        .add_specter_tool(SpecterMCPTool.STORE_CURRENT_ANALYSIS)
+        .add_specter_tool(SpecterMCPTool.GET_PREVIOUS_ANALYSIS)
+        .add_specter_tool(SpecterMCPTool.CREATE_PLAN_COMPLETION_REPORT)
+        .add_specter_tool(SpecterMCPTool.STORE_PLAN_COMPLETION_REPORT)
+        .add_specter_tool(SpecterMCPTool.GET_PLAN_COMPLETION_REPORT_MARKDOWN)
+        .add_specter_tool(SpecterMCPTool.UPDATE_PLAN_COMPLETION_REPORT)
+        .add_platform_tools(platform_tools)
+    )
+
+    return builder.render_yaml_tools()
+
+
+def create_build_command_tools(platform_tools: list[str]) -> str:
+    builder = (
+        TemplateToolBuilder()
+        .add_task_agent('build-planner')
+        .add_task_agent('build-critic')
+        .add_task_agent('build-coder')
+        .add_task_agent('build-reviewer')
+        .add_task_agent('research-synthesizer')
+        .add_bash_script('~/.claude/scripts/detect-packages.sh:*')
+        .add_specter_tool(SpecterMCPTool.INITIALIZE_REFINEMENT_LOOP)
+        .add_specter_tool(SpecterMCPTool.DECIDE_LOOP_NEXT_ACTION)
+        .add_specter_tool(SpecterMCPTool.GET_LOOP_STATUS)
+        .add_platform_tools(platform_tools)
+    )
+
+    return builder.render_yaml_tools()
+
+
+def create_plan_roadmap_tools(platform_tools: list[str]) -> str:
+    builder = (
+        TemplateToolBuilder()
+        .add_task_agent('plan-roadmap')
+        .add_task_agent('roadmap-critic')
+        .add_task_agent('create-spec')
+        .add_specter_tool(SpecterMCPTool.INITIALIZE_REFINEMENT_LOOP)
+        .add_specter_tool(SpecterMCPTool.DECIDE_LOOP_NEXT_ACTION)
+        .add_specter_tool(SpecterMCPTool.GET_LOOP_STATUS)
+        .add_specter_tool(SpecterMCPTool.ADD_SPEC)
+        .add_specter_tool(SpecterMCPTool.LIST_SPECS)
+        .add_platform_tools(platform_tools)
+    )
+
+    return builder.render_yaml_tools()

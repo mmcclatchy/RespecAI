@@ -1,31 +1,10 @@
-def generate_spec_command_template(
-    create_spec_tool: str,
-    get_spec_tool: str,
-    update_spec_tool: str,
-) -> str:
-    # Safe Python list construction to prevent YAML injection
-    base_tools = [
-        'Task(spec-architect)',
-        'Task(spec-critic)',
-        'Task(plan-analyst)',
-        'Bash(~/.claude/scripts/research-advisor-archive-scan.sh:*)',
-        'mcp__memory__search_nodes',
-        'mcp__memory__open_nodes',
-        'mcp__specter__initialize_refinement_loop',  # Fixed: mcp__loop_state__ -> mcp__specter__
-        'mcp__specter__decide_loop_next_action',  # Fixed: mcp__loop_state__ -> mcp__specter__
-        'mcp__specter__get_loop_status',  # Fixed: mcp__loop_state__ -> mcp__specter__
-    ]
+from services.platform.models import SpecCommandTools
 
-    # Add platform tools with validation
-    platform_tools = [create_spec_tool, get_spec_tool, update_spec_tool]
-    all_tools = base_tools + platform_tools
 
-    # Convert to YAML with proper escaping
-    tools_yaml = '\n'.join(f'  - {tool}' for tool in all_tools)
-
+def generate_spec_command_template(tools: SpecCommandTools) -> str:
     return f"""---
 allowed-tools:
-{tools_yaml}
+{tools.tools_yaml}
 argument-hint: [optional: technical-focus-area]
 description: Transform strategic plans into detailed technical specifications
 ---
@@ -76,7 +55,7 @@ Main Agent (via /spec)
     │   └── IF "user_input" → Request technical clarification
     │
     └── 4. Store Specification
-        └── {create_spec_tool} with technical specification
+        └── Platform tool to store technical specification
 ```
 
 ## Implementation Instructions
@@ -84,7 +63,7 @@ Main Agent (via /spec)
 ### Step 1: Initialize Technical Design Process
 Retrieve the strategic plan and set up the technical specification workflow:
 
-```
+```text
 # Initialize MCP refinement loop
 mcp__specter__initialize_refinement_loop:
   loop_type: "spec"
@@ -98,7 +77,7 @@ Invoke the plan-analyst agent with this input:
 Strategic Plan Source: ${{STRATEGIC_PLAN_CONTEXT}}
 Context: Preparing for technical specification phase
 
-Expected Output Format: 
+Expected Output Format:
 - Business objectives summary
 - Technical requirements list
 - Success criteria and constraints
@@ -108,7 +87,7 @@ Expected Output Format:
 ### Step 2: Launch Architecture Development
 Begin technical design with archive integration:
 
-```
+```text
 # Execute archive scanning first
 ARCHIVE_SCAN_RESULTS = Bash: ~/.claude/scripts/research-advisor-archive-scan.sh --query "technical architecture design patterns database integration API security" --output structured
 
@@ -128,14 +107,14 @@ ${{ARCHIVE_SCAN_RESULTS}}
 Expected Output Format:
 - Technical specification in markdown format
 - Research Requirements section with existing docs and external needs
-- Architecture diagrams in ASCII format  
+- Architecture diagrams in ASCII format
 - Technology stack with justifications
 ```
 
 ### Step 3: Quality Assessment Loop
 Pass specification to critic agent for evaluation:
 
-```
+```text
 # Capture current specification from spec-architect output
 CURRENT_SPECIFICATION = [spec-architect output: complete technical specification]
 
@@ -151,7 +130,7 @@ Expected Output Format:
 ### Step 4: Handle Refinement Decisions
 Process quality scores and determine next actions:
 
-```
+```text
 # Extract quality score from spec-critic output
 QUALITY_SCORE = [spec-critic output: Overall Quality Score (0-100)]
 IMPROVEMENT_FEEDBACK = [spec-critic output: Priority Improvements and specific suggestions]
@@ -204,11 +183,11 @@ IF LOOP_DECISION == "max_iterations":
 ### Step 5: Specification Storage
 Store the technical specification:
 
-```
-Use {create_spec_tool} to store the technical specification:
+```text
+Use {tools.create_spec_tool} to store the technical specification:
 
 Title: Technical Specification: [Project Name]
-Description: [Complete technical specification with research requirements]
+Content: [Complete technical specification with research requirements]
 Labels: technical-specification, architecture, phase-2
 ```
 
@@ -258,7 +237,7 @@ All error scenarios return structured responses:
 ### Error Scenario Implementations
 
 #### 1. Missing Strategic Plan
-```
+```text
 IF no strategic plan available:
   ERROR_RESPONSE = {{
     "error_type": "missing_plan",
@@ -270,8 +249,8 @@ IF no strategic plan available:
   → Request plan location OR suggest: "Run /plan [project-name] to create strategic plan first"
 ```
 
-#### 2. Archive Scanning Failure  
-```
+#### 2. Archive Scanning Failure
+```text
 IF ~/.claude/scripts/research-advisor-archive-scan.sh fails:
   ERROR_RESPONSE = {{
     "error_type": "archive_failure", 
@@ -284,7 +263,7 @@ IF ~/.claude/scripts/research-advisor-archive-scan.sh fails:
 ```
 
 #### 3. MCP Loop State Errors
-```
+```text
 IF mcp__specter__* tools unavailable:
   ERROR_RESPONSE = {{
     "error_type": "mcp_error",
@@ -297,20 +276,20 @@ IF mcp__specter__* tools unavailable:
 ```
 
 #### 4. Storage Platform Failure
-```  
-IF {create_spec_tool} fails:
+```text
+IF platform storage tool fails:
   ERROR_RESPONSE = {{
     "error_type": "storage_failure",
     "error_message": "Failed to store specification in configured platform",
-    "recovery_action": "Saving to local Markdown backup at docs/specs/[timestamp]-spec.md", 
-    "user_guidance": "Platform storage failed. Specification saved locally. Check platform connectivity.",
+    "recovery_action": "Saving to local Markdown backup at docs/specs/[timestamp]-spec.md",
+    "user_guidance": "Platform storage failed. Specification saved locally. Check platform connectivity and configuration.",
     "partial_output": "Complete technical specification document"
   }}
-  → Use Write tool to save to local file system
+  → Use Write tool to save to local file system as fallback
 ```
 
 #### 5. Quality Plateau/Stagnation
-```
+```text
 IF LOOP_DECISION == "user_input" (stagnation detected):
   ERROR_RESPONSE = {{
     "error_type": "quality_plateau",
@@ -380,11 +359,11 @@ Maintain conversation flow while processing complex backend refinement:
 ## Implementation Integration Notes
 
 ### Specification Tools
-- **Storage Tool**: {create_spec_tool}
-- **Retrieval Tool**: {get_spec_tool}
-- **Update Tool**: {update_spec_tool}
-- **Content Structure**: Platform-agnostic markdown maintained
-- **Research Section**: Included in specification body
+- **Storage Tool**: Platform-specific creation tool
+- **Retrieval Tool**: Platform-specific retrieval tool
+- **Update Tool**: Platform-specific update tool
+- **Content Structure**: Platform-agnostic markdown maintained consistently
+- **Research Section**: Included in specification body for all platforms
 
 ## Success Metrics
 

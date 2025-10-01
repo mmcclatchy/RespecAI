@@ -8,6 +8,9 @@ from services.mcp.tools.roadmap_tools import RoadmapTools
 from services.utils.state_manager import InMemoryStateManager
 
 
+# No longer need to mock the entire MCP server module since we removed fake markdown tools
+
+
 @pytest.fixture
 def isolated_state_manager() -> InMemoryStateManager:
     return InMemoryStateManager()

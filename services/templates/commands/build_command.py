@@ -1,30 +1,10 @@
-def generate_build_command_template(
-    get_spec_tool: str,
-    comment_spec_tool: str,
-) -> str:
-    # Safe Python list construction to prevent YAML injection
-    base_tools = [
-        'Task(build-planner)',
-        'Task(build-critic)',
-        'Task(build-coder)',
-        'Task(build-reviewer)',
-        'Task(research-synthesizer)',
-        'Bash(~/.claude/scripts/detect-packages.sh:*)',
-        'mcp__specter__initialize_refinement_loop',  # Fixed: mcp__loop_state__ -> mcp__specter__
-        'mcp__specter__decide_loop_next_action',  # Fixed: mcp__loop_state__ -> mcp__specter__
-        'mcp__specter__get_loop_status',  # Fixed: mcp__loop_state__ -> mcp__specter__
-    ]
+from services.platform.models import BuildCommandTools
 
-    # Add platform tools with validation
-    platform_tools = [get_spec_tool, comment_spec_tool]
-    all_tools = base_tools + platform_tools
 
-    # Convert to YAML with proper escaping
-    tools_yaml = '\n'.join(f'  - {tool}' for tool in all_tools)
-
+def generate_build_command_template(tools: BuildCommandTools) -> str:
     return f"""---
 allowed-tools:
-{tools_yaml}
+{tools.tools_yaml}
 argument-hint: [specification-identifier]
 description: Transform technical specifications into production-ready code through parallel research, implementation planning, and TDD development
 ---
@@ -74,7 +54,7 @@ Orchestrate the complete implementation workflow, transforming technical specifi
 Main Agent (via /build)
     │
     ├── 1. Retrieve Specification
-    │   └── {get_spec_tool} with specification identifier
+    │   └── {tools.get_spec_tool} to retrieve specification
     │
     ├── 2. Environment Discovery
     │   └── Bash: detect-packages.sh → technology context
@@ -98,7 +78,7 @@ Main Agent (via /build)
     │   └── MCP: decide_loop_next_action(loop_id, score)
     │
     └── 6. Completion & Documentation
-        └── {comment_spec_tool} with implementation results
+        └── Platform tool to update specification with implementation results
 ```
 
 ## Implementation Instructions
@@ -110,7 +90,7 @@ Initialize the implementation workflow:
 # Retrieve technical specification
 SPECIFICATION_IDENTIFIER = [User provided specification identifier]
 
-TECHNICAL_SPECIFICATION = {get_spec_tool}:
+TECHNICAL_SPECIFICATION = platform retrieval tool:
   identifier: ${{SPECIFICATION_IDENTIFIER}}
 
 # Execute environment detection
@@ -330,7 +310,7 @@ IMPLEMENTATION_SUMMARY = Generate summary including:
 - Performance benchmarks met
 - Security issues (if any)
 
-{comment_spec_tool}:
+Platform specification update tool:
   identifier: ${{SPECIFICATION_IDENTIFIER}}
   status: "Implementation Complete"
   implementation_details: ${{IMPLEMENTATION_SUMMARY}}
@@ -512,8 +492,8 @@ Maintain conversation flow while processing complex implementation workflow:
 ## Implementation Integration Notes
 
 ### Specification Tools
-- **Retrieval Tool**: {get_spec_tool}
-- **Update Tool**: {comment_spec_tool}
+- **Retrieval Tool**: Platform-specific specification retrieval
+- **Update Tool**: Platform-specific specification update
 - **Content Structure**: Platform-agnostic markdown maintained
 - **Implementation Status**: Tracked in specification metadata
 
@@ -544,5 +524,5 @@ Maintain conversation flow while processing complex implementation workflow:
 - **Documentation Quality**: Clear and comprehensive implementation notes
 - **Performance**: Meeting specification benchmarks and requirements
 
-The implementation is ready for deployment. All quality gates passed and specification updated with completion status.
+The implementation is ready for deployment. All quality gates passed and specification updated with completion status using {tools.comment_spec_tool}.
 """

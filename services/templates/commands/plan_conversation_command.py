@@ -1,4 +1,4 @@
-def generate_plan_command_template() -> str:
+def generate_plan_conversation_command_template() -> str:
     return """---
 allowed-tools: []
 argument-hint: [optional-context]
