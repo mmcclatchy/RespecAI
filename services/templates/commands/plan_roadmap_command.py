@@ -45,7 +45,34 @@ Invoke roadmap agent with:
 - Strategic Plan: ${{STRATEGIC_PLAN}}
 - Phasing Preferences: ${{PHASING_PREFERENCES}}
 
-Expected: Implementation roadmap with 3-7 phases
+Expected: Implementation roadmap with appropriately-sized phases using one of these strategies:
+
+Strategy 1 - Feature-Based Phases (Most Common):
+- Each phase delivers a complete, functional capability
+- Phases align with natural feature or domain boundaries
+- Clear acceptance criteria and definition of "done"
+- Examples: "User Authentication", "Payment Integration", "Admin Dashboard"
+
+Strategy 2 - Technical Layer Phases:
+- Each phase completes a technical layer or infrastructure component
+- Useful for foundational projects or platform work
+- Examples: "Database Schema", "API Layer", "Frontend Components"
+
+Strategy 3 - Incremental Complexity Phases:
+- Start with MVP/simplest version, add complexity in subsequent phases
+- Useful for exploratory or evolving requirements
+- Examples: "Basic CRUD", "Add Validation & Error Handling", "Add Advanced Features"
+
+Strategy 4 - Risk-Based Phases:
+- Tackle highest-risk or most uncertain work first
+- Later phases build on validated assumptions
+- Useful for innovative or technically challenging projects
+
+Choose strategy based on project characteristics. Phases should be:
+- Complete enough to test and validate independently
+- Small enough to maintain focus and clarity
+- Large enough to deliver meaningful functionality
+- Naturally ordered by dependencies
 ```
 
 #### Store Roadmap:

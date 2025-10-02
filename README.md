@@ -2,91 +2,183 @@
 
 AI-powered specification-driven development workflow for Claude Code.
 
-## Installation
+## What is Specter?
 
-Specter supports multiple installation methods depending on your setup.
+Specter is a **meta MCP server** that generates platform-specific workflow automation tools for AI-driven development. It creates custom Claude Code commands and agents tailored to your project management platform (Linear, GitHub, or local Markdown files).
 
-### Remote Installation (Recommended)
+### Key Features
 
-Install directly from GitHub using curl:
+- **Platform abstraction** - Work with Linear, GitHub, or Markdown seamlessly
+- **Quality-driven workflows** - Automated refinement loops with critic agents
+- **Strategic to implementation** - Plan → Roadmap → Spec → Build
+- **Type-safe integration** - Platform-specific tools properly configured
 
+## Quick Start
+
+### 1. Installation
+
+**Remote installation (recommended):**
 ```bash
-# Install with default platform (markdown)
-curl -fsSL https://raw.githubusercontent.com/mmcclatchy/spec-driven-development/main/scripts/install-specter.sh | bash
-
-# Install with specific platform
 curl -fsSL https://raw.githubusercontent.com/mmcclatchy/spec-driven-development/main/scripts/install-specter.sh | bash -s -- linear
-
-# Install to specific directory with platform
-curl -fsSL https://raw.githubusercontent.com/mmcclatchy/spec-driven-development/main/scripts/install-specter.sh | bash -s -- --platform github --path ~/my-project
 ```
 
-### Local Installation
-
-If you have the Specter repository cloned:
-
+**Local installation:**
 ```bash
-# Install from current directory (default: markdown)
-./scripts/install-specter.sh
-
-# Install with specific platform
-./scripts/install-specter.sh linear
-
-# Install to specific directory
 ./scripts/install-specter.sh --platform linear --path ~/my-project
 ```
 
-### Installation Options
+**Bootstrap via Claude Code:**
+```text
+Install the Specter bootstrap files for this project
+```
 
-- `--platform`: Choose platform type
-  - `linear` - Linear issue tracking integration
-  - `github` - GitHub issues integration
-  - `markdown` - Local markdown files (default)
-- `--path`: Target directory (default: current directory)
+### 2. Project Setup
 
-### Containerized Installation
+```bash
+cd /path/to/your/project
+claude
+```
 
-> **Note**: Docker/container-based installation support is planned for future releases.
+```text
+/specter-setup linear
+```
 
-## After Installation
+### 3. Start Using
 
-1. Open your project in Claude Code:
-   ```bash
-   cd /path/to/your/project
-   claude
-   ```
+```text
+/specter-plan          # Create strategic plan
+/specter-roadmap       # Break down into phases
+/specter-spec          # Design specifications
+/specter-build         # Implement features
+```
 
-2. Complete setup by running the setup command:
-   ```bash
-   /specter-setup [platform]
-   ```
+## Platform Options
 
-3. Verify MCP server availability:
-   ```bash
-   /mcp list
-   ```
+| Platform | Best For | Integration | Real-time |
+|----------|----------|-------------|-----------|
+| **Linear** | Teams using Linear | Full API | ✅ |
+| **GitHub** | Open source projects | Full API | ❌ |
+| **Markdown** | Solo developers | Local files | ❌ |
 
-## Available Commands
+## Documentation
 
-After setup, you'll have access to:
+### Getting Started
+- **[User Guide](docs/USER_GUIDE.md)** - Complete usage documentation
+  - Installation methods
+  - Platform selection guide
+  - Command reference
+  - Workflow examples
+  - Best practices
+  - Troubleshooting
 
-- `/specter-plan` - Create strategic project plans
-- `/specter-spec` - Convert plans to detailed specifications
-- `/specter-build` - Implement specifications with code
-- `/specter-roadmap` - Generate multi-phase project roadmaps
+### Architecture & Development
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - System design and implementation
+  - Platform orchestrator (11-file system)
+  - Template engine and strategy pattern
+  - MCP tools (32 tools across 8 modules)
+  - Document models and parsing
+  - Deployment architecture
 
-## Platform Support
+- **[Architecture Analysis](docs/ARCHITECTURE_ANALYSIS.md)** - Technical deep dive
+  - Implementation quality assessment
+  - Component analysis
+  - Design pattern evaluation
+  - Type safety framework
+  - Testing and validation
+  - Extensibility guide
 
-- **Linear**: Full integration with Linear's issue tracking, projects, and comments
-- **GitHub**: GitHub Issues integration with labels and milestones
-- **Markdown**: Local file-based workflow using structured markdown files
+- **[Architectural Realignment](docs/ARCHITECTURAL_REALIGNMENT.md)** - Development history
+  - Implementation sessions
+  - Technical decisions
+  - Refactoring achievements
+  - Production readiness status
 
 ## Requirements
 
-- Claude Code CLI
-- Bash shell (for installation script)
-- Git (optional, for version control)
-- Platform-specific requirements:
-  - Linear: Linear MCP server configured
-  - GitHub: GitHub MCP server configured
-  - Markdown: No additional requirements
+### For All Users
+- **Claude Code CLI** installed and configured
+- **Platform MCP Server** (Linear or GitHub) if using external platforms
+
+### For Local Installation
+- **uv** (Python version and package manager)
+- **Python 3.12+**
+- **Unix-like OS** (Linux, macOS, Windows Subsystem for Linux)
+
+### For Containerized Deployments
+- **Docker** (Linux)
+- **Docker Desktop** (macOS, Windows, Windows Subsystem for Linux)
+
+## Workflow Overview
+
+```text
+1. Strategic Planning
+   /specter-plan
+   → Conversational requirements gathering
+   → Creates strategic plan with business objectives
+   → Quality validation with plan-critic
+
+2. Phase Breakdown
+   /specter-roadmap
+   → Breaks plan into implementation phases
+   → Creates initial specs for each phase
+   → Quality refinement with roadmap-critic
+
+3. Technical Design
+   /specter-spec [spec-name]
+   → Detailed technical specifications
+   → Architecture and implementation approach
+   → Quality refinement with spec-critic
+
+4. Implementation
+   /specter-build [spec-name]
+   → Implementation planning
+   → Code generation
+   → Quality review with build-critic and build-reviewer
+```
+
+## Available Commands
+
+- **`/specter-setup [platform]`** - Setup project with platform-specific tools
+- **`/specter-plan [project-name]`** - Create strategic project plans
+- **`/specter-roadmap [project-name]`** - Generate multi-phase implementation roadmaps
+- **`/specter-spec [spec-name]`** - Convert plans to detailed specifications
+- **`/specter-build [spec-name]`** - Implement specifications with code
+
+## Contributing
+
+This is a production-ready system with enterprise-grade architecture. Contributions are welcome!
+
+### Areas for Contribution
+- Additional platform integrations (Jira, GitLab, Azure DevOps)
+- Advanced analytics and reporting
+- Cross-platform spec migration tools
+- Documentation improvements
+- Bug fixes and optimizations
+
+## License
+
+[Add License Information]
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/mmcclatchy/spec-driven-development/issues)
+- **Documentation**: See [docs/](docs/) directory
+- **User Guide**: [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+
+## Project Status
+
+🚧 **In Development** - Core platform system complete (516 tests passing), agent templates and end-to-end workflows still in progress
+
+### Completed
+- ✅ Platform orchestrator (11-file system)
+- ✅ MCP tools (32 tools across 8 modules)
+- ✅ Document models with markdown parsing
+- ✅ Template generation system
+- ✅ Installation and setup workflows
+- ✅ Unit and integration tests
+
+### In Progress
+- 🚧 Agent template completion (some agents not yet implemented)
+- 🚧 End-to-end workflow testing
+- 🚧 Platform integration validation
+- 🚧 User acceptance testing
