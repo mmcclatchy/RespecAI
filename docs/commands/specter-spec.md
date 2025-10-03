@@ -19,8 +19,13 @@ The `/specter-spec` command transforms strategic plans into detailed technical s
 
 ### Trigger Format
 ```text
-/specter-spec [optional: specific technical area focus]
+/specter-spec <project_name> <spec_name> [focus]
 ```
+
+**Parameters**:
+- `project_name`: User-friendly project identifier (system treats this as project_id)
+- `spec_name`: Specification phase name (e.g., "Phase 1: Core API")
+- `focus`: Optional technical area emphasis (e.g., "API design", "data architecture")
 
 ## Workflow Position
 
@@ -70,44 +75,73 @@ Strategic Plan → /specter-spec → [spec-architect ↔ spec-critic loop] → T
 
 ## Orchestration Pattern
 
-### Agent Coordination Flow
-```text
-Main Agent (via /specter-spec)
-    │
-    ├── 1. Initialize MCP Loop
-    │   └── mcp_tool: initialize_refinement_loop(loop_type='spec')
-    │
-    ├── 2. Retrieve Strategic Plan
-    │   └── mcp_tool: get_project_plan_markdown(plan_loop_id) or access user input
-    │
-    ├── 3. Technical Design Loop
-    │   ├── Task: spec-architect (architecture + research identification → markdown)
-    │   ├── mcp_tool: store_technical_spec(spec_loop_id, technical_spec_markdown)
-    │   ├── Task: spec-critic (quality assessment → CriticFeedback)
-    │   ├── mcp_tool: store_critic_feedback(critic_feedback_markdown)
-    │   └── mcp_tool: decide_loop_next_action(spec_loop_id, quality_score)
-    │
-    ├── 4. Handle Loop Decision
-    │   ├── IF "refine" → Pass structured feedback to spec-architect
-    │   ├── IF "complete" → Finalize TechnicalSpec model and proceed
-    │   └── IF "user_input" → Request technical clarification with feedback context
-    │
-    └── 5. Store Specification & Prepare for Build
-        ├── mcp_tool: get_technical_spec_markdown(spec_loop_id)
-        └── TechnicalSpec ready for /specter-build command
-```
+### Agent Coordination Flow (20-Step Optimized Workflow)
+
+The complete workflow consists of 20 steps organized into 5 phases:
+
+**Phase 1: Initialization (Steps 1-3)**
+1. Initialize refinement loop via MCP
+2. Retrieve ProjectPlan markdown from roadmap phase
+3. Retrieve InitialSpec (starter template) from roadmap
+
+**Phase 2: Architecture Generation (Steps 4-9)**
+4. Main Agent passes InitialSpec + ProjectPlan to spec-architect
+5. spec-architect generates TechnicalSpec markdown
+6. spec-architect returns TechnicalSpec markdown to Main Agent
+7. Main Agent stores TechnicalSpec via MCP
+8. Main Agent passes TechnicalSpec to spec-critic
+9. spec-critic stores feedback directly via MCP
+
+**Phase 3: Loop Decision (Steps 10-13)**
+10. Main Agent retrieves score from loop status
+11. Main Agent calls decide_loop_next_action with score
+12. MCP returns decision: "refine", "complete", or "user_input"
+13. Handle decision (continue to Phase 4 if "refine", Phase 5 if "complete")
+
+**Phase 4: Refinement (Steps 14-16, if needed)**
+14. spec-architect retrieves feedback history via MCP
+15. spec-architect generates improved TechnicalSpec
+16. Loop returns to Step 7 (storage and critic assessment)
+
+**Phase 5: Completion (Steps 17-20)**
+17. Retrieve final TechnicalSpec markdown from MCP
+18. Update InitialSpec status to APPROVED
+19. Store platform-specific specification (Linear/GitHub/Markdown)
+20. Return completion message with spec location
+
+**Critical Design Notes**:
+- project_id equals project_name (system treats them identically)
+- Architect receives InitialSpec from Main Agent (Step 4), does NOT retrieve via MCP
+- Main Agent keeps TechnicalSpec markdown from Step 6 to pass to critic (Step 8), no retrieval needed
+- Critic stores own feedback directly (Step 9), not through Main Agent
 
 ### Data Flow Between Components
-- **Main Agent → MCP Server**: `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan
-- **Main Agent → spec-architect**: Strategic plan + technical context
-- **spec-architect → Main Agent**: Technical specification with research needs (markdown)
-- **Main Agent → MCP Server**: `store_technical_spec(spec_loop_id, technical_spec_markdown)` - Create TechnicalSpec model
-- **Main Agent → spec-critic**: TechnicalSpec for FSDD assessment
-- **spec-critic → Main Agent**: Structured CriticFeedback (markdown format)
-- **Main Agent → MCP Server**: `store_critic_feedback(feedback_markdown)` - Store feedback model
-- **Main Agent → MCP Server**: `decide_loop_next_action(spec_loop_id, quality_score)` - Decision logic
-- **MCP Server → Main Agent**: Next action (refine/complete/user_input) with loop state
-- **Main Agent → MCP Server**: `get_technical_spec_markdown(spec_loop_id)` - Final retrieval for /specter-build
+
+**Initialization Phase:**
+- **Main Agent → MCP**: `initialize_refinement_loop('spec')` → loop_id
+- **Main Agent → MCP**: `get_project_plan_markdown(project_id)` → ProjectPlan markdown
+- **Main Agent → MCP**: `get_spec(project_id, spec_name)` → InitialSpec markdown
+
+**Architecture Generation Phase:**
+- **Main Agent → spec-architect**: InitialSpec + ProjectPlan + loop_id + focus (if provided)
+- **spec-architect → Main Agent**: TechnicalSpec markdown (generated, not retrieved)
+- **Main Agent → MCP**: `store_technical_spec(loop_id, technical_spec_markdown)` → success
+- **Main Agent → spec-critic**: TechnicalSpec markdown + loop_id
+- **spec-critic → MCP**: `store_critic_feedback(loop_id, feedback_markdown)` → auto-populates score
+
+**Loop Decision Phase:**
+- **Main Agent → MCP**: `get_loop_status(loop_id)` → current_score
+- **Main Agent → MCP**: `decide_loop_next_action(loop_id, current_score)` → decision
+
+**Refinement Phase (if needed):**
+- **spec-architect → MCP**: `get_feedback_history(loop_id, count=3)` → recent feedback
+- **spec-architect → Main Agent**: Improved TechnicalSpec markdown
+- Return to storage step (Step 7)
+
+**Completion Phase:**
+- **Main Agent → MCP**: `get_technical_spec_markdown(loop_id)` → final spec
+- **Main Agent → MCP**: `update_spec(project_id, spec_name, updated_markdown)` → status APPROVED
+- **Main Agent → Platform**: Store via platform-specific tool
 
 ## Quality Gates
 
@@ -381,16 +415,26 @@ Main Agent: I'll create a technical specification with special emphasis on API d
 - **Platform tools**: Linear/GitHub/Markdown storage
 
 ### MCP Tools Used
-**Technical Specification Workflow:**
+
+**Main Agent uses (via mcp__specter__ prefix):**
 - `initialize_refinement_loop(loop_type='spec')` - Create specification refinement loop
-- `get_project_plan_markdown(plan_loop_id)` - Retrieve strategic plan from /specter-plan phase
-- `store_technical_spec(spec_loop_id, technical_spec_markdown)` - Store TechnicalSpec model
-- `store_critic_feedback(feedback_markdown)` - Store structured CriticFeedback
-- `decide_loop_next_action(spec_loop_id, current_score)` - Loop decision engine
-- `get_technical_spec_markdown(spec_loop_id)` - Retrieve final specification for /specter-build
-- `get_loop_status(spec_loop_id)` - Monitor loop state (optional)
-- `get_feedback_history(spec_loop_id, count)` - Retrieve recent feedback for context
+- `get_project_plan_markdown(project_id)` - Retrieve strategic plan from roadmap
+- `get_spec(project_id, spec_name)` - Retrieve InitialSpec starter template
+- `store_technical_spec(loop_id, technical_spec_markdown)` - Store TechnicalSpec model
+- `get_loop_status(loop_id)` - Retrieve current score and state
+- `decide_loop_next_action(loop_id, current_score)` - Loop decision engine
+- `get_technical_spec_markdown(loop_id)` - Retrieve final specification
+- `update_spec(project_id, spec_name, updated_markdown)` - Update InitialSpec status to APPROVED
 - `list_technical_specs(count)` - List existing specifications
+
+**spec-architect uses:**
+- `get_feedback_history(loop_id, count=3)` - Retrieve recent feedback (refinement iterations only)
+- Archive scanning scripts via Bash tool
+- Read, Grep, Glob for existing documentation
+
+**spec-critic uses:**
+- `store_critic_feedback(loop_id, feedback_markdown)` - Store feedback directly
+- `get_feedback_history(loop_id, count=3)` - Retrieve previous feedback for consistency
 
 ### Shell Scripts
 - `~/.claude/scripts/research-advisor-archive-scan.sh`

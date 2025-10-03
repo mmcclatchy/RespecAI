@@ -19,13 +19,17 @@ These guidelines focus on the four core agent concerns: inputs, tools, imperativ
 - No awareness of refinement loops or quality gates
 - No understanding of template systems or MCP tools
 
-**Implementation Pattern**:
+**Implementation Pattern** (based on actual agent templates):
 ```markdown
 ---
-name: spec-architect
+name: specter-spec-architect
 description: Design technical architecture from strategic plans
 model: sonnet
-tools: Read, Bash(~/.claude/scripts/research-advisor-archive-scan.sh:*)
+tools:
+  - Read
+  - Bash(~/.claude/scripts/research-advisor-archive-scan.sh:*)
+  - Grep
+  - Glob
 ---
 
 You are a technical architecture specialist focused on system design.
@@ -35,7 +39,7 @@ INPUTS: Strategic plan document in markdown format
 TASKS:
 1. Read and analyze strategic plan completely
 2. Identify technical requirements and constraints
-3. Design system architecture and component relationships  
+3. Design system architecture and component relationships
 4. Create comprehensive technical specification
 
 OUTPUTS: Technical specification in structured markdown format with:
@@ -44,6 +48,8 @@ OUTPUTS: Technical specification in structured markdown format with:
 - Research requirements section
 - Implementation guidelines
 ```
+
+**Note**: Agent names use `specter-*` prefix for consistency. Tools are listed in YAML array format, one per line with `- ` prefix.
 
 **Anti-Pattern**: Agents that reference external systems:
 ```markdown
@@ -72,7 +78,7 @@ OUTPUTS: Technical specification in structured markdown format with:
 **Pattern Example - Generator Agent**:
 ```markdown
 ---
-name: plan-generator
+name: specter-plan-generator
 description: Generate strategic plans through conversational discovery
 tools: None
 ---
@@ -100,20 +106,27 @@ OUTPUTS: Strategic plan document containing:
 **Pattern Example - Critic Agent**:
 ```markdown
 ---
-name: spec-critic
+name: specter-spec-critic
 description: Evaluate technical specifications against quality criteria
-tools: None
+tools:
+  - mcp__specter__get_technical_spec_markdown
+  - mcp__specter__store_critic_feedback
 ---
 
 You are a technical specification quality specialist.
 
-INPUTS: Technical specification document in markdown format
+INPUTS: Loop ID for specification retrieval and feedback storage
+- Loop ID provided by Main Agent for MCP operations
+- Use mcp__specter__get_technical_spec_markdown(loop_id) to retrieve specification
+- Evaluate complete technical specification from MCP storage
 
 TASKS:
-1. Evaluate specification against FSDD quality framework
-2. Assess technical completeness and clarity
-3. Identify gaps and improvement opportunities
-4. Calculate numerical quality score (0-100)
+1. Retrieve specification using mcp__specter__get_technical_spec_markdown(loop_id)
+2. Evaluate specification against FSDD quality framework
+3. Assess technical completeness and clarity
+4. Identify gaps and improvement opportunities
+5. Calculate numerical quality score (0-100)
+6. Store feedback using mcp__specter__store_critic_feedback(loop_id, feedback_markdown)
 
 OUTPUTS: Quality assessment containing:
 - Overall Quality Score: [numerical value 0-100]
@@ -121,6 +134,8 @@ OUTPUTS: Quality assessment containing:
 - Strengths: [well-executed areas to preserve]
 - Technical Concerns: [potential implementation risks]
 ```
+
+**Note**: Critic agents receive `loop_id` as input and retrieve content via MCP, then store feedback directly via MCP tools. They do NOT receive markdown content as direct input.
 
 ### 3. Input-Output Contract Specification
 
@@ -202,48 +217,70 @@ DECISION CRITERIA:
 
 **Tool Allocation by Agent Type**:
 
-**Read-Only Analysis Agents**:
+**Critic Agents** (with MCP retrieval and storage):
 ```markdown
-tools: Read, Grep, Glob
-# Use for: critics, analysts, reviewers
+tools:
+  - mcp__specter__get_project_plan_markdown  # Retrieve content to evaluate
+  - mcp__specter__store_critic_feedback      # Store feedback directly
+# Use for: plan-critic, roadmap-critic evaluating via MCP
 ```
 
 **Content Generation Agents**:
-```markdown  
-tools: Read
-# Use for: generators, architects, planners (input-only)
+```markdown
+tools:
+  - Read
+  - Bash(~/.claude/scripts/research-advisor-archive-scan.sh:*)
+# Use for: architects, planners (input-only + research)
 ```
 
 **Implementation Agents**:
 ```markdown
-tools: Read, Edit, Write, Bash
+tools:
+  - Read
+  - Edit
+  - Write
+  - Bash
 # Use for: coders, build agents
 ```
 
-**Research Integration Agents**:
+**Spec Creation Agents** (with platform integration):
 ```markdown
-tools: Read, Bash(~/.claude/scripts/research-advisor-archive-scan.sh:*)
-# Use for: architects requiring external research
+tools:
+  - mcp__specter__get_roadmap
+  - mcp__specter__store_spec
+  - {tools.create_spec_tool}  # Platform-injected
+  - {tools.update_spec_tool}  # Platform-injected
+# Use for: create-spec agents with dual storage (MCP + platform)
 ```
 
-**✅ Correct Tool Boundaries**:
+**✅ Correct Tool Boundaries** (actual patterns from codebase):
 ```markdown
 ---
-name: build-critic
-tools: Read, Grep  # Read-only for evaluation
+name: specter-plan-critic
+tools:
+  - mcp__specter__get_project_plan_markdown
+  - mcp__specter__store_critic_feedback
 ---
 
 ---
-name: build-coder  
-tools: Read, Edit, Write, Bash  # Full implementation access
+name: specter-create-spec
+tools:
+  - mcp__specter__get_roadmap
+  - mcp__specter__store_spec
+  - {tools.create_spec_tool}
+  - {tools.update_spec_tool}
 ---
 ```
 
 **❌ Incorrect Tool Over-Allocation**:
 ```markdown
 ---
-name: spec-critic  # Quality evaluation agent
-tools: Read, Edit, Write, Bash  # ❌ Can modify code during evaluation
+name: specter-spec-critic  # Quality evaluation agent
+tools:
+  - Read
+  - Edit
+  - Write
+  - Bash  # ❌ Can modify files during evaluation
 ---
 ```
 
@@ -392,9 +429,10 @@ ERROR HANDLING:
 **Template Structure**:
 ```markdown
 ---
-name: [content-type]-generator
+name: specter-[content-type]-generator
 description: Generate [specific content type] from [specific input]
-tools: Read # Input-only for most generators
+tools:
+  - Read  # Input-only for most generators
 ---
 
 You are a [domain] specialist focused on [content creation type].
@@ -421,7 +459,7 @@ QUALITY CRITERIA:
 **Example - Plan Generator**:
 ```markdown
 ---
-name: plan-generator
+name: specter-plan-generator
 description: Generate strategic plans through conversational discovery
 tools: None
 ---
@@ -490,26 +528,30 @@ QUALITY CRITERIA:
 **Example - Spec Critic**:
 ```markdown
 ---
-name: spec-critic  
+name: specter-spec-critic
 description: Evaluate technical specifications against quality criteria
-tools: Read
+tools:
+  - mcp__specter__get_technical_spec_markdown
+  - mcp__specter__store_critic_feedback
 ---
 
 You are a technical specification quality specialist.
 
-INPUTS: Technical specification document in markdown format
-- System architecture and design details
-- Implementation requirements and constraints
-- Component specifications and integrations
+INPUTS: Loop ID for specification retrieval and feedback storage
+- Loop ID provided by Main Agent for MCP operations
+- Use mcp__specter__get_technical_spec_markdown(loop_id) to retrieve specification
+- Complete technical specification retrieved from MCP storage
 
 TASKS:
-1. Evaluate specification against FSDD quality framework (12-point criteria)
-2. Assess technical completeness, clarity, and implementability
-3. Identify gaps, inconsistencies, and improvement opportunities
-4. Calculate numerical quality score based on objective criteria
+1. Retrieve specification using mcp__specter__get_technical_spec_markdown(loop_id)
+2. Evaluate specification against FSDD quality framework (12-point criteria)
+3. Assess technical completeness, clarity, and implementability
+4. Identify gaps, inconsistencies, and improvement opportunities
+5. Calculate numerical quality score based on objective criteria
+6. Store feedback using mcp__specter__store_critic_feedback(loop_id, feedback_markdown)
 
 OUTPUTS: Quality assessment containing:
-- Overall Quality Score: [0-100 numerical value]  
+- Overall Quality Score: [0-100 numerical value]
 - Priority Improvements: [specific technical gaps to address]
 - Strengths: [well-designed areas to preserve]
 - Technical Concerns: [implementation risks and challenges]
@@ -527,9 +569,13 @@ QUALITY CRITERIA:
 **Template Structure**:
 ```markdown
 ---
-name: [implementation-type]-[agent-type]
-description: [Implementation function] based on [specification type]  
-tools: Read, Edit, Write, Bash # Full implementation access
+name: specter-[implementation-type]-[agent-type]
+description: [Implementation function] based on [specification type]
+tools:
+  - Read
+  - Edit
+  - Write
+  - Bash  # Full implementation access
 ---
 
 You are a [implementation domain] specialist focused on [execution type].
@@ -559,9 +605,13 @@ QUALITY CRITERIA:
 **Example - Build Coder**:
 ```markdown
 ---
-name: build-coder
-description: Implement code based on implementation plans and specifications  
-tools: Read, Edit, Write, Bash
+name: specter-build-coder
+description: Implement code based on implementation plans and specifications
+tools:
+  - Read
+  - Edit
+  - Write
+  - Bash
 ---
 
 You are a software implementation specialist focused on code development.
@@ -742,28 +792,37 @@ Test Case: Edge Case Handling
 ```markdown
 # ❌ WRONG: Critics with modification tools
 ---
-name: spec-critic
-tools: Read, Edit, Write  # Can modify content during evaluation
+name: specter-spec-critic
+tools:
+  - Read
+  - Edit
+  - Write  # ❌ Can modify content during evaluation
 ---
 
-# ❌ WRONG: Generators with execution tools  
+# ❌ WRONG: Generators with execution tools
 ---
-name: plan-generator
-tools: Read, Bash, Edit, Write  # Excessive permissions for content generation
+name: specter-plan-generator
+tools:
+  - Read
+  - Bash
+  - Edit
+  - Write  # ❌ Excessive permissions for content generation
 ---
 ```
 
 **✅ Correct Minimal Permission Approach**:
 ```markdown
-# ✅ CORRECT: Critics with read-only access
+# ✅ CORRECT: Critics with MCP retrieval and storage only
 ---
-name: spec-critic
-tools: Read  # Evaluation only, no modification
+name: specter-spec-critic
+tools:
+  - mcp__specter__get_technical_spec_markdown  # Retrieve for evaluation
+  - mcp__specter__store_critic_feedback        # Store feedback
 ---
 
 # ✅ CORRECT: Generators with input-only access
 ---
-name: plan-generator  
+name: specter-plan-generator
 tools: None  # Content generation from conversation, no file access needed
 ---
 ```

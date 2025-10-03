@@ -64,91 +64,56 @@ Producer Agent → Content → Critic Agent → Score → MCP Decision
 
 ### 3. Dynamic Template Generation with Platform Tool Injection
 
-**Pattern**: Create templates as functions that inject platform-specific tools at generation time.
+**Pattern**: Create templates as functions that receive platform tool dataclasses and inject tools via string interpolation.
 
-**Platform Tool Mapping**:
+**Actual Implementation Pattern** (from `services/templates/commands/spec_command.py`):
 ```python
-PLATFORM_TOOL_MAPPING = {
-    'linear': {
-        'create_spec': 'mcp__linear-server__create_issue',
-        'update_spec': 'mcp__linear-server__update_issue',
-        'get_spec': 'mcp__linear-server__get_issue'
-    },
-    'github': {
-        'create_spec': 'mcp__github__create_issue',
-        'update_spec': 'mcp__github__update_issue',
-        'get_spec': 'mcp__github__get_issue'
-    },
-    'markdown': {
-        'create_spec': 'Write',
-        'update_spec': 'Edit',
-        'get_spec': 'Read'
-    }
-}
-```
+from services.platform.models import SpecCommandTools
 
-**Template Function with Injection**:
-```python
-def generate_spec_command_template(
-    create_spec_tool: str,
-    get_spec_tool: str,
-    update_spec_tool: str,
-) -> str:
+def generate_spec_command_template(tools: SpecCommandTools) -> str:
     return f"""---
 allowed-tools:
-  - Task(plan-analyst)
-  - Task(spec-architect) 
-  - Task(spec-critic)
-  - {create_spec_tool}
-  - {get_spec_tool}
-  - {update_spec_tool}
-  - mcp__loop_state__initialize_refinement_loop
-  - mcp__loop_state__decide_loop_next_action
+{tools.tools_yaml}
+argument-hint: [optional: technical-focus-area]
 description: Transform strategic plans into detailed technical specifications
 ---
 
-# Technical Specification Creation
+# /specter-spec Command: Technical Specification Creation
 
-## Step 1: Plan Analysis
-Invoke the plan-analyst agent with this input:
-${{STRATEGIC_PLAN_CONTEXT}}
+## Step 1: Initialize Technical Design Process
+mcp__specter__initialize_refinement_loop:
+  loop_type: "spec"
 
-Expected Output Format:
-- Business objectives summary
-- Technical requirements list
-
-## Step 2: Architecture Development  
+## Step 2: Launch Architecture Development
 Invoke the spec-architect agent with this input:
-${{STRATEGIC_PLAN_SUMMARY}}
-
+Strategic Plan Summary: ${{STRATEGIC_PLAN_SUMMARY}}
 Expected Output Format:
 - Technical specification in markdown format
-- Research requirements section
+- Research Requirements section
 
-## Step 3: Quality Assessment
+## Step 3: Quality Assessment Loop
 Invoke the spec-critic agent with this input:
 ${{CURRENT_SPECIFICATION}}
-
 Expected Output Format:
 - Overall Quality Score: [0-100 numerical value]
 - Priority Improvements: [List of suggestions]
 
-## Step 4: Storage
-Use {create_spec_tool} to store the technical specification.
+## Step 5: Specification Storage
+Use {tools.create_spec_tool} to store the technical specification:
+Title: Technical Specification: [Project Name]
+Content: [Complete specification with research requirements]
 """
 ```
 
-**Generation Process**:
-```python
-# Platform-specific template generation
-tools = PLATFORM_TOOL_MAPPING[platform]
-template = generate_spec_command_template(
-    create_spec_tool=tools['create_spec'],
-    get_spec_tool=tools['get_spec'],
-    update_spec_tool=tools['update_spec'],
-    spec_implementation=platform.title()
-)
-```
+**Tool Dataclass Structure**:
+The `SpecCommandTools` dataclass contains:
+- `tools_yaml`: Complete YAML-formatted tools list for frontmatter
+- `create_spec_tool`: Platform-specific creation tool name
+- `get_spec_tool`: Platform-specific retrieval tool name
+- `update_spec_tool`: Platform-specific update tool name
+
+**Platform Abstraction**:
+Platform mapping and tool selection happens in platform service layer, not in template functions. Templates receive pre-configured dataclass instances.
 
 **Benefits**:
 - Single template function generates platform-specific commands
@@ -573,12 +538,12 @@ Before creating a new command template, validate these architectural requirement
 1. **YAML Frontmatter**
    ```yaml
    allowed-tools:
-     - Task(agent-name)
-     - {injected_tool_name}
-     - mcp__service__tool_name
+   {tools.tools_yaml}
    argument-hint: [expected parameters]
    description: [platform-agnostic purpose]
    ```
+
+   **Note**: The `{tools.tools_yaml}` placeholder is replaced with complete formatted tools list at generation time from the `SpecCommandTools` dataclass. Individual tools are injected as `{tools.create_spec_tool}` within template content.
 
 2. **Orchestration Steps**
    - Sequential workflow with clear handoffs
