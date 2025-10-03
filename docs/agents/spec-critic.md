@@ -1,11 +1,11 @@
-# spec-critic Agent Specification
+# specter-spec-critic Agent Specification
 
 ## Overview
-The `spec-critic` agent evaluates technical specifications against FSDD quality criteria with emphasis on technical completeness, architectural soundness, and implementation readiness.
+The `specter-spec-critic` agent evaluates technical specifications against FSDD quality criteria with emphasis on technical completeness, architectural soundness, and implementation readiness.
 
 ## Agent Metadata
 
-**Name**: `spec-critic`  
+**Name**: `specter-spec-critic`  
 **Type**: Technical specification validation specialist  
 **Model**: Claude Sonnet  
 **Invoked By**: Main Agent via `/specter-spec` command  
@@ -22,7 +22,7 @@ The `spec-critic` agent evaluates technical specifications against FSDD quality 
 ```python
 # Main Agent invokes spec-critic
 response = Task(
-    agent="spec-critic",
+    agent="specter-spec-critic",
     prompt=f"""
     Evaluate this technical specification for completeness and quality.
     
@@ -38,7 +38,7 @@ response = Task(
 ## Workflow Position
 
 ```text
-spec-architect → [Technical Spec] → spec-critic → [Score + Feedback]
+specter-spec-architect → [Technical Spec] → specter-spec-critic → [Score + Feedback]
                                            ↓
                                       MCP Decision
                                            ↓
