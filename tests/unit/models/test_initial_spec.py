@@ -1,6 +1,6 @@
 import pytest
 
-from services.models.initial_spec import InitialSpec
+from services.models.spec import InitialSpec
 from services.models.enums import SpecStatus
 
 

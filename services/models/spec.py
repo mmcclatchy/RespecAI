@@ -25,80 +25,84 @@ class TechnicalSpec(MCPModel):
         'research_requirements': ('Additional Details', 'Research Requirements'),
         'success_criteria': ('Additional Details', 'Success Criteria'),
         'integration_context': ('Additional Details', 'Integration Context'),
+        'iteration': ('Metadata', 'Iteration'),
+        'version': ('Metadata', 'Version'),
         'spec_status': ('Metadata', 'Status'),
     }
 
-    # Model fields with defaults
+    # Model fields
     id: str = Field(default_factory=lambda: str(uuid4())[:8])
-    initial_spec_id: str | None = None
-    phase_name: str = 'Unnamed Specification'
+    phase_name: str
+
+    # Required fields (present in iteration=0)
     objectives: str = 'Objectives not specified'
     scope: str = 'Scope not specified'
     dependencies: str = 'Dependencies not specified'
     deliverables: str = 'Deliverables not specified'
-    architecture: str = 'Architecture not specified'
-    technology_stack: str = 'Technology Stack not specified'
-    functional_requirements: str = 'Functional Requirements not specified'
-    non_functional_requirements: str = 'Non-Functional Requirements not specified'
-    development_plan: str = 'Development Plan not specified'
-    testing_strategy: str = 'Testing Strategy not specified'
-    research_requirements: str = 'Research Requirements not specified'
-    success_criteria: str = 'Success Criteria not specified'
-    integration_context: str = 'Integration Context not specified'
+
+    # Optional fields (added by spec-architect in iteration 1+)
+    architecture: str | None = None
+    technology_stack: str | None = None
+    functional_requirements: str | None = None
+    non_functional_requirements: str | None = None
+    development_plan: str | None = None
+    testing_strategy: str | None = None
+    research_requirements: str | None = None
+    success_criteria: str | None = None
+    integration_context: str | None = None
+
+    # State tracking
+    iteration: int = 0
+    version: int = 1
     spec_status: SpecStatus = SpecStatus.DRAFT
 
     def build_markdown(self) -> str:
-        return f"""{self.TITLE_PATTERN}: {self.phase_name}
+        sections = [f'{self.TITLE_PATTERN}: {self.phase_name}']
 
-## Overview
+        sections.append('\n## Overview')
+        sections.append(f'\n### Objectives\n{self.objectives}')
+        sections.append(f'\n### Scope\n{self.scope}')
+        sections.append(f'\n### Dependencies\n{self.dependencies}')
+        sections.append(f'\n### Deliverables\n{self.deliverables}')
 
-### Objectives
-{self.objectives}
+        if self.architecture or self.technology_stack:
+            sections.append('\n## System Design')
+            if self.architecture:
+                sections.append(f'\n### Architecture\n{self.architecture}')
+            if self.technology_stack:
+                sections.append(f'\n### Technology Stack\n{self.technology_stack}')
 
-### Scope
-{self.scope}
+        if (
+            self.functional_requirements
+            or self.non_functional_requirements
+            or self.development_plan
+            or self.testing_strategy
+        ):
+            sections.append('\n## Implementation')
+            if self.functional_requirements:
+                sections.append(f'\n### Functional Requirements\n{self.functional_requirements}')
+            if self.non_functional_requirements:
+                sections.append(f'\n### Non-Functional Requirements\n{self.non_functional_requirements}')
+            if self.development_plan:
+                sections.append(f'\n### Development Plan\n{self.development_plan}')
+            if self.testing_strategy:
+                sections.append(f'\n### Testing Strategy\n{self.testing_strategy}')
 
-### Dependencies
-{self.dependencies}
+        if self.research_requirements or self.success_criteria or self.integration_context:
+            sections.append('\n## Additional Details')
+            if self.research_requirements:
+                sections.append(f'\n### Research Requirements\n{self.research_requirements}')
+            if self.success_criteria:
+                sections.append(f'\n### Success Criteria\n{self.success_criteria}')
+            if self.integration_context:
+                sections.append(f'\n### Integration Context\n{self.integration_context}')
 
-### Deliverables
-{self.deliverables}
+        sections.append('\n## Metadata')
+        sections.append(f'\n### Iteration\n{self.iteration}')
+        sections.append(f'\n### Version\n{self.version}')
+        sections.append(f'\n### Status\n{self.spec_status.value}')
 
-## System Design
+        return '\n'.join(sections) + '\n'
 
-### Architecture
-{self.architecture}
 
-### Technology Stack
-{self.technology_stack}
-
-## Implementation
-
-### Functional Requirements
-{self.functional_requirements}
-
-### Non-Functional Requirements
-{self.non_functional_requirements}
-
-### Development Plan
-{self.development_plan}
-
-### Testing Strategy
-{self.testing_strategy}
-
-## Additional Details
-
-### Research Requirements
-{self.research_requirements}
-
-### Success Criteria
-{self.success_criteria}
-
-### Integration Context
-{self.integration_context}
-
-## Metadata
-
-### Status
-{self.spec_status.value}
-"""
+InitialSpec = TechnicalSpec

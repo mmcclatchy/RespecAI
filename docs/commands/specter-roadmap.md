@@ -436,12 +436,13 @@ Main Agent: Creating roadmap with 2-week sprint phases targeting MVP delivery in
 - `get_loop_status(roadmap_loop_id)` - Monitor loop state (optional)
 - `get_feedback_history(roadmap_loop_id, count)` - Retrieve recent feedback for context
 
-**Roadmap Management Tools:**
-- `add_spec(project_id, spec_name, spec_markdown)` - Add InitialSpec to roadmap
-- `get_spec(project_id, spec_name)` - Retrieve specific spec from roadmap
-- `update_spec(project_id, spec_name, spec_markdown)` - Update existing spec
-- `list_specs(project_id)` - List all specs in roadmap
-- `delete_spec(project_id, spec_name)` - Remove spec from roadmap
+**Unified Spec Management Tools:**
+- `store_spec(project_id, spec_name, spec_markdown)` - Store spec with auto-versioning
+- `get_spec_markdown(project_id, spec_name, loop_id)` - Retrieve spec (by project OR loop)
+- `list_specs(project_id)` - List all specs in project
+- `delete_spec(project_id, spec_name)` - Remove spec from storage
+- `link_loop_to_spec(loop_id, project_id, spec_name)` - Link refinement loop to spec
+- `unlink_loop(loop_id)` - Remove loop mapping
 
 ### Environment Variables
 - `FSDD_LOOP_ROADMAP_THRESHOLD`: Quality threshold (default: 85)

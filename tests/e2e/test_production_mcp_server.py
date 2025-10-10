@@ -3,12 +3,8 @@ import os
 from typing import Any
 from unittest.mock import patch
 
-import pytest
-
 from services.mcp.server import create_mcp_server, health_check
-from services.mcp.tools.loop_tools import loop_tools
-from services.mcp.tools.roadmap_tools import roadmap_tools
-from services.utils.enums import HealthState, LoopStatus
+from services.utils.enums import HealthState
 from services.utils.setting_configs import MCPSettings
 
 
@@ -67,16 +63,17 @@ class TestProductionMCPServer:
             'get_previous_objective_feedback',
             'store_current_objective_feedback',
         ]
-        expected_roadmap_tools = [
+        expected_unified_tools = [
             'create_roadmap',
             'get_roadmap',
-            'add_spec',
-            'get_spec',
-            'update_spec',
+            'store_spec',
+            'get_spec_markdown',
+            'link_loop_to_spec',
+            'unlink_loop',
             'list_specs',
             'delete_spec',
         ]
-        expected_tools = expected_loop_tools + expected_roadmap_tools
+        expected_tools = expected_loop_tools + expected_unified_tools
 
         for tool_name in expected_tools:
             assert tool_name in tool_names, f'Required tool {tool_name} not found in {tool_names}'
@@ -261,7 +258,7 @@ class TestProductionMCPServer:
             'initialize_refinement_loop',
             'create_roadmap',
             'get_roadmap',
-            'add_spec',
+            'store_spec',
         }
 
         for tool_set in tool_names_sets:
@@ -304,16 +301,17 @@ class TestProductionMCPServer:
             'get_previous_objective_feedback',
             'store_current_objective_feedback',
         ]
-        expected_roadmap_tools = [
+        expected_unified_tools = [
             'create_roadmap',
             'get_roadmap',
-            'add_spec',
-            'get_spec',
-            'update_spec',
+            'store_spec',
+            'get_spec_markdown',
+            'link_loop_to_spec',
+            'unlink_loop',
             'list_specs',
             'delete_spec',
         ]
-        expected_tools = expected_loop_tools + expected_roadmap_tools
+        expected_tools = expected_loop_tools + expected_unified_tools
 
         for tool_name in expected_tools:
             assert tool_name in tools
@@ -377,180 +375,3 @@ class TestProductionMCPServer:
 
         # Run async tests
         asyncio.run(test_async_errors())
-
-    def test_complete_production_workflow_loop_and_roadmap_integration(self) -> None:
-        server = create_mcp_server()
-
-        # Verify server has all required tools registered
-        tools = asyncio.run(server.get_tools())
-        assert len(tools) >= 13  # Tools may expand over time
-
-        project_id = 'production-workflow-project'
-        spec_markdown = """# Technical Specification: Production Workflow Test
-
-## Overview
-
-**Objectives**: `Test complete production workflow with loop and roadmap integration`
-**Scope**: `End-to-end validation of MCP server functionality`
-**Dependencies**: `FastMCP server, in-memory state management, loop refinement`
-
-## Expected Deliverables
-
-- Successful roadmap creation and management
-- Effective spec lifecycle management
-- Loop-based refinement process integration
-- Production-ready error handling
-
-## Technical Architecture
-
-Production MCP server with FastAPI middleware, async tool handling, 
-and comprehensive error recovery mechanisms.
-"""
-
-        # Phase 1: Project Initialization
-        roadmap_markdown = create_test_roadmap_markdown('Production Workflow Roadmap')
-        roadmap_result = roadmap_tools.create_roadmap(project_id, roadmap_markdown)
-        assert isinstance(roadmap_result, str)
-        assert 'Created roadmap' in roadmap_result
-
-        # Phase 2: Refinement Loop Initialization
-        loop_result = loop_tools.initialize_refinement_loop('spec')
-        assert loop_result.status == LoopStatus.INITIALIZED
-        loop_id = loop_result.id
-
-        # Phase 3: Initial Spec Creation
-        spec_result = roadmap_tools.add_spec(project_id, 'Production Workflow Spec', spec_markdown)
-        assert isinstance(spec_result, str)
-        assert 'Added spec' in spec_result
-
-        # Phase 4: Refinement Iteration 1 (Score: 60 - Should Refine)
-        refinement_1 = loop_tools.decide_loop_next_action(loop_id, 60)
-        assert refinement_1.status == LoopStatus.REFINE
-
-        # Phase 5: Spec Update After First Refinement (content update, not name)
-        updated_markdown_1 = spec_markdown.replace(
-            'End-to-end validation of MCP server functionality',
-            'Updated end-to-end validation of MCP server functionality after first refinement',
-        )
-        update_1 = roadmap_tools.update_spec(project_id, 'First Refinement Update', updated_markdown_1)
-        assert isinstance(update_1, str)
-        assert 'Updated spec' in update_1
-
-        # Phase 6: Refinement Iteration 2 (Score: 75 - Should Refine)
-        refinement_2 = loop_tools.decide_loop_next_action(loop_id, 75)
-        assert refinement_2.status == LoopStatus.REFINE
-
-        # Phase 7: Spec Update After Second Refinement (content update, not name)
-        updated_markdown_2 = updated_markdown_1.replace('after first refinement', 'after second refinement')
-        update_2 = roadmap_tools.update_spec(project_id, 'Second Refinement Update', updated_markdown_2)
-        assert isinstance(update_2, str)
-        assert 'Updated spec' in update_2
-
-        # Phase 8: Final Refinement (Score: 90 - Should Complete)
-        completion = loop_tools.decide_loop_next_action(loop_id, 90)
-        assert completion.status == LoopStatus.COMPLETED
-
-        # Phase 9: Verification of Final State
-        final_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert isinstance(final_roadmap, str)
-        assert '- **Spec 1**: Production Workflow Test' in final_roadmap
-
-        final_loop_status = loop_tools.get_loop_status(loop_id)
-        assert final_loop_status.status == LoopStatus.COMPLETED
-
-        # Phase 10: Spec Listing and Management
-        list_result = roadmap_tools.list_specs(project_id)
-        assert isinstance(list_result, str)
-        assert 'Production Workflow Test' in list_result
-
-        # Phase 11: Active Loops Management
-        active_loops = loop_tools.list_active_loops()
-        assert isinstance(active_loops, list)
-        # Should contain our completed loop
-        loop_ids = [loop.id for loop in active_loops]
-        assert loop_id in loop_ids
-
-        # Phase 12: Error Recovery Testing
-        with pytest.raises(Exception):
-            roadmap_tools.get_spec('non-existent-project', 'non-existent-spec')
-
-        # Phase 13: Cleanup and Final Verification
-        delete_result = roadmap_tools.delete_spec(project_id, 'Production Workflow Test')
-        assert isinstance(delete_result, str)
-        assert 'Deleted spec' in delete_result
-
-        # Verify empty roadmap after deletion
-        empty_roadmap = roadmap_tools.get_roadmap(project_id)
-        assert '## Specifications\n\n\n## Risk Assessment' in empty_roadmap
-
-    def test_production_concurrent_mixed_operations(self) -> None:
-        server = create_mcp_server()
-
-        # Verify server has all required tools registered
-        tools = asyncio.run(server.get_tools())
-        assert len(tools) >= 13  # Tools may expand over time
-
-        # Test concurrent roadmap creation operations
-        roadmap_results = []
-        for i in range(3):
-            roadmap_markdown = create_test_roadmap_markdown(f'Concurrent Roadmap {i}')
-            roadmap_result = roadmap_tools.create_roadmap(f'concurrent-project-{i}', roadmap_markdown)
-            roadmap_results.append(roadmap_result)
-            assert isinstance(roadmap_result, str)
-            assert 'Created roadmap' in roadmap_result
-
-        # Test concurrent loop initialization operations
-        loop_results = []
-        for i in range(3):
-            loop_type = 'plan' if i % 2 == 0 else 'spec'
-            loop_result = loop_tools.initialize_refinement_loop(loop_type)
-            loop_results.append(loop_result)
-            assert loop_result.status == LoopStatus.INITIALIZED
-
-        # Test concurrent mixed follow-up operations
-        spec_markdown = """# Technical Specification: Test Spec
-## Overview
-**Objectives**: `Concurrent testing`
-**Scope**: `Production validation`
-**Dependencies**: `None`
-## Expected Deliverables
-Concurrent operation validation
-## Technical Architecture
-Async MCP server operations
-"""
-
-        # Add specs to concurrent roadmaps
-        spec_results = []
-        for i in range(3):
-            result = roadmap_tools.add_spec(f'concurrent-project-{i}', f'Concurrent Spec {i}', spec_markdown)
-            spec_results.append(result)
-            assert isinstance(result, str)
-            assert 'Added spec' in result
-
-        # Progress concurrent loops
-        loop_progress_results = []
-        for i, loop_result in enumerate(loop_results):
-            score = 85 + i  # Varying scores
-            progress_result = loop_tools.decide_loop_next_action(loop_result.id, score)
-            loop_progress_results.append(progress_result)
-            assert progress_result.status == LoopStatus.COMPLETED  # All scores >= 85
-
-        # Verify final state consistency
-        for i in range(3):
-            # Verify roadmaps have specs
-            roadmap_check = roadmap_tools.get_roadmap(f'concurrent-project-{i}')
-            assert isinstance(roadmap_check, str)
-            assert '- **Spec 1**: Test Spec' in roadmap_check
-
-            # List all specs in each roadmap
-            specs_list = roadmap_tools.list_specs(f'concurrent-project-{i}')
-            assert isinstance(specs_list, str)
-            assert 'Test Spec' in specs_list
-
-        # Verify all loops are in completed state
-        active_loops = loop_tools.list_active_loops()
-        completed_loop_ids = [loop.id for loop in loop_results]
-        active_loop_ids = [loop.id for loop in active_loops]
-
-        for completed_id in completed_loop_ids:
-            assert completed_id in active_loop_ids

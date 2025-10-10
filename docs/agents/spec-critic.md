@@ -19,21 +19,19 @@ The `specter-spec-critic` agent evaluates technical specifications against FSDD 
 - **Quality Validation**: At each iteration
 
 ### Invocation Pattern
-```python
-# Main Agent invokes spec-critic
-response = Task(
-    agent="specter-spec-critic",
-    prompt=f"""
-    Evaluate this technical specification for completeness and quality.
-    
-    Technical Specification:
-    {spec_document}
-    
-    Assess against technical FSDD criteria.
-    Provide score (0-100) and specific improvements.
-    """
-)
-```
+
+The Main Agent invokes spec-critic using the Task tool with:
+
+1. **Agent parameter**: `specter-spec-critic`
+2. **Prompt parameters**:
+   - **loop_id** (required - for specification retrieval and feedback storage)
+
+**Key Design - Idempotent Self-Sufficiency**:
+- Agent RETRIEVES spec via `get_technical_spec_markdown(loop_id)`
+- Agent RETRIEVES feedback history via `get_feedback_history(loop_id)`
+- Agent STORES feedback directly via `store_critic_feedback(loop_id, feedback)`
+- NO markdown passed as parameters - agent is self-sufficient
+- Can be called multiple times with same loop_id - idempotent
 
 ## Workflow Position
 
@@ -46,10 +44,13 @@ specter-spec-architect → [Technical Spec] → specter-spec-critic → [Score +
 ```
 
 ### Role in Specification Loop
-1. **Technical Assessment**: Evaluate architectural decisions
-2. **Completeness Check**: Verify all components specified
-3. **Score Generation**: Provide quality metric
-4. **Improvement Guidance**: Direct technical enhancements
+1. **Specification Retrieval**: Use MCP to get TechnicalSpec markdown
+2. **Feedback History Review**: Retrieve previous feedback for consistency
+3. **Technical Assessment**: Evaluate architectural decisions
+4. **Completeness Check**: Verify all components specified
+5. **Score Generation**: Provide quality metric
+6. **Improvement Guidance**: Direct technical enhancements
+7. **Feedback Storage**: Store assessment directly via MCP
 
 ## Primary Responsibilities
 
@@ -87,43 +88,78 @@ specter-spec-architect → [Technical Spec] → specter-spec-critic → [Score +
    - Generate 0-100 score
    - Track improvement trends
 
+6. **Feedback Storage**
+   - Format feedback in structured markdown
+   - Include overall_score in feedback
+   - Store directly via `mcp__specter__store_critic_feedback`
+   - Ensure score auto-populates in MCP database
+
 ## Tool Permissions
 
 ### Allowed Tools
-- **None**: Pure assessment agent
+- **mcp__specter__get_technical_spec_markdown**: Retrieve specification for evaluation
+- **mcp__specter__get_feedback_history**: Retrieve previous feedback for consistency
+- **mcp__specter__store_critic_feedback**: Store assessment results directly
+
+### Specific Tool Usage
+
+**Specification Retrieval**:
+```text
+mcp__specter__get_technical_spec_markdown(loop_id=loop_id)
+→ Returns: TechnicalSpec markdown for evaluation
+```
+
+**Feedback History Review**:
+```text
+mcp__specter__get_feedback_history(loop_id=loop_id, count=3)
+→ Returns: Recent feedback for consistency tracking
+```
+
+**Feedback Storage**:
+```text
+mcp__specter__store_critic_feedback(loop_id=loop_id, feedback_markdown=feedback_text)
+→ Action: Stores feedback with auto-populated score
+```
 
 ### Restrictions
 - No file system access
 - No external tool invocation
 - No platform interaction
 - No specification modification
+- MCP access limited to spec retrieval, feedback history, and feedback storage
 
 ## Input Specifications
 
 ### Assessment Input
 ```markdown
-Evaluate this technical specification for completeness and quality.
+loop_id: [loop identifier for MCP operations]
 
-Technical Specification:
-[Complete specification from spec-architect]
-
-Iteration: [1-5]
-Previous Score: [If applicable]
+Instructions:
+1. Use mcp__specter__get_technical_spec_markdown(loop_id) to retrieve the specification
+2. Use mcp__specter__get_feedback_history(loop_id, count=3) to review previous assessments
+3. Evaluate the specification against technical FSDD criteria
+4. Generate structured feedback with overall_score (0-100)
+5. Use mcp__specter__store_critic_feedback(loop_id, feedback_markdown) to store the assessment
 
 Focus on:
 - Technical architecture completeness
 - Implementation readiness
 - Research requirements accuracy
 - Integration specifications
+- Consistency with previous feedback
 ```
 
 ## Output Specifications
 
-### Technical Assessment Output
+**Critical Note**: The critic does NOT return feedback to Main Agent. It stores feedback directly via `mcp__specter__store_critic_feedback(loop_id, feedback_markdown)`. The feedback markdown must include `overall_score` which auto-populates in the MCP database.
+
+### Technical Assessment Output Format
 ```markdown
 ## Technical Specification Assessment
 
-### Overall Score: 76/100
+### Overall_score: 76
+
+**NOTE**: The overall_score field is critical - it auto-populates the score in MCP database for loop decision logic.
 
 ### Technical FSDD Criteria
 

@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from services.models.spec import TechnicalSpec
 from services.shared import state_manager
 from services.utils.enums import LoopStatus
-from services.utils.errors import LoopNotFoundError
+from services.utils.errors import LoopNotFoundError, RoadmapNotFoundError, SpecNotFoundError
 from services.utils.loop_state import MCPResponse
 from services.utils.state_manager import StateManager
 
@@ -13,182 +13,277 @@ from services.utils.state_manager import StateManager
 class SpecTools:
     def __init__(self, state: StateManager) -> None:
         self.state = state
-        self._technical_specs: dict[str, TechnicalSpec] = {}
 
-    def store_technical_spec(self, spec: TechnicalSpec, loop_id: str) -> MCPResponse:
+    def store_spec(self, project_id: str, spec_name: str, spec_markdown: str) -> str:
+        if not project_id:
+            raise ToolError('Project ID cannot be empty')
+        if not spec_name:
+            raise ToolError('Spec name cannot be empty')
+        if not spec_markdown:
+            raise ToolError('Spec markdown cannot be empty')
+
         try:
-            if spec is None:
-                raise ValueError('TechnicalSpec cannot be None')
+            spec = TechnicalSpec.parse_markdown(spec_markdown)
+            self.state.store_spec(project_id, spec)
+            return f'Stored spec "{spec_name}" in project {project_id} (iteration {spec.iteration}, version {spec.version})'
+        except RoadmapNotFoundError as e:
+            raise ResourceError(str(e))
+        except ValidationError:
+            raise ToolError('Invalid specification data provided')
+        except Exception as e:
+            raise ToolError(f'Failed to store spec: {str(e)}')
 
+    def get_spec_markdown(self, project_id: str | None, spec_name: str | None, loop_id: str | None) -> MCPResponse:
+        try:
+            if loop_id:
+                loop_state = self.state.get_loop(loop_id)
+                spec = self.state.get_spec_by_loop(loop_id)
+                markdown = spec.build_markdown()
+                return MCPResponse(id=loop_id, status=loop_state.status, message=markdown)
+            elif project_id and spec_name:
+                spec = self.state.get_spec(project_id, spec_name)
+                markdown = spec.build_markdown()
+                return MCPResponse(id=f'{project_id}/{spec_name}', status=LoopStatus.COMPLETED, message=markdown)
+            else:
+                raise ToolError('Either loop_id OR (project_id AND spec_name) must be provided')
+        except LoopNotFoundError:
+            raise ResourceError('Loop does not exist or is not linked to a spec')
+        except RoadmapNotFoundError as e:
+            raise ResourceError(str(e))
+        except SpecNotFoundError as e:
+            raise ResourceError(str(e))
+        except Exception as e:
+            raise ToolError(f'Failed to retrieve spec: {str(e)}')
+
+    def list_specs(self, project_id: str) -> MCPResponse:
+        if not project_id:
+            raise ToolError('Project ID cannot be empty')
+
+        try:
+            spec_names = self.state.list_specs(project_id)
+            if not spec_names:
+                return MCPResponse(
+                    id=project_id, status=LoopStatus.COMPLETED, message=f'No specs found in project {project_id}'
+                )
+
+            spec_list = ', '.join(spec_names)
+            return MCPResponse(
+                id=project_id,
+                status=LoopStatus.COMPLETED,
+                message=f'Found {len(spec_names)} spec{"s" if len(spec_names) != 1 else ""} in project {project_id}: {spec_list}',
+            )
+        except RoadmapNotFoundError as e:
+            raise ResourceError(str(e))
+        except Exception as e:
+            raise ToolError(f'Failed to list specs: {str(e)}')
+
+    def delete_spec(self, project_id: str, spec_name: str) -> MCPResponse:
+        if not project_id:
+            raise ToolError('Project ID cannot be empty')
+        if not spec_name:
+            raise ToolError('Spec name cannot be empty')
+
+        try:
+            was_deleted = self.state.delete_spec(project_id, spec_name)
+            if was_deleted:
+                return MCPResponse(
+                    id=f'{project_id}/{spec_name}',
+                    status=LoopStatus.COMPLETED,
+                    message=f'Deleted spec "{spec_name}" from project {project_id}',
+                )
+            else:
+                return MCPResponse(
+                    id=f'{project_id}/{spec_name}',
+                    status=LoopStatus.COMPLETED,
+                    message=f'Spec "{spec_name}" not found in project {project_id}',
+                )
+        except RoadmapNotFoundError as e:
+            raise ResourceError(str(e))
+        except Exception as e:
+            raise ToolError(f'Failed to delete spec: {str(e)}')
+
+    def link_loop_to_spec(self, loop_id: str, project_id: str, spec_name: str) -> MCPResponse:
+        if not loop_id:
+            raise ToolError('Loop ID cannot be empty')
+        if not project_id:
+            raise ToolError('Project ID cannot be empty')
+        if not spec_name:
+            raise ToolError('Spec name cannot be empty')
+
+        try:
+            self.state.link_loop_to_spec(loop_id, project_id, spec_name)
             loop_state = self.state.get_loop(loop_id)
-            self._technical_specs[loop_id] = spec
             return MCPResponse(
                 id=loop_id,
                 status=loop_state.status,
-                message=f'Stored technical specification: {spec.phase_name}',
+                message=f'Linked loop {loop_id} to spec "{spec_name}" in project {project_id}',
             )
-        except ValidationError:
-            raise ToolError('Invalid technical specification data provided')
-        except ValueError:
-            raise ToolError('Invalid technical specification: cannot be None')
+        except SpecNotFoundError as e:
+            raise ResourceError(str(e))
         except LoopNotFoundError:
             raise ResourceError('Loop does not exist')
         except Exception as e:
-            raise ToolError(f'Unexpected error storing technical specification: {str(e)}')
+            raise ToolError(f'Failed to link loop to spec: {str(e)}')
 
-    def get_technical_spec_data(self, loop_id: str) -> TechnicalSpec:
+    def unlink_loop(self, loop_id: str) -> MCPResponse:
+        if not loop_id:
+            raise ToolError('Loop ID cannot be empty')
+
         try:
-            self.state.get_loop(loop_id)
-
-            if loop_id not in self._technical_specs:
-                raise ResourceError('No technical specification stored for this loop')
-
-            return self._technical_specs[loop_id]
-        except LoopNotFoundError:
-            raise ResourceError('Loop does not exist')
-        except (ResourceError, ToolError):
-            raise
-        except Exception as e:
-            raise ToolError(f'Unexpected error retrieving technical specification: {str(e)}')
-
-    def get_technical_spec_markdown(self, loop_id: str) -> MCPResponse:
-        try:
+            result = self.state.unlink_loop(loop_id)
             loop_state = self.state.get_loop(loop_id)
-            technical_spec = self.get_technical_spec_data(loop_id)
-
-            markdown = technical_spec.build_markdown()
-            return MCPResponse(id=loop_id, status=loop_state.status, message=markdown)
-        except LoopNotFoundError:
-            raise ResourceError('Loop does not exist')
-        except Exception as e:
-            raise ToolError(f'Unexpected error generating markdown: {str(e)}')
-
-    def list_technical_specs(self, count: int = 10) -> MCPResponse:
-        try:
-            if not self._technical_specs:
+            if result:
+                project_id, spec_name = result
                 return MCPResponse(
-                    id='list', status=LoopStatus.INITIALIZED, message='No technical specifications found'
+                    id=loop_id,
+                    status=loop_state.status,
+                    message=f'Unlinked loop {loop_id} from spec "{spec_name}" in project {project_id}',
                 )
-
-            spec_items = list(self._technical_specs.items())[-count:]
-            spec_count = len(spec_items)
-
-            spec_summaries = []
-            for loop_id, spec in spec_items:
-                summary = f'ID: {loop_id}, Specification: {spec.phase_name}'
-                spec_summaries.append(summary)
-
-            message = f'Found {spec_count} technical spec{"s" if spec_count != 1 else ""}: ' + '; '.join(spec_summaries)
-            return MCPResponse(id='list', status=LoopStatus.COMPLETED, message=message)
-        except Exception as e:
-            raise ToolError(f'Unexpected error listing technical specifications: {str(e)}')
-
-    def delete_technical_spec(self, loop_id: str) -> MCPResponse:
-        try:
-            self.state.get_loop(loop_id)
-
-            if loop_id in self._technical_specs:
-                spec_name = self._technical_specs[loop_id].phase_name
-                del self._technical_specs[loop_id]
             else:
-                spec_name = 'Unknown'
-            return MCPResponse(
-                id=loop_id, status=LoopStatus.COMPLETED, message=f'Deleted technical specification: {spec_name}'
-            )
+                return MCPResponse(
+                    id=loop_id, status=loop_state.status, message=f'Loop {loop_id} was not linked to any spec'
+                )
         except LoopNotFoundError:
             raise ResourceError('Loop does not exist')
         except Exception as e:
-            raise ToolError(f'Unexpected error deleting technical specification: {str(e)}')
+            raise ToolError(f'Failed to unlink loop: {str(e)}')
 
 
 def register_spec_tools(mcp: FastMCP) -> None:
     spec_tools = SpecTools(state_manager)
 
     @mcp.tool()
-    async def store_technical_spec(loop_id: str, spec_markdown: str, ctx: Context) -> MCPResponse:
-        """Store technical specification from markdown.
+    async def store_spec(project_id: str, spec_name: str, spec_markdown: str, ctx: Context) -> str:
+        """Store technical specification with automatic versioning.
 
-        Parses markdown content into a TechnicalSpec model and stores it with
-        the specified loop.
+        Parses markdown content into a TechnicalSpec model and stores it in the
+        unified spec storage. Automatically increments iteration and version if
+        updating an existing spec.
 
         Parameters:
-        - loop_id: Loop ID to store the technical specification in
-        - spec_markdown: Complete technical specification in markdown format
+        - project_id: Project identifier
+        - spec_name: Name/phase of the specification
+        - spec_markdown: Complete specification in markdown format
 
         Returns:
-        - MCPResponse: Contains loop_id, status, and confirmation message
+        - str: Confirmation message with iteration and version
         """
-        await ctx.info(f'Parsing and storing technical specification with loop_id: {loop_id}')
-
+        await ctx.info(f'Storing spec "{spec_name}" for project {project_id}')
         try:
-            technical_spec = TechnicalSpec.parse_markdown(spec_markdown)
-            result = spec_tools.store_technical_spec(technical_spec, loop_id)
-
-            await ctx.info(f'Stored technical specification with ID: {result.id}')
+            result = spec_tools.store_spec(project_id, spec_name, spec_markdown)
+            await ctx.info(f'Stored spec "{spec_name}" for project {project_id}')
             return result
         except Exception as e:
-            await ctx.error(f'Failed to store technical specification: {str(e)}')
-            raise ToolError(f'Failed to store technical specification: {str(e)}')
+            await ctx.error(f'Failed to store spec: {str(e)}')
+            raise
 
     @mcp.tool()
-    async def get_technical_spec_markdown(loop_id: str, ctx: Context) -> MCPResponse:
-        """Generate markdown for technical specification.
+    async def get_spec_markdown(
+        project_id: str | None, spec_name: str | None, loop_id: str | None, ctx: Context
+    ) -> MCPResponse:
+        """Retrieve specification as markdown.
 
-        Retrieves stored technical specification and formats as markdown
+        Two retrieval modes:
+        1. By loop_id: Retrieves spec linked to active refinement loop
+        2. By project_id + spec_name: Retrieves spec directly from storage
 
         Parameters:
-        - loop_id: Unique identifier of the loop
+        - project_id: Project identifier (required if not using loop_id)
+        - spec_name: Spec name (required if not using loop_id)
+        - loop_id: Loop identifier (alternative to project_id + spec_name)
 
         Returns:
-        - MCPResponse: Contains loop_id, status, and formatted markdown content
+        - MCPResponse: Contains spec markdown in message field
         """
-        await ctx.info(f'Generating markdown for technical specification {loop_id}')
+        await ctx.info('Retrieving spec markdown')
         try:
-            result = spec_tools.get_technical_spec_markdown(loop_id)
-            await ctx.info(f'Generated markdown for technical specification {loop_id}')
+            result = spec_tools.get_spec_markdown(project_id, spec_name, loop_id)
+            await ctx.info('Retrieved spec markdown')
             return result
         except Exception as e:
-            await ctx.error(f'Failed to generate technical specification markdown: {str(e)}')
-            raise ResourceError(f'Technical specification not found for loop {loop_id}: {str(e)}')
+            await ctx.error(f'Failed to retrieve spec: {str(e)}')
+            raise
 
     @mcp.tool()
-    async def list_technical_specs(count: int, ctx: Context) -> MCPResponse:
-        """List available technical specifications.
-
-        Returns summary of stored technical specifications with basic metadata.
+    async def list_specs(project_id: str, ctx: Context) -> MCPResponse:
+        """List all specifications for a project.
 
         Parameters:
-        - count: Maximum number of specifications to return
+        - project_id: Project identifier
 
         Returns:
-        - MCPResponse: Contains list status and technical specification summaries
+        - MCPResponse: Contains list of spec names in message field
         """
-        await ctx.info(f'Listing up to {count} technical specifications')
+        await ctx.info(f'Listing specs for project {project_id}')
         try:
-            result = spec_tools.list_technical_specs(count)
-            await ctx.info('Retrieved technical specification list')
+            result = spec_tools.list_specs(project_id)
+            await ctx.info(f'Listed specs for project {project_id}')
             return result
         except Exception as e:
-            await ctx.error(f'Failed to list technical specifications: {str(e)}')
-            raise ToolError(f'Failed to list technical specifications: {str(e)}')
+            await ctx.error(f'Failed to list specs: {str(e)}')
+            raise
 
     @mcp.tool()
-    async def delete_technical_spec(loop_id: str, ctx: Context) -> MCPResponse:
-        """Delete a stored technical specification.
-
-        Removes technical specification data associated with the given loop ID.
+    async def delete_spec(project_id: str, spec_name: str, ctx: Context) -> MCPResponse:
+        """Delete a specification from storage.
 
         Parameters:
-        - loop_id: Unique identifier of the loop
+        - project_id: Project identifier
+        - spec_name: Spec name to delete
 
         Returns:
-        - MCPResponse: Contains loop_id, status, and deletion confirmation
+        - MCPResponse: Contains deletion confirmation
         """
-        await ctx.info(f'Deleting technical specification {loop_id}')
+        await ctx.info(f'Deleting spec "{spec_name}" from project {project_id}')
         try:
-            result = spec_tools.delete_technical_spec(loop_id)
-            await ctx.info(f'Deleted technical specification {loop_id}')
+            result = spec_tools.delete_spec(project_id, spec_name)
+            await ctx.info(f'Deleted spec "{spec_name}" from project {project_id}')
             return result
         except Exception as e:
-            await ctx.error(f'Failed to delete technical specification: {str(e)}')
-            raise ToolError(f'Failed to delete technical specification: {str(e)}')
+            await ctx.error(f'Failed to delete spec: {str(e)}')
+            raise
+
+    @mcp.tool()
+    async def link_loop_to_spec(loop_id: str, project_id: str, spec_name: str, ctx: Context) -> MCPResponse:
+        """Link active refinement loop to specification for idempotent iteration.
+
+        Creates temporary mapping allowing agents to retrieve/update specs via loop_id
+        during refinement sessions. Enables idempotent spec-architect pattern.
+
+        Parameters:
+        - loop_id: Active loop identifier
+        - project_id: Project identifier
+        - spec_name: Spec name to link
+
+        Returns:
+        - MCPResponse: Contains linking confirmation
+        """
+        await ctx.info(f'Linking loop {loop_id} to spec "{spec_name}" in project {project_id}')
+        try:
+            result = spec_tools.link_loop_to_spec(loop_id, project_id, spec_name)
+            await ctx.info(f'Linked loop {loop_id} to spec')
+            return result
+        except Exception as e:
+            await ctx.error(f'Failed to link loop to spec: {str(e)}')
+            raise
+
+    @mcp.tool()
+    async def unlink_loop(loop_id: str, ctx: Context) -> MCPResponse:
+        """Remove loop-to-spec mapping after refinement completion.
+
+        Cleans up temporary mapping when refinement loop completes.
+
+        Parameters:
+        - loop_id: Loop identifier to unlink
+
+        Returns:
+        - MCPResponse: Contains unlinking confirmation
+        """
+        await ctx.info(f'Unlinking loop {loop_id}')
+        try:
+            result = spec_tools.unlink_loop(loop_id)
+            await ctx.info(f'Unlinked loop {loop_id}')
+            return result
+        except Exception as e:
+            await ctx.error(f'Failed to unlink loop: {str(e)}')
+            raise

@@ -6,7 +6,7 @@ from services.utils.errors import SpecNotFoundError
 
 from .base import MCPModel
 from .enums import RoadmapStatus
-from .initial_spec import InitialSpec
+from .spec import InitialSpec
 
 
 class Roadmap(MCPModel):

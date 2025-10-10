@@ -14,8 +14,8 @@ The `specter-spec-architect` agent transforms strategic plans into comprehensive
 ## Invocation Context
 
 ### When Invoked
-- **Initial**: Start of `/spec` command with strategic plan
-- **Refinement**: When MCP Server returns "refine" status  
+- **Initial Generation**: First iteration (spec at iteration=0)
+- **Refinement**: Subsequent iterations when quality score < threshold
 - **Focus**: With specific technical area emphasis
 
 ### Invocation Pattern
@@ -23,12 +23,15 @@ The `specter-spec-architect` agent transforms strategic plans into comprehensive
 The Main Agent invokes spec-architect using the Task tool with:
 
 1. **Agent parameter**: `specter-spec-architect`
-2. **Prompt contents**:
-   - Strategic plan (required)
-   - Focus area (optional - for targeted work)
-   - Critic feedback (optional - for refinement iterations)
-   - Instructions to create comprehensive technical specification
-   - Instructions to identify research requirements
+2. **Prompt parameters**:
+   - **loop_id** (required - for retrieving current spec state and storing updates)
+   - **focus** (optional - for targeted improvements like "API design" or "data architecture")
+
+**Key Design - Idempotent Self-Sufficiency**:
+- Agent RETRIEVES current spec via `get_spec_markdown(loop_id=loop_id)`
+- Agent STORES updated spec via loop-based workflow (spec linked to loop during refinement)
+- NO markdown passed as parameters - agent is self-sufficient
+- Can be called multiple times with same loop_id - always retrieves latest state
 
 ## Workflow Position
 
@@ -87,12 +90,37 @@ Strategic Plan → specter-spec-architect → Technical Spec → specter-spec-cr
 ## Tool Permissions
 
 ### Allowed Tools
-- **Bash**: For executing archive scanning scripts
-- **Read**: For accessing existing documentation
-- **Grep**: For searching technical patterns
-- **Glob**: For finding relevant files
+- **mcp__specter__get_spec_markdown**: Retrieve current spec state from loop
+- **mcp__specter__store_spec**: Store spec with auto-versioning
+- **mcp__specter__link_loop_to_spec**: Link loop to spec for refinement workflow
+- **mcp__specter__get_feedback_history**: Retrieve critic feedback for refinement
+- **Bash**: Execute archive scanning scripts
+- **Read**: Access existing documentation
+- **Grep**: Search technical patterns
+- **Glob**: Find relevant files
 
-### Specific Tool Usage
+### MCP Tool Usage
+
+**Spec Retrieval** (Always - First Step):
+```text
+mcp__specter__get_spec_markdown(loop_id=loop_id)
+→ Returns: Current TechnicalSpec markdown (iteration=0 for first call, 1+ for refinement)
+```
+
+**Feedback Retrieval** (Refinement Only - When iteration > 0):
+```text
+mcp__specter__get_feedback_history(loop_id=loop_id, count=3)
+→ Returns: Recent critic feedback for addressing weak areas
+```
+
+**Spec Storage** (Always - Final Step):
+```text
+mcp__specter__store_spec(project_id=project_id, spec_name=spec_name, spec_markdown=updated_spec)
+→ Action: Stores spec with auto-incremented iteration and version
+```
+
+### Archive Scanning
+
 ```bash
 # Archive scanning execution
 Bash: ~/.claude/scripts/research-advisor-archive-scan.sh "React hooks"
@@ -104,41 +132,55 @@ Glob: ~/.claude/best-practices/*authentication*.md
 ```
 
 ### Restrictions
-- No direct file writing (specification returned to Main Agent)
 - No platform-specific tool access
 - No external network calls
-- No MCP Server interaction
+- All state operations through MCP (no local caching)
 
 ## Input Specifications
 
-### Initial Invocation Input
+### Invocation Input (All Iterations)
    ```markdown
-   Strategic Plan:
-   [Complete strategic plan document]
+   loop_id: [loop identifier for MCP retrieval and storage]
 
-   Technical Focus (optional):
-   [Specific area like "API design" or "data architecture"]
+   focus (optional): [Specific technical area like "API design" or "data architecture"]
 
-   Create a comprehensive technical specification including:
-   1. System architecture
-   2. Technology decisions
-   3. Implementation approach
-   4. Research requirements
+   Instructions:
+   1. Retrieve current spec: mcp__specter__get_spec_markdown(loop_id=loop_id)
+   2. Check spec.iteration to determine mode:
+      - iteration=0: Generate complete spec from sparse template
+      - iteration>0: Retrieve feedback and improve existing spec
+   3. If iteration>0: mcp__specter__get_feedback_history(loop_id, count=3)
+   4. Generate/improve comprehensive technical specification
+   5. Store updated spec: mcp__specter__store_spec(project_id, spec_name, updated_spec)
+   6. Return completion message
    ```
 
-### Refinement Invocation Input
-   ```markdown
-   Previous Specification:
-   [Current technical specification]
+**Agent Workflow** (Self-Contained):
+1. **Retrieve**: Get current spec state from MCP loop
+2. **Analyze**: Determine if initial generation (iteration=0) or refinement (iteration>0)
+3. **Research**: Execute archive scanning for technical patterns
+4. **Generate**: Create or improve specification markdown
+5. **Store**: Save updated spec to MCP loop (auto-increments iteration/version)
+6. **Report**: Return completion status to Main Agent
 
-   Critic Feedback:
-   - Score: [X]%
-   - Weak Areas: [list]
-   - Missing Elements: [list]
-   - Suggestions: [improvements]
+## Idempotency Guarantees
 
-   Enhance the specification addressing the feedback.
-   ```
+**The spec-architect agent is idempotent**: Calling it multiple times with the same `loop_id` is safe and will always produce consistent results based on the current state.
+
+**Why This Works**:
+- All state is in MCP (no local caching or hidden state)
+- Agent always retrieves latest spec from MCP before processing
+- Agent stores updates atomically to MCP
+- Iteration and version numbers auto-increment on storage
+
+**Retry Scenarios**:
+1. **Agent crashes during generation**: Retry with same loop_id → retrieves last successfully stored state
+2. **Storage fails**: Retry with same loop_id → regenerates and stores again (no corruption)
+3. **User interrupts**: Resume with same loop_id → continues from last stored state
+
+**Not Idempotent Across**:
+- Different focus parameters (intentionally - focus changes behavior)
+- Different feedback states (if critic ran between calls, feedback history changes)
 
 ## Output Specifications
 

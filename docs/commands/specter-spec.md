@@ -1,23 +1,17 @@
-# /specter-spec Command Specification
+# specter-spec Command Specification
 
 ## Overview
-The `/specter-spec` command transforms strategic plans into detailed technical specifications. It orchestrates technical architecture design, research integration, and platform-specific specification creation through a quality-driven refinement loop.
 
-## Command Metadata
+The `/specter-spec` command transforms strategic plans into comprehensive technical specifications through an automated refinement loop with quality assessment and iterative improvement.
 
-**Name**: `/specter-spec`  
-**Type**: User-invoked workflow command  
-**Phase**: Technical Specification (Phase 2 of 4)  
-**Model**: Claude Sonnet (default)  
+## Command Purpose
 
-## Invocation
+**Input**: Project name, specification phase name, optional technical focus
+**Output**: Comprehensive technical specification meeting quality threshold (≥85%)
+**Process**: Idempotent refinement loop with automated quality assessment
 
-### Who Invokes It
-- **Primary**: End user via Claude Code CLI
-- **Context**: After successful completion of `/specter-plan` command
-- **Prerequisites**: Completed strategic plan document
+## Trigger Format
 
-### Trigger Format
 ```text
 /specter-spec <project_name> <spec_name> [focus]
 ```
@@ -27,131 +21,216 @@ The `/specter-spec` command transforms strategic plans into detailed technical s
 - `spec_name`: Specification phase name (e.g., "Phase 1: Core API")
 - `focus`: Optional technical area emphasis (e.g., "API design", "data architecture")
 
-## Workflow Position
-
-```text
-Strategic Plan → /specter-spec → [spec-architect ↔ spec-critic loop] → Technical Specification
-                              ↓
-                    Research identification
-                              ↓
-                    Platform-specific storage
-                              ↓
-                    Ready for /specter-build command
+**Examples**:
+```bash
+/specter-spec best-practices-graph "Phase 1: Core API"
+/specter-spec best-practices-graph "Phase 1: Core API" "API design"
+/specter-spec analytics-platform "Phase 2: Data Pipeline" "scalability"
 ```
 
-### Position in End-to-End Flow
-1. **Second Phase**: Follows strategic planning phase
-2. **Precedes**: Implementation planning (`/specter-build`) phase
-3. **Dependencies**: Requires completed strategic plan
-4. **Output Used By**: `/specter-build` command and `build-planner` agent
+## Architecture Principles
 
-## Primary Responsibilities
+### 1. Unified Specification Model
 
-### Core Tasks
-1. **Initialize Technical Design Process**
-   - Retrieve strategic plan from previous phase
-   - Launch `spec-architect` agent for technical architecture
-   - Initialize MCP refinement loop for spec phase
+**TechnicalSpec Model** (replaces separate InitialSpec + TechnicalSpec):
+- **iteration=0**: Sparse spec from roadmap (phase_name, objectives, scope, dependencies, deliverables)
+- **iteration 1+**: Complete spec with all technical sections filled
+- **Auto-versioning**: Each store operation increments iteration and version
 
-2. **Coordinate Architecture Development**
-   - Guide `spec-architect` through technical design decisions
-   - Integrate existing documentation from archive
-   - Identify external research requirements
+### 2. Idempotent Agents
 
-3. **Manage Quality Assessment Loop**
-   - Pass specifications to `spec-critic` for evaluation
-   - Handle MCP Server refinement decisions
-   - Iterate until quality threshold achieved
+**spec-architect**:
+- Retrieves current spec via MCP
+- Generates or improves specification
+- Stores updated spec via MCP
+- Can be called multiple times with same loop_id safely
 
-4. **Research Integration Management**
-   - Catalog existing documentation paths
-   - Identify gaps requiring external research
-   - Create Research Requirements section in specification
+**spec-critic**:
+- Retrieves spec via MCP
+- Evaluates against FSDD criteria
+- Stores feedback via MCP
+- Idempotent evaluation
 
-5. **Platform-Specific Storage**
-   - Determine active platform (Linear/GitHub/Markdown)
-   - Use platform-appropriate tools for specification storage
-   - Maintain platform-agnostic content structure
+### 3. Self-Sufficient Agents
 
-## Orchestration Pattern
+- Agents retrieve their own data from MCP (no markdown passing)
+- Main Agent coordinates via loop_id only
+- All state in MCP, agents are stateless functions
 
-### Agent Coordination Flow (20-Step Optimized Workflow)
+## Complete Workflow (9 Steps)
 
-The complete workflow consists of 20 steps organized into 5 phases:
+### Phase 1: Initialization (Steps 1-3)
 
-**Phase 1: Initialization (Steps 1-3)**
-1. Initialize refinement loop via MCP
-2. Retrieve ProjectPlan markdown from roadmap phase
-3. Retrieve InitialSpec (starter template) from roadmap
+#### Step 1: Initialize Refinement Loop
+**Actor**: Main Agent
+**MCP Call**: `mcp__specter__initialize_refinement_loop('spec')`
+**Output**: `loop_id` for tracking this refinement session
 
-**Phase 2: Architecture Generation (Steps 4-9)**
-4. Main Agent passes InitialSpec + ProjectPlan to spec-architect
-5. spec-architect generates TechnicalSpec markdown
-6. spec-architect returns TechnicalSpec markdown to Main Agent
-7. Main Agent stores TechnicalSpec via MCP
-8. Main Agent passes TechnicalSpec to spec-critic
-9. spec-critic stores feedback directly via MCP
+#### Step 2: Retrieve Sparse Spec from Roadmap
+**Actor**: Main Agent
+**MCP Call**: `mcp__specter__get_spec(project_name, spec_name)`
+**Output**: TechnicalSpec with iteration=0 (sparse template from roadmap)
 
-**Phase 3: Loop Decision (Steps 10-13)**
-10. Main Agent retrieves score from loop status
-11. Main Agent calls decide_loop_next_action with score
-12. MCP returns decision: "refine", "complete", or "user_input"
-13. Handle decision (continue to Phase 4 if "refine", Phase 5 if "complete")
+**Sparse Spec Contents**:
+- phase_name, objectives, scope, dependencies, deliverables
+- All technical fields (architecture, technology_stack, etc.) are None
 
-**Phase 4: Refinement (Steps 14-16, if needed)**
-14. spec-architect retrieves feedback history via MCP
-15. spec-architect generates improved TechnicalSpec
-16. Loop returns to Step 7 (storage and critic assessment)
+#### Step 3: Store Initial Spec in Loop
+**Actor**: Main Agent
+**MCP Call**: `mcp__specter__store_technical_spec(loop_id, spec_markdown)`
+**Purpose**: Establish iteration=0 baseline for architect to retrieve
 
-**Phase 5: Completion (Steps 17-20)**
-17. Retrieve final TechnicalSpec markdown from MCP
-18. Update InitialSpec status to APPROVED
-19. Store platform-specific specification (Linear/GitHub/Markdown)
-20. Return completion message with spec location
+---
 
-**Critical Design Notes**:
-- project_id equals project_name (system treats them identically)
-- Architect receives InitialSpec from Main Agent (Step 4), does NOT retrieve via MCP
-- Main Agent keeps TechnicalSpec markdown from Step 6 to pass to critic (Step 8), no retrieval needed
-- Critic stores own feedback directly (Step 9), not through Main Agent
+### Phase 2: Refinement Loop (Steps 4-7)
 
-### Data Flow Between Components
+#### Step 4: Invoke spec-architect
+**Actor**: Main Agent
+**Action**: `Task(agent='specter-spec-architect', prompt with loop_id and focus)`
 
-**Initialization Phase:**
-- **Main Agent → MCP**: `initialize_refinement_loop('spec')` → loop_id
-- **Main Agent → MCP**: `get_project_plan_markdown(project_id)` → ProjectPlan markdown
-- **Main Agent → MCP**: `get_spec(project_id, spec_name)` → InitialSpec markdown
+**spec-architect Workflow** (Idempotent):
+1. Retrieve current spec: `mcp__specter__get_technical_spec_markdown(loop_id)`
+2. Check iteration:
+   - If 0: Generate complete spec from sparse template
+   - If >0: Retrieve feedback and improve existing spec
+3. If iteration>0: `mcp__specter__get_feedback_history(loop_id, count=3)`
+4. Execute archive scanning for technical patterns
+5. Generate/improve TechnicalSpec markdown
+6. Store: `mcp__specter__store_technical_spec(loop_id, updated_spec)`
+   - Auto-increments iteration and version
+7. Return completion message
 
-**Architecture Generation Phase:**
-- **Main Agent → spec-architect**: InitialSpec + ProjectPlan + loop_id + focus (if provided)
-- **spec-architect → Main Agent**: TechnicalSpec markdown (generated, not retrieved)
-- **Main Agent → MCP**: `store_technical_spec(loop_id, technical_spec_markdown)` → success
-- **Main Agent → spec-critic**: TechnicalSpec markdown + loop_id
-- **spec-critic → MCP**: `store_critic_feedback(loop_id, feedback_markdown)` → auto-populates score
+**Key Design**: Agent retrieves and stores via MCP. Main Agent only passes loop_id.
 
-**Loop Decision Phase:**
-- **Main Agent → MCP**: `get_loop_status(loop_id)` → current_score
-- **Main Agent → MCP**: `decide_loop_next_action(loop_id, current_score)` → decision
+#### Step 5: Invoke spec-critic
+**Actor**: Main Agent
+**Action**: `Task(agent='specter-spec-critic', prompt with loop_id)`
 
-**Refinement Phase (if needed):**
-- **spec-architect → MCP**: `get_feedback_history(loop_id, count=3)` → recent feedback
-- **spec-architect → Main Agent**: Improved TechnicalSpec markdown
-- Return to storage step (Step 7)
+**spec-critic Workflow** (Idempotent):
+1. Retrieve spec: `mcp__specter__get_technical_spec_markdown(loop_id)`
+2. Retrieve feedback history: `mcp__specter__get_feedback_history(loop_id, count=3)`
+3. Evaluate against FSDD criteria (10 quality gates)
+4. Generate feedback markdown with `overall_score` (0-100)
+5. Store: `mcp__specter__store_critic_feedback(loop_id, feedback_markdown)`
+6. Return completion message
 
-**Completion Phase:**
-- **Main Agent → MCP**: `get_technical_spec_markdown(loop_id)` → final spec
-- **Main Agent → MCP**: `update_spec(project_id, spec_name, updated_markdown)` → status APPROVED
-- **Main Agent → Platform**: Store via platform-specific tool
+**Key Design**: Critic retrieves and stores via MCP. Main Agent only passes loop_id.
+
+#### Step 6: Get Loop Status
+**Actor**: Main Agent
+**MCP Call**: `mcp__specter__get_loop_status(loop_id)`
+**Output**: `current_score` (latest quality score), `iteration_count`
+
+#### Step 7: Decision Engine
+**Actor**: Main Agent
+**MCP Call**: `mcp__specter__decide_loop_next_action(loop_id, current_score)`
+
+**Decision Logic**:
+- **score ≥ 85**: Return `"complete"` → proceed to Step 8
+- **score < 85 AND improvement ≥ 5**: Return `"refine"` → loop back to Step 4
+- **score < 85 AND improvement < 5**: Return `"user_input"` → pause for guidance
+- **iterations ≥ max (5)**: Return `"max_iterations"` → proceed to Step 8
+
+**If "refine"**: Loop back to Step 4 (idempotent - architect retrieves updated state)
+**If "user_input"**: Present feedback to user, get guidance, resume
+**If "complete" or "max_iterations"**: Proceed to Step 8
+
+---
+
+### Phase 3: Completion (Steps 8-9)
+
+#### Step 8: Finalize Specification
+**Actor**: Main Agent
+**MCP Call**: `mcp__specter__get_technical_spec_markdown(loop_id)`
+**Output**: Complete TechnicalSpec markdown for platform storage
+
+#### Step 9: Platform Storage
+**Actor**: Main Agent
+**Actions**:
+1. Update roadmap: `mcp__specter__update_spec(project_name, spec_name, status='APPROVED')`
+2. Store to platform: Use platform-specific tool (Linear/GitHub/Markdown)
+3. Return completion message to user
+
+**Completion Message Includes**:
+- Final quality score
+- Total iterations
+- Platform storage location
+- Next step recommendation (`/specter-build`)
+
+---
+
+## Data Flow Diagram
+
+```text
+User: /specter-spec project "Phase 1"
+  ↓
+┌─── Phase 1: Initialization ────┐
+│ Main Agent:                    │
+│  1. initialize_loop → loop_id  │
+│  2. get_spec → sparse spec     │
+│  3. store_spec(loop_id)        │
+└────────────────────────────────┘
+  ↓
+┌──────────── Phase 2: Refinement Loop ────────────┐
+│                                                  │
+│  Main Agent: Invoke architect(loop_id, focus)    │
+│    ↓                                             │
+│  spec-architect (Self-Sufficient):               │
+│    • get_technical_spec_markdown(loop_id)        │
+│    • Generate/improve spec                       │
+│    • store_technical_spec(loop_id, spec)         │
+│    ↓                                             │
+│  Main Agent: Invoke critic(loop_id)              │
+│    ↓                                             │
+│  spec-critic (Self-Sufficient):                  │
+│    • get_technical_spec_markdown(loop_id)        │
+│    • get_feedback_history(loop_id)               │
+│    • Evaluate spec                               │
+│    • store_critic_feedback(loop_id, feedback)    │
+│    ↓                                             │
+│  Main Agent:                                     │
+│    • get_loop_status(loop_id)                    │
+│    • decide_loop_next_action(loop_id, score)     │
+│    ↓                                             │
+│  Decision: refine? → Loop back to architect      │
+│            complete? → Exit to Phase 3           │
+└──────────────────────────────────────────────────┘
+  ↓
+┌─── Phase 3: Completion ─────┐
+│ Main Agent:                 │
+│  8. get_technical_spec      │
+│  9. Store to platform       │
+└─────────────────────────────┘
+  ↓
+User: "Spec complete! Score: 88%, Platform: Linear #123"
+```
+
+## MCP Tools Used
+
+### Loop Management
+- `initialize_refinement_loop(loop_type='spec')` - Create refinement session
+- `get_loop_status(loop_id)` - Get current score and iteration count
+- `decide_loop_next_action(loop_id, current_score)` - Determine next step
+
+### Specification Operations
+- `get_spec(project_name, spec_name)` - Retrieve sparse spec from roadmap
+- `store_technical_spec(loop_id, spec_markdown)` - Store with auto-versioning
+- `get_technical_spec_markdown(loop_id)` - Retrieve current spec state
+- `update_spec(project_name, spec_name, status)` - Update roadmap status
+
+### Feedback Operations
+- `get_feedback_history(loop_id, count)` - Retrieve recent critic feedback
+- `store_critic_feedback(loop_id, feedback_markdown)` - Store evaluation
+
+### Roadmap Operations
+- `get_project_plan_markdown(project_name)` - Retrieve strategic context (used by architect internally)
 
 ## Quality Gates
 
-### Success Criteria
-- **Quality Threshold**: 85% (configurable via `FSDD_LOOP_SPEC_THRESHOLD`)
-- **Maximum Iterations**: 5 (configurable via `FSDD_LOOP_SPEC_MAX_ITERATIONS`)
-- **Improvement Threshold**: 5 points minimum between iterations
+### FSDD Assessment Criteria (10 Gates)
 
-### FSDD Assessment Points
-The spec-critic evaluates technical specifications against:
+The spec-critic evaluates specifications against:
+
 1. **Technical Completeness** - All components specified
 2. **Architecture Clarity** - Design decisions documented
 3. **Integration Points** - External systems identified
@@ -162,304 +241,110 @@ The spec-critic evaluates technical specifications against:
 8. **Testing Strategy** - Validation approach defined
 9. **Deployment Architecture** - Infrastructure specified
 10. **Monitoring Plan** - Observability defined
-11. **Documentation Requirements** - Knowledge capture planned
-12. **Technology Stack** - Tools and frameworks justified
 
-## Research Integration
+### Success Criteria
 
-### Research Identification Process
-```text
-spec-architect performs:
-1. Archive Scanning
-   - Execute: research-advisor-archive-scan.sh
-   - Search: ~/.claude/best-practices/*.md
-   - Catalog: Relevant existing documents
+- **Quality Threshold**: 85% (configurable via `FSDD_LOOP_SPEC_THRESHOLD`)
+- **Maximum Iterations**: 5 (configurable via `FSDD_LOOP_SPEC_MAX_ITERATIONS`)
+- **Improvement Threshold**: 5 points minimum between iterations
 
-2. Gap Analysis
-   - Compare: Required knowledge vs available
-   - Identify: Missing technical guidance
-   - Document: External research needs
+## Key Design Benefits
 
-3. Research Requirements Section
-   - Format: Structured list in specification
-   - Content: Mix of Read paths and research prompts
+### 1. Idempotency
+- **Safe Retries**: Can retry any step with same loop_id without corruption
+- **Crash Recovery**: Agents always retrieve latest state from MCP
+- **No Side Effects**: All state in MCP, agents are pure functions
+
+**Example**:
+```bash
+# Call 1: Architect generates spec, stores at iteration=1
+/specter-spec project "Phase 1"
+
+# Architect crashes during evaluation
+# Call 2: Retry with same loop_id
+# Architect retrieves iteration=1, improves to iteration=2
+# No data corruption, clean continuation
 ```
 
-### Research Requirements Format
-```markdown
-## Research Requirements
+### 2. Simplicity
+- **9 steps vs 20**: Much easier to understand and debug
+- **One model**: No confusion about InitialSpec vs TechnicalSpec
+- **Clear handshakes**: loop_id is the only coordination needed
 
-### Existing Documentation
-- Read: ~/.claude/best-practices/react-hooks-patterns.md
-- Read: ~/.claude/best-practices/postgresql-optimization.md
+### 3. State Visibility
+- **Check any point**: `get_technical_spec_markdown(loop_id)` shows current state
+- **Version history**: iteration and version track every change
+- **Audit trail**: Feedback history shows all evaluations
 
-### External Research Needed
-- Synthesize: Best practices for integrating React with GraphQL in 2025
-- Synthesize: PostgreSQL connection pooling strategies for microservices
-```
+### 4. Agent Autonomy
+- **Self-sufficient**: Agents retrieve their own data
+- **No coupling**: Main Agent doesn't need to know spec structure
+- **Easy testing**: Idempotent agents are trivial to unit test
 
-## Platform-Specific Behavior
+## Environment Variables
 
-### Platform Detection
-```python
-# Main Agent determines active platform
-platform = get_active_platform()  # Returns: 'linear' | 'github' | 'markdown'
-```
-
-### Linear Platform
-- **Storage Tool**: `mcp__linear-server__create_issue`
-- **Specification Location**: Linear issue with detailed description
-- **Research Section**: Added as structured comment
-- **Labels**: Technical specification, architecture
-- **Assignee**: Technical lead (if configured)
-
-### GitHub Platform  
-- **Storage Tool**: `mcp__github__create_issue`
-- **Specification Location**: GitHub issue with technical details
-- **Research Section**: Included in issue body
-- **Labels**: specification, technical-design
-- **Milestone**: Current sprint/release
-
-### Markdown Platform
-- **Storage Tool**: `Write`
-- **Specification Location**: `docs/specter-specs/[timestamp]-[project].md`
-- **Research Section**: Embedded in document
-- **Version Control**: Git-tracked changes
-- **Cross-references**: Links to strategic plan
-
-## Structured Data Models
-
-### TechnicalSpec Model
-The `/specter-spec` command creates and stores structured TechnicalSpec models:
-```python
-class TechnicalSpec(MCPModel):
-    id: str = Field(default_factory=lambda: str(uuid4())[:8])
-    phase_name: str = 'Unnamed Specification'
-    objectives: str
-    scope: str
-    dependencies: str
-    deliverables: str
-    architecture: str
-    technology_stack: str
-    functional_requirements: str
-    non_functional_requirements: str
-    development_plan: str
-    testing_strategy: str
-    research_requirements: str
-    success_criteria: str
-    integration_context: str
-    spec_status: SpecStatus = SpecStatus.DRAFT
-```
-
-### CriticFeedback Model
-Quality assessments stored as structured feedback:
-```python
-class CriticFeedback(MCPModel):
-    loop_id: str
-    critic_agent: CriticAgent.SPEC_CRITIC
-    iteration: int
-    overall_score: int  # 0-100
-    assessment_summary: str
-    detailed_feedback: str
-    key_issues: list[str]
-    recommendations: list[str]
-    timestamp: datetime
-```
-
-## Input/Output Specifications
-
-### Input Requirements
-- **Strategic Plan**: ProjectPlan model from `/specter-plan` phase via `get_project_plan_markdown()`
-- **Technical Focus**: Optional area of emphasis
-- **Format**: TechnicalSpec markdown structure
-
-### Output Specifications
-- **Primary Output**: TechnicalSpec model stored in MCP Server + technical specification markdown
-- **Structured Storage**: TechnicalSpec with validated fields for `/specter-build` consumption
-- **Markdown Format**:
-  ```markdown
-  # Technical Specification: [Phase Name]
-
-  ## Overview
-  ### Objectives / Scope / Dependencies / Deliverables
-
-  ## System Design
-  ### Architecture / Technology Stack
-
-  ## Implementation
-  ### Functional Requirements / Non-Functional Requirements
-  ### Development Plan / Testing Strategy
-
-  ## Additional Details
-  ### Research Requirements / Success Criteria / Integration Context
-
-  ## Metadata
-  ### Status
-  ```
+- `FSDD_LOOP_SPEC_THRESHOLD`: Quality score threshold (default: 85)
+- `FSDD_LOOP_SPEC_MAX_ITERATIONS`: Maximum refinement iterations (default: 5)
+- `FSDD_LOOP_SPEC_MIN_IMPROVEMENT`: Minimum improvement per iteration (default: 5)
 
 ## Error Handling
 
-### Common Failure Scenarios
-
-1. **Missing Strategic Plan**
-   - **Error**: "No strategic plan found"
-   - **Recovery**: Request plan location or invoke `/specter-plan`
-   - **User Message**: "Please provide the strategic plan or run /specter-plan first"
-
-2. **Platform Detection Failure**
-   - **Error**: "Cannot determine active platform"
-   - **Recovery**: Fallback to Markdown, prompt for `/specter-spec-setup`
-   - **User Message**: "Platform not configured. Using Markdown. Run /specter-spec-setup to configure."
-
-3. **Research Archive Unavailable**
-   - **Error**: "Cannot access best-practices archive"
-   - **Recovery**: Continue without archive, note in research section
-   - **User Message**: "Archive unavailable. External research will cover all topics."
-
-4. **Quality Threshold Not Met**
-   - **Error**: "Specification quality below threshold after max iterations"
-   - **Recovery**: Present specification with quality warnings
-   - **User Message**: "Specification quality: [score]%. Key gaps: [areas]. Proceed with caution."
-
-5. **Platform Storage Failure**
-   - **Error**: "Failed to store specification in [platform]"
-   - **Recovery**: Save to local Markdown as backup
-   - **User Message**: "Platform storage failed. Saved locally to: [path]"
-
-## Example Usage
-
-### Typical Invocation
-```text
-User: /specter-spec
-
-Main Agent: I'll transform your strategic plan into a detailed technical specification. Let me retrieve the plan and begin the architecture design process.
-
-[Retrieves strategic plan]
-[Invokes spec-architect agent]
-
-spec-architect: Analyzing the strategic plan for the AI-powered customer feedback system. Let me design the technical architecture.
-
-[Searches archive for relevant patterns]
-Found: ~/.claude/best-practices/ml-pipeline-patterns.md
-Found: ~/.claude/best-practices/event-driven-architecture.md
-
-Designing architecture with:
-- Microservices for scalability
-- Event-driven processing for real-time analysis
-- ML pipeline for classification
-
-[Creates technical specification]
-
-[Main Agent invokes spec-critic]
-[Score: 78% - needs more detail on data models]
-
-[Refinement cycle continues]
-
-spec-architect: Adding detailed data models and entity relationships...
-
-[Final score: 88%]
-
-Main Agent: Technical specification completed! 
-- Quality score: 88%
-- Platform: Linear
-- Issue created: SPEC-1234
-- Research requirements documented
-
-The specification is ready for implementation planning. Use /specter-build to proceed.
+### Spec Not Found
+```bash
+/specter-spec project "NonExistent Phase"
+# Error: No specification template found for "NonExistent Phase"
+# Available specs: Phase 1: Core API (DRAFT), Phase 2: Integration (DRAFT)
 ```
 
-### With Technical Focus
-```text
-User: /specter-spec focus on API design and integration patterns
+### Loop Stagnation
+- If improvement < 5 points between iterations
+- System prompts user for additional guidance
+- User can provide focus area or accept current spec
 
-Main Agent: I'll create a technical specification with special emphasis on API design and integration patterns.
-
-[Process continues with focused attention on specified areas]
-```
-
-## Implementation Notes
-
-### Key Considerations for Claude Code
-
-1. **Archive Integration**
-   - Execute shell scripts for archive scanning
-   - Parse results to identify relevant documents
-   - Maintain list of found documentation paths
-
-2. **Research Documentation**
-   - Clearly separate existing docs from needed research
-   - Use consistent format for research prompts
-   - Include year (2025) in research prompts for current practices
-
-3. **Platform Abstraction**
-   - Use platform-agnostic content structure
-   - Apply platform-specific formatting only at storage time
-   - Maintain ability to export/convert between platforms
-
-4. **Quality Feedback Integration**
-   - Present critic feedback constructively
-   - Focus refinements on lowest-scoring areas
-   - Preserve strong sections during iterations
-
-5. **Context Management**
-   - Summarize strategic plan for efficiency
-   - Focus on technical decisions in later iterations
-   - Prune redundant research requirements
-
-## Dependencies and Integration Points
-
-### Required Components
-- **MCP Server**: Loop state management and decision logic
-- **spec-architect agent**: Technical design and research identification
-- **spec-critic agent**: Quality assessment and feedback
-- **Platform tools**: Linear/GitHub/Markdown storage
-
-### MCP Tools Used
-
-**Main Agent uses (via mcp__specter__ prefix):**
-- `initialize_refinement_loop(loop_type='spec')` - Create specification refinement loop
-- `get_project_plan_markdown(project_id)` - Retrieve strategic plan from roadmap
-- `get_spec(project_id, spec_name)` - Retrieve InitialSpec starter template
-- `store_technical_spec(loop_id, technical_spec_markdown)` - Store TechnicalSpec model
-- `get_loop_status(loop_id)` - Retrieve current score and state
-- `decide_loop_next_action(loop_id, current_score)` - Loop decision engine
-- `get_technical_spec_markdown(loop_id)` - Retrieve final specification
-- `update_spec(project_id, spec_name, updated_markdown)` - Update InitialSpec status to APPROVED
-- `list_technical_specs(count)` - List existing specifications
-
-**spec-architect uses:**
-- `get_feedback_history(loop_id, count=3)` - Retrieve recent feedback (refinement iterations only)
-- Archive scanning scripts via Bash tool
-- Read, Grep, Glob for existing documentation
-
-**spec-critic uses:**
-- `store_critic_feedback(loop_id, feedback_markdown)` - Store feedback directly
-- `get_feedback_history(loop_id, count=3)` - Retrieve previous feedback for consistency
-
-### Shell Scripts
-- `~/.claude/scripts/research-advisor-archive-scan.sh`
-
-### Environment Variables
-- `FSDD_LOOP_SPEC_THRESHOLD`: Quality threshold (default: 85)
-- `FSDD_LOOP_SPEC_MAX_ITERATIONS`: Maximum iterations (default: 5)
+### Maximum Iterations Reached
+- System completes workflow with current spec
+- Presents final score and feedback
+- User can manually trigger additional refinement if needed
 
 ## Success Metrics
 
-### Quantitative Metrics
+### Quantitative
 - **Quality Score**: Target ≥85%
-- **Iterations to Complete**: Target ≤3
-- **Archive Hit Rate**: Target >60% of research needs
-- **Platform Storage Success**: Target >99%
+- **Iteration Count**: Average 2-3 iterations per spec
+- **Time to Complete**: ~5-15 minutes depending on complexity
 
-### Qualitative Metrics
-- **Technical Completeness**: All architectural decisions documented
-- **Research Coverage**: All knowledge gaps identified
-- **Implementation Ready**: Sufficient detail for development
-- **Platform Integration**: Seamless storage and retrieval
+### Qualitative
+- **Specification Completeness**: All FSDD gates addressed
+- **Implementation Readiness**: Sufficient detail for development
+- **Research Requirements**: Knowledge gaps identified
+
+## Platform Integration
+
+### Linear
+- Spec stored as Linear issue with custom fields
+- Labels: `spec`, `phase-1`, `approved`
+- Status: `Approved Specification`
+
+### GitHub
+- Spec stored as markdown in `/docs/specs/` directory
+- Automatically committed with message including score
+- PR created for team review
+
+### Markdown Files
+- Spec stored in project directory
+- Filename: `{project_name}-{spec_name}.md`
+- Includes metadata header with score and iteration count
 
 ## Related Documentation
-- **Previous Phase**: [`/specter-plan` Command Specification](plan.md)
-- **Next Phase**: [`/specter-build` Command Specification](build.md)
-- **Primary Agent**: [`spec-architect` Agent Specification](../agents/specter-spec-architect.md)
-- **Quality Agent**: [`spec-critic` Agent Specification](../agents/specter-spec-critic.md)
-- **Platform Setup**: [`/specter-spec-setup` Command Specification](spec-setup.md)
+
+- [SPECTER_SPEC_WORKFLOW_OPTIMIZATION.md](../implementation/SPECTER_SPEC_WORKFLOW_OPTIMIZATION.md) - Complete workflow architecture
+- [spec-architect.md](../agents/spec-architect.md) - Architect agent specification
+- [spec-critic.md](../agents/spec-critic.md) - Critic agent specification
+- [specter-spec-integration-test.md](../testing/specter-spec-integration-test.md) - Integration tests
+
+## Next Steps
+
+After completing the specification phase:
+1. Review the approved specification
+2. Create implementation tasks: `/specter-build <project_name> <spec_name>`
+3. Begin development following the technical specification
