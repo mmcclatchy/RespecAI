@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import deque
 
-from services.models.spec import InitialSpec, TechnicalSpec
+from services.models.spec import TechnicalSpec
 from services.models.roadmap import Roadmap
 from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError, SpecNotFoundError
 from services.utils.loop_state import LoopState, MCPResponse
@@ -62,13 +62,6 @@ class StateManager(ABC):
 
     @abstractmethod
     def unlink_loop(self, loop_id: str) -> tuple[str, str] | None: ...
-
-    # Backward compatibility aliases (DEPRECATED - will be removed)
-    @abstractmethod
-    def store_initial_spec(self, project_id: str, spec: InitialSpec) -> str: ...
-
-    @abstractmethod
-    def get_initial_spec(self, project_id: str, spec_name: str) -> InitialSpec: ...
 
 
 class Queue[T]:
@@ -226,10 +219,3 @@ class InMemoryStateManager(StateManager):
 
     def unlink_loop(self, loop_id: str) -> tuple[str, str] | None:
         return self._loop_to_spec.pop(loop_id, None)
-
-    # Backward compatibility (DEPRECATED - maps to new unified storage)
-    def store_initial_spec(self, project_id: str, spec: InitialSpec) -> str:
-        return self.store_spec(project_id, spec)
-
-    def get_initial_spec(self, project_id: str, spec_name: str) -> InitialSpec:
-        return self.get_spec(project_id, spec_name)

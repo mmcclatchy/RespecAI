@@ -1,6 +1,6 @@
 import pytest
 
-from services.models.spec import InitialSpec
+from services.models.spec import TechnicalSpec
 from services.models.enums import SpecStatus
 
 
@@ -32,7 +32,7 @@ draft
 
 class TestInitialSpecParsing:
     def test_parse_markdown_extracts_basic_fields(self, sample_initial_spec_markdown: str) -> None:
-        spec = InitialSpec.parse_markdown(sample_initial_spec_markdown)
+        spec = TechnicalSpec.parse_markdown(sample_initial_spec_markdown)
 
         assert spec.phase_name == 'User Authentication System'
         assert spec.objectives == 'Implement secure user login and registration'
@@ -42,7 +42,7 @@ class TestInitialSpecParsing:
         assert spec.spec_status == SpecStatus.DRAFT
 
     def test_initial_spec_generates_8_char_id(self) -> None:
-        spec = InitialSpec(
+        spec = TechnicalSpec(
             phase_name='Test Spec',
             objectives='Test objectives',
             scope='Test scope',
@@ -55,7 +55,7 @@ class TestInitialSpecParsing:
         assert spec.id.isalnum()
 
     def test_build_markdown_creates_initial_spec_format(self) -> None:
-        spec = InitialSpec(
+        spec = TechnicalSpec(
             phase_name='Test Spec',
             objectives='Test objectives',
             scope='Test scope',
@@ -74,11 +74,11 @@ class TestInitialSpecParsing:
         assert '### Status\ndraft' in markdown
 
     def test_round_trip_parsing_maintains_data_integrity(self, sample_initial_spec_markdown: str) -> None:
-        original_spec = InitialSpec.parse_markdown(sample_initial_spec_markdown)
+        original_spec = TechnicalSpec.parse_markdown(sample_initial_spec_markdown)
 
         rebuilt_markdown = original_spec.build_markdown()
 
-        reparsed_spec = InitialSpec.parse_markdown(rebuilt_markdown)
+        reparsed_spec = TechnicalSpec.parse_markdown(rebuilt_markdown)
 
         assert original_spec.phase_name == reparsed_spec.phase_name
         assert original_spec.objectives == reparsed_spec.objectives
@@ -90,5 +90,5 @@ class TestInitialSpecParsing:
 
 class TestInitialSpecUtilities:
     def test_recursive_traversal_utilities_exist(self) -> None:
-        assert hasattr(InitialSpec, '_find_nodes_by_type')
-        assert hasattr(InitialSpec, '_extract_text_content')
+        assert hasattr(TechnicalSpec, '_find_nodes_by_type')
+        assert hasattr(TechnicalSpec, '_extract_text_content')

@@ -1,7 +1,7 @@
 import pytest
 
 from services.models.roadmap import Roadmap
-from services.models.spec import InitialSpec
+from services.models.spec import TechnicalSpec
 from services.models.enums import RoadmapStatus, SpecStatus
 
 
@@ -81,9 +81,9 @@ draft
 
 
 @pytest.fixture
-def sample_specs_list() -> list[InitialSpec]:
+def sample_specs_list() -> list[TechnicalSpec]:
     return [
-        InitialSpec(
+        TechnicalSpec(
             phase_name='User Authentication System',
             objectives='Implement secure login',
             scope='Login, logout, registration',
@@ -94,7 +94,7 @@ def sample_specs_list() -> list[InitialSpec]:
             last_updated='2024-01-01',
             spec_owner='Backend Team',
         ),
-        InitialSpec(
+        TechnicalSpec(
             phase_name='Product Catalog Management',
             objectives='Manage product inventory',
             scope='CRUD operations for products',
@@ -105,7 +105,7 @@ def sample_specs_list() -> list[InitialSpec]:
             last_updated='2024-01-01',
             spec_owner='Backend Team',
         ),
-        InitialSpec(
+        TechnicalSpec(
             phase_name='Shopping Cart & Checkout',
             objectives='Enable purchase flow',
             scope='Cart, checkout, payments',
@@ -143,7 +143,7 @@ class TestDynamicRoadmapParsing:
         assert roadmap.roadmap_status == RoadmapStatus.DRAFT
         assert roadmap.spec_count == 3
 
-    def test_roadmap_with_specs_list_field(self, sample_specs_list: list[InitialSpec]) -> None:
+    def test_roadmap_with_specs_list_field(self, sample_specs_list: list[TechnicalSpec]) -> None:
         roadmap = Roadmap(
             project_name='Test Project',
             project_goal='Test goal',
@@ -169,9 +169,9 @@ class TestDynamicRoadmapParsing:
 
         assert len(roadmap.specs) == 3
         assert roadmap.spec_count == 3
-        assert all(isinstance(spec, InitialSpec) for spec in roadmap.specs)
+        assert all(isinstance(spec, TechnicalSpec) for spec in roadmap.specs)
 
-    def test_build_markdown_creates_dynamic_format(self, sample_specs_list: list[InitialSpec]) -> None:
+    def test_build_markdown_creates_dynamic_format(self, sample_specs_list: list[TechnicalSpec]) -> None:
         roadmap = Roadmap(
             project_name='Test Project',
             project_goal='Test goal',
@@ -236,7 +236,7 @@ class TestDynamicRoadmapUtilities:
         assert hasattr(Roadmap, '_find_nodes_by_type')
         assert hasattr(Roadmap, '_extract_text_content')
 
-    def test_spec_count_property_matches_specs_length(self, sample_specs_list: list[InitialSpec]) -> None:
+    def test_spec_count_property_matches_specs_length(self, sample_specs_list: list[TechnicalSpec]) -> None:
         roadmap = Roadmap(
             project_name='Test Project',
             project_goal='Test goal',

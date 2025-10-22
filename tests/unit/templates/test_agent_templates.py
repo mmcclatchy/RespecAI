@@ -127,7 +127,7 @@ class TestCreateSpecTemplate:
         template = generate_create_spec_template(tools)
 
         # Should include MCP tools
-        mcp_tools = ['get_roadmap', 'add_spec', 'store_initial_spec']
+        mcp_tools = ['get_roadmap', 'add_spec', 'store_spec']
         has_mcp_tool = any(tool in template for tool in mcp_tools)
         assert has_mcp_tool, 'Template should include MCP tools for roadmap operations'
 

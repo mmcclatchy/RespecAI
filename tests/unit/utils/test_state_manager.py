@@ -3,7 +3,7 @@ from datetime import datetime
 import pytest
 
 from services.models.enums import RoadmapStatus, SpecStatus
-from services.models.spec import InitialSpec
+from services.models.spec import TechnicalSpec
 from services.models.roadmap import Roadmap
 from services.utils.enums import LoopType
 from services.utils.errors import LoopAlreadyExistsError, LoopNotFoundError, RoadmapNotFoundError, SpecNotFoundError
@@ -98,8 +98,8 @@ class TestInMemoryStateManager:
         )
 
     @pytest.fixture
-    def sample_spec(self) -> InitialSpec:
-        return InitialSpec(
+    def sample_spec(self) -> TechnicalSpec:
+        return TechnicalSpec(
             phase_name='Sample Spec',
             objectives='Test objectives',
             scope='Test scope',
@@ -245,36 +245,36 @@ class TestRoadmapOperations(TestInMemoryStateManager):
 
 class TestSpecOperations(TestInMemoryStateManager):
     def test_store_spec_requires_existing_roadmap(
-        self, state_manager: InMemoryStateManager, sample_spec: InitialSpec
+        self, state_manager: InMemoryStateManager, sample_spec: TechnicalSpec
     ) -> None:
         with pytest.raises(RoadmapNotFoundError):
-            state_manager.store_initial_spec('non-existent-project', sample_spec)
+            state_manager.store_spec('non-existent-project', sample_spec)
 
     def test_store_spec_returns_spec_name(
-        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: InitialSpec
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: TechnicalSpec
     ) -> None:
         project_id = 'test-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
 
-        result = state_manager.store_initial_spec(project_id, sample_spec)
+        result = state_manager.store_spec(project_id, sample_spec)
 
         assert result == sample_spec.phase_name
 
     def test_store_spec_makes_retrievable(
-        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: InitialSpec
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: TechnicalSpec
     ) -> None:
         project_id = 'test-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
 
-        state_manager.store_initial_spec(project_id, sample_spec)
-        retrieved_spec = state_manager.get_initial_spec(project_id, sample_spec.phase_name)
+        state_manager.store_spec(project_id, sample_spec)
+        retrieved_spec = state_manager.get_spec(project_id, sample_spec.phase_name)
 
         assert retrieved_spec == sample_spec
         assert retrieved_spec.objectives == 'Test objectives'
 
     def test_get_spec_raises_error_when_roadmap_not_found(self, state_manager: InMemoryStateManager) -> None:
         with pytest.raises(RoadmapNotFoundError):
-            state_manager.get_initial_spec('non-existent-project', 'any-spec')
+            state_manager.get_spec('non-existent-project', 'any-spec')
 
     def test_get_spec_raises_error_when_spec_not_found(
         self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap
@@ -283,7 +283,7 @@ class TestSpecOperations(TestInMemoryStateManager):
         state_manager.store_roadmap(project_id, sample_roadmap)
 
         with pytest.raises(SpecNotFoundError):
-            state_manager.get_initial_spec(project_id, 'non-existent-spec')
+            state_manager.get_spec(project_id, 'non-existent-spec')
 
     def test_list_specs_returns_empty_for_empty_roadmap(
         self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap
@@ -301,7 +301,7 @@ class TestSpecOperations(TestInMemoryStateManager):
         project_id = 'multi-spec-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
 
-        spec1 = InitialSpec(
+        spec1 = TechnicalSpec(
             phase_name='Spec 1',
             objectives='Obj 1',
             scope='Scope 1',
@@ -312,7 +312,7 @@ class TestSpecOperations(TestInMemoryStateManager):
             last_updated=datetime.now().isoformat(),
             spec_owner='Test Owner',
         )
-        spec2 = InitialSpec(
+        spec2 = TechnicalSpec(
             phase_name='Spec 2',
             objectives='Obj 2',
             scope='Scope 2',
@@ -324,8 +324,8 @@ class TestSpecOperations(TestInMemoryStateManager):
             spec_owner='Test Owner',
         )
 
-        state_manager.store_initial_spec(project_id, spec1)
-        state_manager.store_initial_spec(project_id, spec2)
+        state_manager.store_spec(project_id, spec1)
+        state_manager.store_spec(project_id, spec2)
 
         spec_names = state_manager.list_specs(project_id)
 
@@ -338,28 +338,28 @@ class TestSpecOperations(TestInMemoryStateManager):
             state_manager.list_specs('non-existent-project')
 
     def test_delete_spec_returns_true_when_spec_exists(
-        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: InitialSpec
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: TechnicalSpec
     ) -> None:
         project_id = 'test-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
-        state_manager.store_initial_spec(project_id, sample_spec)
+        state_manager.store_spec(project_id, sample_spec)
 
         result = state_manager.delete_spec(project_id, sample_spec.phase_name)
 
         assert result is True
 
     def test_delete_spec_removes_spec_from_roadmap(
-        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: InitialSpec
+        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_spec: TechnicalSpec
     ) -> None:
         project_id = 'test-project'
         state_manager.store_roadmap(project_id, sample_roadmap)
-        state_manager.store_initial_spec(project_id, sample_spec)
+        state_manager.store_spec(project_id, sample_spec)
 
         state_manager.delete_spec(project_id, sample_spec.phase_name)
 
         # Should raise SpecNotFoundError now
         with pytest.raises(SpecNotFoundError):
-            state_manager.get_initial_spec(project_id, sample_spec.phase_name)
+            state_manager.get_spec(project_id, sample_spec.phase_name)
 
     def test_delete_spec_returns_false_when_spec_not_found(
         self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap
@@ -391,7 +391,7 @@ class TestSpecOperations(TestInMemoryStateManager):
 
         # Store all specs
         for spec_name in spec_names:
-            spec = InitialSpec(
+            spec = TechnicalSpec(
                 phase_name=spec_name,
                 objectives=f'Obj {spec_name}',
                 scope=f'Scope {spec_name}',
@@ -402,7 +402,7 @@ class TestSpecOperations(TestInMemoryStateManager):
                 last_updated=datetime.now().isoformat(),
                 spec_owner='Test Owner',
             )
-            state_manager.store_initial_spec(project_id, spec)
+            state_manager.store_spec(project_id, spec)
 
         # List should return all names
         listed_names = state_manager.list_specs(project_id)
@@ -523,7 +523,7 @@ class TestCrossOperationIntegration(TestInMemoryStateManager):
         state_manager.store_roadmap('project-1', project1_roadmap)
         state_manager.store_roadmap('project-2', project2_roadmap)
 
-        spec1 = InitialSpec(
+        spec1 = TechnicalSpec(
             phase_name='P1 Spec',
             objectives='P1 Obj',
             scope='P1 Scope',
@@ -534,7 +534,7 @@ class TestCrossOperationIntegration(TestInMemoryStateManager):
             last_updated=datetime.now().isoformat(),
             spec_owner='Test Owner',
         )
-        spec2 = InitialSpec(
+        spec2 = TechnicalSpec(
             phase_name='P2 Spec',
             objectives='P2 Obj',
             scope='P2 Scope',
@@ -546,8 +546,8 @@ class TestCrossOperationIntegration(TestInMemoryStateManager):
             spec_owner='Test Owner',
         )
 
-        state_manager.store_initial_spec('project-1', spec1)
-        state_manager.store_initial_spec('project-2', spec2)
+        state_manager.store_spec('project-1', spec1)
+        state_manager.store_spec('project-2', spec2)
 
         # Each project should only see its own specs
         p1_specs = state_manager.list_specs('project-1')

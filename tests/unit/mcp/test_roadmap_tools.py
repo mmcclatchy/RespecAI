@@ -5,7 +5,7 @@ from fastmcp.exceptions import ResourceError, ToolError
 
 from services.mcp.tools.roadmap_tools import RoadmapTools
 from services.models.roadmap import Roadmap
-from services.models.spec import InitialSpec
+from services.models.spec import TechnicalSpec
 from services.utils.state_manager import StateManager
 
 
@@ -174,21 +174,21 @@ class TestGetRoadmap(TestRoadmapTools):
             team_size='5 developers',
             roadmap_budget='$100k',
             specs=[
-                InitialSpec(
+                TechnicalSpec(
                     phase_name='spec1',
                     objectives='Test objectives 1',
                     scope='Test scope 1',
                     dependencies='Test deps 1',
                     deliverables='Test deliverables 1',
                 ),
-                InitialSpec(
+                TechnicalSpec(
                     phase_name='spec2',
                     objectives='Test objectives 2',
                     scope='Test scope 2',
                     dependencies='Test deps 2',
                     deliverables='Test deliverables 2',
                 ),
-                InitialSpec(
+                TechnicalSpec(
                     phase_name='spec3',
                     objectives='Test objectives 3',
                     scope='Test scope 3',

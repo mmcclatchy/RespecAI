@@ -6,7 +6,7 @@ from services.utils.errors import SpecNotFoundError
 
 from .base import MCPModel
 from .enums import RoadmapStatus
-from .spec import InitialSpec
+from .spec import TechnicalSpec
 
 
 class Roadmap(MCPModel):
@@ -40,7 +40,7 @@ class Roadmap(MCPModel):
     total_duration: str = 'Total Duration not specified'
     team_size: str = 'Team Size not specified'
     roadmap_budget: str = 'Budget not specified'
-    specs: list[InitialSpec] = Field(default_factory=list)
+    specs: list[TechnicalSpec] = Field(default_factory=list)
     critical_path_analysis: str = 'Critical Path Analysis not specified'
     key_risks: str = 'Key Risks not specified'
     mitigation_plans: str = 'Mitigation Plans not specified'
@@ -57,7 +57,7 @@ class Roadmap(MCPModel):
     spec_count: int = 0
 
     def build_markdown(self) -> str:
-        # Generate specs list dynamically from InitialSpec objects
+        # Generate specs list dynamically from TechnicalSpec objects
         specs_list = '\n'.join(f'- **Spec {i + 1}**: {spec.phase_name}' for i, spec in enumerate(self.specs))
 
         return f"""{self.TITLE_PATTERN}: {self.project_name}
@@ -137,7 +137,7 @@ class Roadmap(MCPModel):
 
         raise SpecNotFoundError(f'Spec not found: {spec_name}')
 
-    def add_spec(self, spec: InitialSpec) -> None:
+    def add_spec(self, spec: TechnicalSpec) -> None:
         # Remove existing spec with same name if it exists
         for i, existing_spec in enumerate(self.specs):
             if existing_spec.phase_name == spec.phase_name:

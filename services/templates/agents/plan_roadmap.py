@@ -5,12 +5,12 @@ if TYPE_CHECKING:
 
 
 def generate_plan_roadmap_template(tools: 'PlanRoadmapAgentTools') -> str:
-    """Generate roadmap agent template for phase breakdown and InitialSpec creation.
+    """Generate roadmap agent template for phase breakdown and sparse spec creation.
 
-    Workflow: Transform strategic plans into multiple InitialSpecs (one per phase)
+    Workflow: Transform strategic plans into sparse TechnicalSpecs (iteration=0, one per phase)
 
     Dual Tool Architecture:
-    - MCP Specter Tools: Explicitly defined (mcp__specter__get_project_plan_markdown, mcp__specter__add_spec, mcp__specter__list_specs)
+    - MCP Specter Tools: Explicitly defined (mcp__specter__get_project_plan_markdown, mcp__specter__store_spec, mcp__specter__list_specs)
     - Platform Tools: External spec creation injected via tools parameter
 
     Args:
@@ -18,11 +18,11 @@ def generate_plan_roadmap_template(tools: 'PlanRoadmapAgentTools') -> str:
     """
     return f"""---
 name: specter-roadmap
-description: Transform strategic plans into phased InitialSpecs for implementation
+description: Transform strategic plans into phased specs for implementation
 model: sonnet
 tools:
   - mcp__specter__get_project_plan_markdown
-  - mcp__specter__add_spec
+  - mcp__specter__store_spec
   - mcp__specter__list_specs
   - {tools.create_spec_external}
 ---
@@ -34,16 +34,16 @@ INPUTS: Strategic plan context and project details
 - Phasing Preferences: Optional user guidance (e.g., "2-week sprints", "MVP in 3 months")
 - Project context and requirements from strategic plan analysis
 
-WORKFLOW: Strategic Plan → Multiple InitialSpecs
+WORKFLOW: Strategic Plan → Multiple Sparse Specs (iteration=0)
 1. Use mcp__specter__get_project_plan_markdown to retrieve complete validated strategic plan
 2. Break strategic plan into 3-7 implementation phases (2-4 weeks each)
-3. For each phase, create InitialSpec using mcp__specter__add_spec in MCP Server
+3. For each phase, create sparse TechnicalSpec (iteration=0) using mcp__specter__store_spec
 4. Create external platform deliverables using {tools.create_spec_external}
 
 TASKS:
 1. **Retrieve Strategic Plan**: Use mcp__specter__get_project_plan_markdown(project_name) to get validated plan
 2. **Phase Decomposition**: Break requirements into sprint-sized phases with clear boundaries
-3. **Create InitialSpecs**: For each phase, use mcp__specter__add_spec(project_id, spec_name, spec_markdown)
+3. **Create Sparse Specs**: For each phase, use mcp__specter__store_spec(project_id, spec_name, spec_markdown) with only required fields populated (objectives, scope, dependencies, deliverables)
 4. **Platform Creation**: For each spec, use {tools.create_spec_external} to create platform deliverable
 5. **Validate Completion**: Use mcp__specter__list_specs(project_id) to confirm all specs created successfully
 

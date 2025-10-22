@@ -103,6 +103,3 @@ class TechnicalSpec(MCPModel):
         sections.append(f'\n### Status\n{self.spec_status.value}')
 
         return '\n'.join(sections) + '\n'
-
-
-InitialSpec = TechnicalSpec
