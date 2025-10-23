@@ -138,7 +138,7 @@ Expected structured format from plan-conversation:
 Retrieve conversation context from MCP and create strategic plan:
 ```text
 Conversation context available via: mcp__specter__get_conversation_context(PROJECT_NAME)
-Previous feedback available via: mcp__specter__get_previous_feedback(PROJECT_NAME)
+Previous feedback available via: mcp__specter__get_feedback(PROJECT_NAME, count=2)
 ```
 
 #### Create strategic plan using template:
@@ -173,7 +173,7 @@ Input: PROJECT_NAME
 
 #### Extract quality score for user decision:
 ```text
-Retrieve feedback using: mcp__specter__get_previous_feedback(PROJECT_NAME)
+Retrieve feedback using: mcp__specter__get_feedback(PROJECT_NAME, count=1)
 Extract QUALITY_SCORE from feedback overall_score field
 ```
 
@@ -184,7 +184,7 @@ Extract QUALITY_SCORE from feedback overall_score field
 Retrieve and display plan quality results:
 
 ```text
-Retrieve quality feedback: mcp__specter__get_previous_feedback(PROJECT_NAME)
+Retrieve quality feedback: mcp__specter__get_feedback(PROJECT_NAME, count=1)
 Display QUALITY_SCORE and feedback summary to user
 ```
 

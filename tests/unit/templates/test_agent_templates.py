@@ -70,7 +70,7 @@ class TestRoadmapCriticTemplate:
 
         # Check MCP tools for data retrieval and feedback storage
         assert '- mcp__specter__get_roadmap_markdown' in template
-        assert '- mcp__specter__get_previous_feedback' in template
+        assert '- mcp__specter__get_feedback' in template
         assert '- mcp__specter__store_critic_feedback' in template
 
     def test_template_includes_critic_feedback_format(self) -> None:

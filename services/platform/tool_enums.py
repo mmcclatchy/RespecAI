@@ -84,10 +84,10 @@ class SpecterMCPTool(Enum):
 
     # Feedback Management Tools
     STORE_CRITIC_FEEDBACK = 'mcp__specter__store_critic_feedback'
-    GET_FEEDBACK_HISTORY = 'mcp__specter__get_feedback_history'
+    STORE_USER_FEEDBACK = 'mcp__specter__store_user_feedback'
+    GET_FEEDBACK = 'mcp__specter__get_feedback'
     STORE_CURRENT_ANALYSIS = 'mcp__specter__store_current_analysis'
     GET_PREVIOUS_ANALYSIS = 'mcp__specter__get_previous_analysis'
-    GET_PREVIOUS_FEEDBACK = 'mcp__specter__get_previous_feedback'
 
     # Project Plan Tools
     CREATE_PROJECT_PLAN = 'mcp__specter__create_project_plan'
@@ -99,17 +99,14 @@ class SpecterMCPTool(Enum):
     # Roadmap Management Tools
     CREATE_ROADMAP = 'mcp__specter__create_roadmap'
     GET_ROADMAP = 'mcp__specter__get_roadmap'
-    ADD_SPEC = 'mcp__specter__add_spec'
-    GET_SPEC = 'mcp__specter__get_spec'
-    UPDATE_SPEC = 'mcp__specter__update_spec'
+
+    # Spec Management Tools
+    GET_SPEC_MARKDOWN = 'mcp__specter__get_spec_markdown'
+    STORE_SPEC = 'mcp__specter__store_spec'
     LIST_SPECS = 'mcp__specter__list_specs'
     DELETE_SPEC = 'mcp__specter__delete_spec'
-
-    # Technical Spec Tools
-    STORE_TECHNICAL_SPEC = 'mcp__specter__store_technical_spec'
-    GET_TECHNICAL_SPEC_MARKDOWN = 'mcp__specter__get_technical_spec_markdown'
-    LIST_TECHNICAL_SPECS = 'mcp__specter__list_technical_specs'
-    DELETE_TECHNICAL_SPEC = 'mcp__specter__delete_technical_spec'
+    LINK_LOOP_TO_SPEC = 'mcp__specter__link_loop_to_spec'
+    UNLINK_LOOP = 'mcp__specter__unlink_loop'
 
     # Build Plan Tools
     STORE_BUILD_PLAN = 'mcp__specter__store_build_plan'
@@ -124,6 +121,11 @@ class SpecterMCPTool(Enum):
     UPDATE_PLAN_COMPLETION_REPORT = 'mcp__specter__update_plan_completion_report'
     LIST_PLAN_COMPLETION_REPORTS = 'mcp__specter__list_plan_completion_reports'
     DELETE_PLAN_COMPLETION_REPORT = 'mcp__specter__delete_plan_completion_report'
+
+    # Specter Setup Tools
+    GENERATE_SPECTER_SETUP = 'mcp__specter__generate_specter_setup'
+    VALIDATE_SPECTER_SETUP = 'mcp__specter__validate_specter_setup'
+    GET_BOOTSTRAP_FILES = 'mcp__specter__get_bootstrap_files'
 
 
 class AbstractOperation(Enum):

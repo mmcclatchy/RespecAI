@@ -8,14 +8,14 @@ from fastmcp import FastMCP
 
 from services.mcp.tools import (
     build_plan_tools,
-    feedback_storage_tools,
-    feedback_tools,
+    feedback_tools_unified,
     loop_tools,
     plan_completion_report_tools,
     project_plan_tools,
     register_all_tools,
     roadmap_tools,
     spec_tools,
+    specter_setup_tools,
 )
 
 from .tool_enums import SpecterMCPTool
@@ -25,10 +25,7 @@ def discover_registered_specter_tools() -> set[str]:
     temp_mcp = FastMCP('discovery')
     register_all_tools(temp_mcp)
 
-    if not hasattr(temp_mcp, '_tools'):
-        raise ValueError('FastMCP instance does not have _tools attribute')
-
-    tool_names = {t for t in temp_mcp._tools.keys() if t.startswith('mcp__specter__')}
+    tool_names = {f'mcp__specter__{name}' for name in temp_mcp._tool_manager._tools.keys()}
     return tool_names
 
 
@@ -50,13 +47,13 @@ def validate_specter_enum_completeness() -> dict[str, list[str]]:
 def discover_tool_registration_functions() -> dict[str, list[str]]:
     modules = [
         loop_tools,
-        feedback_tools,
-        feedback_storage_tools,
+        feedback_tools_unified,
         project_plan_tools,
         plan_completion_report_tools,
         roadmap_tools,
         spec_tools,
         build_plan_tools,
+        specter_setup_tools,
     ]
 
     discovered_tools: dict[str, list[str]] = {}

@@ -153,7 +153,7 @@ Stagnation detected in planning loop. Request user guidance:
 
 Retrieve current state:
 - BuildPlan: mcp__specter__get_build_plan_markdown(PLANNING_LOOP_ID)
-- CriticFeedback: mcp__specter__get_critic_feedback(PLANNING_LOOP_ID)
+- All Feedback: mcp__specter__get_feedback(PLANNING_LOOP_ID, count=2)
 
 Present to user:
 "BuildPlan development has stagnated at {{PLAN_QUALITY_SCORE}}%.
@@ -281,7 +281,7 @@ Stagnation detected in coding loop. Request user guidance:
 
 Retrieve current state:
 - BuildPlan: mcp__specter__get_build_plan_markdown(PLANNING_LOOP_ID)
-- CriticFeedback: mcp__specter__get_critic_feedback(CODING_LOOP_ID)
+- All Feedback: mcp__specter__get_feedback(CODING_LOOP_ID, count=2)
 
 Present to user:
 "Code implementation has stagnated at {{CODE_QUALITY_SCORE}}%.
@@ -317,7 +317,7 @@ Complete implementation workflow and update specification:
 ```
 Retrieve final state:
 - BuildPlan: mcp__specter__get_build_plan_markdown(PLANNING_LOOP_ID)
-- Final CriticFeedback: mcp__specter__get_critic_feedback(CODING_LOOP_ID)
+- Final Feedback: mcp__specter__get_feedback(CODING_LOOP_ID, count=1)
 
 Generate IMPLEMENTATION_SUMMARY including:
 - Build Plan Quality Score: {{PLAN_QUALITY_SCORE}}%
@@ -493,8 +493,8 @@ All specialized work delegated to appropriate agents:
 ### User Feedback During Stagnation
 - User input requested when quality plateaus (<5 points over 2 iterations)
 - User feedback stored via mcp__specter__store_user_feedback
-- Agents retrieve user feedback autonomously via mcp__specter__get_user_feedback
-- User feedback takes priority over critic suggestions
+- Agents retrieve all feedback (critic + user) via mcp__specter__get_feedback
+- User feedback takes priority over critic suggestions when conflicts exist
 
 Ready for production deployment with validated quality scores and comprehensive test coverage.
 """

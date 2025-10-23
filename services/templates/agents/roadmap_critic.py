@@ -5,7 +5,7 @@ description: Evaluate implementation roadmaps against quality criteria and FSDD 
 model: sonnet
 tools:
   - mcp__specter__get_roadmap_markdown
-  - mcp__specter__get_previous_feedback
+  - mcp__specter__get_feedback
   - mcp__specter__store_critic_feedback
 ---
 
