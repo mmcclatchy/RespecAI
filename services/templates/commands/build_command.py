@@ -5,524 +5,496 @@ def generate_build_command_template(tools: BuildCommandTools) -> str:
     return f"""---
 allowed-tools:
 {tools.tools_yaml}
-argument-hint: [specification-identifier]
+argument-hint: [spec-name]
 description: Transform technical specifications into production-ready code through parallel research, implementation planning, and TDD development
 ---
 
 # /specter-build Command: Implementation Orchestration
 
 ## Overview
-Orchestrate the complete implementation workflow, transforming technical specifications into production-ready code through parallel research synthesis, implementation planning, and code development with comprehensive quality validation.
+Orchestrate the complete implementation workflow, transforming technical specifications into production-ready code through parallel research synthesis, implementation planning, and TDD-driven code development with comprehensive quality validation.
 
-## Primary Responsibilities
+## Workflow Steps
 
-### 1. Technology Environment Discovery
-- Execute environment detection to identify project stack
-- Analyze project configuration files and dependencies
-- Determine testing frameworks and build tools
-- Configure implementation context for agents
+### 1. Specification Retrieval and Validation
+Retrieve and validate completed TechnicalSpec from /specter-spec command:
+
+#### Retrieve TechnicalSpec:
+```
+SPEC_NAME = [user provided spec name]
+PROJECT_ID = [extracted from context or user provided]
+
+TECHNICAL_SPEC = mcp__specter__get_spec_markdown(PROJECT_ID, SPEC_NAME)
+IF TECHNICAL_SPEC not found:
+  ERROR: "No technical specification found: [SPEC_NAME]"
+  SUGGEST: "Run '/specter-spec [SPEC_NAME]' to create technical specification first"
+  EXIT: Graceful failure with guidance
+
+SPEC_OBJECTIVES = [Extract from TechnicalSpec Objectives section]
+RESEARCH_REQUIREMENTS = [Extract from TechnicalSpec Research Requirements section]
+TECH_STACK = [Extract from TechnicalSpec Technology Stack section]
+```
 
 ### 2. Parallel Research Orchestration
-- Parse Research Requirements from specification
-- Identify existing documentation paths
-  - Just collect the paths. Do not read the content.
-- Identify external research needs for synthesis
-- Execute parallel research operations
-- Collect documentation paths for build-planner
+Coordinate research synthesis for implementation guidance:
 
-### 3. Implementation Planning Loop
-- Initialize MCP refinement loop for build plan development
-- Invoke build-planner with research documentation paths
-- Assess plan quality with build-critic agent
-- Iterate until plan quality threshold met
-
-### 4. Code Implementation Loop
-- Initialize MCP refinement loop for code development
-- Invoke build-coder for TDD implementation approach
-- Validate implementation with build-reviewer agent
-- Iterate until code quality threshold met
-
-### 5. Integration & Documentation
-- Update specification with implementation status
-- Link code changes to specification
-- Document completion status
-- Generate implementation summary
-
-## Orchestration Pattern
-
-```text
-Main Agent (via /specter-build)
-    │
-    ├── 1. Retrieve Specification
-    │   └── {tools.get_spec_tool} to retrieve specification
-    │
-    ├── 2. Environment Discovery
-    │   └── Bash: detect-packages.sh → technology context
-    │
-    ├── 3. Parallel Research Execution
-    │   ├── Parse Research Requirements section
-    │   ├── For each "Synthesize: [prompt]" item:
-    │   │   └── Task: research-synthesizer (parallel)
-    │   └── Collect: All documentation paths
-    │
-    ├── 4. Implementation Planning Loop
-    │   ├── MCP: initialize_refinement_loop(loop_type='build_plan')
-    │   ├── Task: build-planner (with documentation paths)
-    │   ├── Task: build-critic → quality score
-    │   └── MCP: decide_loop_next_action(loop_id, score)
-    │
-    ├── 5. Code Implementation Loop
-    │   ├── MCP: initialize_refinement_loop(loop_type='build_code')
-    │   ├── Task: build-coder (TDD approach)
-    │   ├── Task: build-reviewer → quality score
-    │   └── MCP: decide_loop_next_action(loop_id, score)
-    │
-    └── 6. Completion & Documentation
-        └── Platform tool to update specification with implementation results
+#### Parse Research Requirements:
 ```
-
-## Implementation Instructions
-
-### Step 1: Retrieve Specification and Environment Setup
-Initialize the implementation workflow:
-
-```
-# Retrieve technical specification
-SPECIFICATION_IDENTIFIER = [User provided specification identifier]
-
-TECHNICAL_SPECIFICATION = platform retrieval tool:
-  identifier: ${{SPECIFICATION_IDENTIFIER}}
-
-# Execute environment detection
-TECHNOLOGY_CONTEXT = Bash: ~/.claude/scripts/detect-packages.sh --scan-project --output structured
-
-# Extract key components
-PROJECT_STACK = [detect-packages.sh output: languages, frameworks, tools]
-RESEARCH_REQUIREMENTS = [TECHNICAL_SPECIFICATION: Research Requirements section]
-SPECIFICATION_CONTENT = [TECHNICAL_SPECIFICATION: complete specification]
-```
-
-### Step 2: Parallel Research Execution
-Coordinate research path collection:
-
-```
-# Initialize documentation paths collection
 DOCUMENTATION_PATHS = []
 
-# Process Research Requirements section
 For each item in RESEARCH_REQUIREMENTS:
 
-IF item starts with "Read:":
-  EXISTING_PATH = [Extract path from "Read: [path]"]
-  Add EXISTING_PATH to DOCUMENTATION_PATHS
+  IF item starts with "Read:":
+    EXISTING_PATH = [Extract path from "Read: [path]"]
+    Add EXISTING_PATH to DOCUMENTATION_PATHS
 
-IF item starts with "Synthesize:":
-  RESEARCH_PROMPT = [Extract prompt from "Synthesize: [prompt]"]
-  
-  Invoke research-synthesizer agent with this input:
-  ${{RESEARCH_PROMPT}}
-  
-  Expected Output Format:
-  - Research document path for generated content
-  - Key findings summary
-  - Implementation guidance recommendations
-  
-  SYNTHESIZED_PATH = [research-synthesizer output: document path]
-  Add SYNTHESIZED_PATH to DOCUMENTATION_PATHS
+  IF item starts with "Synthesize:":
+    RESEARCH_PROMPT = [Extract prompt from "Synthesize: [prompt]"]
 
-# Collect all paths for build-planner
-COMPLETE_DOCUMENTATION_PATHS = [All collected paths from existing docs and research synthesis]
+    Launch parallel research-synthesizer agents (single message, multiple Task calls):
+    Task(
+        agent="research-synthesizer",
+        prompt=RESEARCH_PROMPT
+    )
+
+    Expected: Research brief file path from each agent
+    SYNTHESIZED_PATH = [research-synthesizer output: document path]
+    Add SYNTHESIZED_PATH to DOCUMENTATION_PATHS
+
+Collect: COMPLETE_DOCUMENTATION_PATHS = [All paths from existing docs + research synthesis]
 ```
 
-### Step 3: Implementation Planning Loop
-Coordinate build plan development and refinement:
+### 3. Planning Loop Initialization and Refinement
+Set up and execute MCP-managed planning quality refinement:
 
+#### Initialize Planning Loop:
 ```
-# Initialize planning refinement loop
-PLANNING_LOOP_ID = mcp__specter__initialize_refinement_loop:
-  loop_type: "build_plan"
+PLANNING_LOOP_ID = mcp__specter__initialize_refinement_loop(loop_type='build_plan')
 
-# Begin planning cycle
-Invoke build-planner agent with this input:
-
-Technical Specification:
-${{SPECIFICATION_CONTENT}}
-
-Technology Context:
-${{PROJECT_STACK}}
-
-Documentation Paths:
-${{COMPLETE_DOCUMENTATION_PATHS}}
-
-Expected Output Format:
-- Implementation plan in markdown format
-- Phased approach with specific tasks
-- Technology decisions with justifications
-- Risk mitigation strategies
-
-# Capture planning output
-CURRENT_BUILD_PLAN = [build-planner output: complete implementation plan]
+State to maintain:
+- planning_loop_id: For BuildPlan storage and retrieval
 ```
 
-### Step 4: Planning Quality Assessment
-Evaluate build plan quality:
-
+#### Planning Refinement Cycle:
 ```
-# Assess plan quality
-Invoke build-critic agent with this input:
-${{CURRENT_BUILD_PLAN}}
+Invoke build-planner agent with:
+- planning_loop_id: {{PLANNING_LOOP_ID}}
+- research_file_paths: {{COMPLETE_DOCUMENTATION_PATHS}}
+- project_id: {{PROJECT_ID}}
+- spec_name: {{SPEC_NAME}}
 
-Expected Output Format:
-- Overall Quality Score: [0-100 numerical value]
-- Priority Improvements: [List of specific actionable suggestions]
-- Strengths: [List of well-executed areas to preserve]
+Agent will autonomously:
+1. Read .specter/coding-standards.md (if exists)
+2. Retrieve TechnicalSpec via MCP
+3. Retrieve existing BuildPlan via MCP (empty on first iteration)
+4. Retrieve critic feedback via MCP (none on first iteration)
+5. Retrieve user feedback via MCP (if stagnation occurred)
+6. Read research briefs from file paths
+7. Generate or refine BuildPlan
+8. Store BuildPlan via MCP
+9. Exit
 
-# Extract assessment results
-PLAN_QUALITY_SCORE = [build-critic output: Overall Quality Score (0-100)]
-PLAN_IMPROVEMENT_FEEDBACK = [build-critic output: Priority Improvements and suggestions]
-
-# MCP decision for planning loop
-PLANNING_DECISION = mcp__specter__decide_loop_next_action:
-  loop_id: ${{PLANNING_LOOP_ID}}
-  current_score: ${{PLAN_QUALITY_SCORE}}
-
-# Handle planning decisions
-IF PLANNING_DECISION == "complete":
-  → Proceed to Step 5: Code Implementation Loop
-
-IF PLANNING_DECISION == "refine":
-  → Return to Step 3 with refined context:
-  
-  Invoke build-planner agent with this input:
-  
-  Previous Plan: ${{CURRENT_BUILD_PLAN}}
-  Quality Feedback: ${{PLAN_IMPROVEMENT_FEEDBACK}}
-  Iteration: [increment counter]
-  
-  Expected Output Format: Refined implementation plan addressing feedback
-
-IF PLANNING_DECISION == "user_input":
-  → Escalate planning stagnation:
-  
-  Present to user:
-  "Implementation planning has reached quality plateau at ${{PLAN_QUALITY_SCORE}}%.
-  Key gaps identified: [Priority Improvements list]
-  
-  Please provide guidance on:
-  1. [Specific technical approach preferences]
-  2. [Alternative implementation strategies]
-  3. [Accept current plan quality: yes/no]"
+Expected: BuildPlan stored in MCP with planning_loop_id
 ```
 
-### Step 5: Code Implementation Loop
-Coordinate TDD code development:
-
+#### Planning Quality Assessment:
 ```
-# Initialize code implementation loop
-CODING_LOOP_ID = mcp__specter__initialize_refinement_loop:
-  loop_type: "build_code"
+Invoke build-critic agent with:
+- planning_loop_id: {{PLANNING_LOOP_ID}}
+- project_id: {{PROJECT_ID}}
+- spec_name: {{SPEC_NAME}}
 
-# Begin coding cycle with approved plan
-Invoke build-coder agent with this input:
+Agent will autonomously:
+1. Retrieve BuildPlan via MCP
+2. Retrieve TechnicalSpec via MCP
+3. Retrieve previous critic feedback via MCP (for progress tracking)
+4. Assess BuildPlan against FSDD criteria (5 categories, 100 points total)
+5. Calculate quality score (0-100)
+6. Generate CriticFeedback markdown
+7. Store CriticFeedback via MCP
+8. Exit
 
-Implementation Plan:
-${{CURRENT_BUILD_PLAN}}
-
-Technology Context:
-${{PROJECT_STACK}}
-
-Technical Specification:
-${{SPECIFICATION_CONTENT}}
-
-Expected Output Format:
-- Source code implementation with tests
-- Test execution results
-- Implementation progress summary
-- Code quality metrics
-
-# Capture implementation output
-CURRENT_IMPLEMENTATION = [build-coder output: complete code implementation with tests]
+Expected: CriticFeedback with Overall Score stored in MCP
 ```
 
-### Step 6: Code Quality Assessment
-Evaluate implementation quality:
-
+#### MCP Planning Decision:
 ```
-# Assess code quality
-Invoke build-reviewer agent with this input:
-${{CURRENT_IMPLEMENTATION}}
+PLANNING_DECISION = mcp__specter__decide_loop_next_action(
+    loop_id=PLANNING_LOOP_ID,
+    current_score=PLAN_QUALITY_SCORE
+)
 
-Expected Output Format:
-- Overall Quality Score: [0-100 numerical value]
-- Priority Improvements: [List of specific actionable suggestions]
-- Strengths: [List of well-executed areas to preserve]
-- Test Results: [Pass/fail status and coverage metrics]
-
-# Extract assessment results
-CODE_QUALITY_SCORE = [build-reviewer output: Overall Quality Score (0-100)]
-CODE_IMPROVEMENT_FEEDBACK = [build-reviewer output: Priority Improvements and suggestions]
-TEST_RESULTS = [build-reviewer output: Test Results and coverage]
-
-# MCP decision for coding loop
-CODING_DECISION = mcp__specter__decide_loop_next_action:
-  loop_id: ${{CODING_LOOP_ID}}
-  current_score: ${{CODE_QUALITY_SCORE}}
-
-# Handle coding decisions
-IF CODING_DECISION == "complete":
-  → Proceed to Step 7: Integration & Documentation
-
-IF CODING_DECISION == "refine":
-  → Return to Step 5 with refined context:
-  
-  Invoke build-coder agent with this input:
-  
-  Previous Implementation: ${{CURRENT_IMPLEMENTATION}}
-  Quality Feedback: ${{CODE_IMPROVEMENT_FEEDBACK}}
-  Test Status: ${{TEST_RESULTS}}
-  Iteration: [increment counter]
-  
-  Expected Output Format: Refined implementation addressing feedback
-
-IF CODING_DECISION == "user_input":
-  → Escalate implementation stagnation:
-  
-  Present to user:
-  "Code implementation has reached quality plateau at ${{CODE_QUALITY_SCORE}}%.
-  Key gaps identified: [Priority Improvements list]
-  Test Status: ${{TEST_RESULTS}}
-  
-  Please provide guidance on:
-  1. [Specific code quality concerns]
-  2. [Alternative implementation approaches]
-  3. [Accept current code quality: yes/no]"
+Returns:
+- "refine" if score < 80%
+- "complete" if score >= 80%
+- "user_input" if stagnation detected (<5 points improvement over 2 iterations)
 ```
 
-### Step 7: Integration & Documentation
-Complete implementation workflow:
+### 4. Planning Decision Handling
+Handle MCP Server planning phase responses:
 
+#### If PLANNING_DECISION == "refine":
 ```
-# Update specification with implementation details
-IMPLEMENTATION_SUMMARY = Generate summary including:
-- Files modified count
-- Test results and coverage
-- Quality scores achieved
-- Performance benchmarks met
-- Security issues (if any)
+Re-invoke build-planner agent (same parameters)
+Agent retrieves previous critic feedback and incorporates into refinement
+Re-invoke build-critic agent
+Call MCP decision again
+Continue until "complete" or "user_input"
+```
 
-Platform specification update tool:
-  identifier: ${{SPECIFICATION_IDENTIFIER}}
-  status: "Implementation Complete"
-  implementation_details: ${{IMPLEMENTATION_SUMMARY}}
-  build_plan_quality: ${{PLAN_QUALITY_SCORE}}%
-  code_quality: ${{CODE_QUALITY_SCORE}}%
-  test_results: ${{TEST_RESULTS}}
+#### If PLANNING_DECISION == "complete":
+```
+Proceed to Step 5: Coding Loop Initialization
+```
+
+#### If PLANNING_DECISION == "user_input":
+```
+Stagnation detected in planning loop. Request user guidance:
+
+Retrieve current state:
+- BuildPlan: mcp__specter__get_build_plan_markdown(PLANNING_LOOP_ID)
+- CriticFeedback: mcp__specter__get_critic_feedback(PLANNING_LOOP_ID)
+
+Present to user:
+"BuildPlan development has stagnated at {{PLAN_QUALITY_SCORE}}%.
+
+Key Issues:
+{{CriticFeedback Key Issues section}}
+
+Recommendations:
+{{CriticFeedback Recommendations section}}
+
+Please provide guidance on:
+1. Specific technical approach preferences
+2. Alternative implementation strategies
+3. Accept current plan and proceed to coding: yes/no"
+
+Collect user response as USER_FEEDBACK_MARKDOWN
+
+Store user feedback:
+mcp__specter__store_user_feedback(PLANNING_LOOP_ID, USER_FEEDBACK_MARKDOWN)
+
+Re-invoke build-planner (will retrieve user feedback autonomously)
+Continue refinement with user guidance
+```
+
+### 5. Coding Loop Initialization and Refinement
+Set up and execute MCP-managed code quality refinement:
+
+#### Initialize Coding Loop:
+```
+CODING_LOOP_ID = mcp__specter__initialize_refinement_loop(loop_type='build_code')
+
+State to maintain (CRITICAL - TWO loop IDs):
+- planning_loop_id: For retrieving BuildPlan
+- coding_loop_id: For code feedback storage/retrieval
+```
+
+#### Code Implementation Cycle:
+```
+Invoke build-coder agent with:
+- coding_loop_id: {{CODING_LOOP_ID}}
+- planning_loop_id: {{PLANNING_LOOP_ID}} (CRITICAL - for BuildPlan retrieval)
+- project_id: {{PROJECT_ID}}
+- spec_name: {{SPEC_NAME}}
+
+Agent will autonomously:
+1. Read .specter/coding-standards.md (if exists, otherwise use BuildPlan Code Standards)
+2. Retrieve BuildPlan via MCP using planning_loop_id
+3. Retrieve TechnicalSpec via MCP
+4. Retrieve critic feedback via MCP using coding_loop_id (none on first iteration)
+5. Retrieve user feedback via MCP using coding_loop_id (if stagnation occurred)
+6. Inspect codebase (Read/Glob to check current state)
+7. Create TodoList (TodoWrite)
+8. Execute TDD cycle:
+   - Write test (Write/Edit)
+   - Run test, verify fails (Bash: pytest)
+   - Implement code (Write/Edit)
+   - Run test, verify passes (Bash: pytest)
+   - Run full suite (Bash: pytest --cov)
+   - Run static analysis (Bash: mypy, ruff)
+9. Commit changes (Bash: git add, git commit with test results)
+10. Update platform task status using {{tools.update_task_status}}
+11. Exit
+
+Expected: Code implementation committed, platform status updated
+```
+
+#### Code Quality Assessment:
+```
+Invoke build-reviewer agent with:
+- coding_loop_id: {{CODING_LOOP_ID}}
+- planning_loop_id: {{PLANNING_LOOP_ID}} (CRITICAL - for BuildPlan retrieval)
+- project_id: {{PROJECT_ID}}
+- spec_name: {{SPEC_NAME}}
+
+Agent will autonomously:
+1. Retrieve BuildPlan via MCP using planning_loop_id
+2. Retrieve TechnicalSpec via MCP
+3. Retrieve previous critic feedback via MCP using coding_loop_id (for progress tracking)
+4. Inspect codebase (Read/Glob)
+5. Run static analysis (Bash: mypy, ruff)
+6. Run test suite (Bash: pytest --cov)
+7. Assess code quality against criteria (6 categories, 100 points total)
+8. Calculate quality score (0-100)
+9. Generate CriticFeedback markdown with test results
+10. Store CriticFeedback via MCP using coding_loop_id
+11. Exit
+
+Expected: CriticFeedback with Overall Score and test results stored in MCP
+```
+
+#### MCP Coding Decision:
+```
+CODING_DECISION = mcp__specter__decide_loop_next_action(
+    loop_id=CODING_LOOP_ID,
+    current_score=CODE_QUALITY_SCORE
+)
+
+Returns:
+- "refine" if score < 95%
+- "complete" if score >= 95%
+- "user_input" if stagnation detected (<5 points improvement over 2 iterations)
+```
+
+### 6. Coding Decision Handling
+Handle MCP Server coding phase responses:
+
+#### If CODING_DECISION == "refine":
+```
+Re-invoke build-coder agent (same parameters)
+Agent retrieves previous critic feedback and user feedback (if any)
+Agent addresses feedback items and continues implementation
+Re-invoke build-reviewer agent
+Call MCP decision again
+Continue until "complete" or "user_input"
+```
+
+#### If CODING_DECISION == "complete":
+```
+Proceed to Step 7: Integration & Documentation
+```
+
+#### If CODING_DECISION == "user_input":
+```
+Stagnation detected in coding loop. Request user guidance:
+
+Retrieve current state:
+- BuildPlan: mcp__specter__get_build_plan_markdown(PLANNING_LOOP_ID)
+- CriticFeedback: mcp__specter__get_critic_feedback(CODING_LOOP_ID)
+
+Present to user:
+"Code implementation has stagnated at {{CODE_QUALITY_SCORE}}%.
+
+Test Results:
+{{CriticFeedback Test Execution Results section}}
+
+Key Issues:
+{{CriticFeedback Key Issues section}}
+
+Recommendations:
+{{CriticFeedback Recommendations section}}
+
+Please provide guidance on:
+1. Specific code quality concerns or trade-offs
+2. Alternative implementation approaches
+3. Accept current quality and complete: yes/no
+4. Technical constraints or requirements adjustment"
+
+Collect user response as USER_FEEDBACK_MARKDOWN
+
+Store user feedback:
+mcp__specter__store_user_feedback(CODING_LOOP_ID, USER_FEEDBACK_MARKDOWN)
+
+Re-invoke build-coder (will retrieve user feedback autonomously)
+Continue refinement with user guidance
+```
+
+### 7. Integration & Documentation
+Complete implementation workflow and update specification:
+
+#### Generate Implementation Summary:
+```
+Retrieve final state:
+- BuildPlan: mcp__specter__get_build_plan_markdown(PLANNING_LOOP_ID)
+- Final CriticFeedback: mcp__specter__get_critic_feedback(CODING_LOOP_ID)
+
+Generate IMPLEMENTATION_SUMMARY including:
+- Build Plan Quality Score: {{PLAN_QUALITY_SCORE}}%
+- Code Quality Score: {{CODE_QUALITY_SCORE}}%
+- Test Results: {{TEST_RESULTS from CriticFeedback}}
+- Coverage: {{COVERAGE_PERCENTAGE}}%
+- Files Modified: {{FILE_COUNT}}
+- Commit Summary: {{GIT_LOG_SUMMARY}}
+```
+
+#### Update TechnicalSpec:
+```
+Update specification status and implementation details using {{tools.update_spec_tool}}:
+
+Status: "IMPLEMENTED"
+Implementation Summary: {{IMPLEMENTATION_SUMMARY}}
+BuildPlan Quality: {{PLAN_QUALITY_SCORE}}%
+Code Quality: {{CODE_QUALITY_SCORE}}%
+Test Coverage: {{COVERAGE_PERCENTAGE}}%
+Implementation Date: {{CURRENT_DATE}}
+```
+
+#### Report Completion:
+```
+Present final summary:
+"✓ Implementation complete for {{SPEC_NAME}}
+
+Build Planning:
+- Quality Score: {{PLAN_QUALITY_SCORE}}%
+- Iterations: {{PLANNING_ITERATION_COUNT}}
+
+Code Implementation:
+- Quality Score: {{CODE_QUALITY_SCORE}}%
+- Iterations: {{CODING_ITERATION_COUNT}}
+- Tests Passing: {{TESTS_PASSING}}/{{TOTAL_TESTS}}
+- Coverage: {{COVERAGE_PERCENTAGE}}%
+- MyPy: {{MYPY_STATUS}}
+- Ruff: {{RUFF_STATUS}}
+
+Implementation artifacts:
+- BuildPlan: Available via planning_loop_id={{PLANNING_LOOP_ID}}
+- Code Review: Available via coding_loop_id={{CODING_LOOP_ID}}
+- Commits: {{COMMIT_COUNT}} commits with test results
+- Platform Status: Updated via {{tools.update_spec_tool}}
+
+Ready for deployment."
 ```
 
 ## Quality Gates
 
-### Build Planning Quality
-- **Quality Threshold**: 80% (configurable via FSDD_LOOP_BUILD_PLAN_THRESHOLD)
+### Planning Quality Threshold
+- **Target Score**: 80/100 points minimum
 - **Maximum Iterations**: 5 (configurable via FSDD_LOOP_BUILD_PLAN_MAX_ITERATIONS)
-- **Assessment Focus**: Completeness, feasibility, test coverage
+- **Stagnation Detection**: <5 points improvement over 2 iterations triggers user_input
 
-### Code Implementation Quality
-- **Quality Threshold**: 95% (configurable via FSDD_LOOP_BUILD_CODE_THRESHOLD)
+### Code Quality Threshold
+- **Target Score**: 95/100 points minimum
 - **Maximum Iterations**: 5 (configurable via FSDD_LOOP_BUILD_CODE_MAX_ITERATIONS)
-- **Assessment Focus**: Code quality, test passing, best practices
+- **Stagnation Detection**: <5 points improvement over 2 iterations triggers user_input
 
-### Stagnation Detection
-- **Both Loops**: Less than 5 points improvement over 2 iterations
-- **Action**: MCP Server returns "user_input" status
-- **Recovery**: Request specific guidance on blocked areas
+### Assessment Criteria
 
-## Research Integration Strategy
+**BuildPlan Assessment (80% threshold)**:
+1. Plan Completeness (20 points): All sections populated
+2. TechnicalSpec Alignment (25 points): Matches objectives, scope, architecture
+3. Test Strategy Clarity (20 points): TDD approach defined
+4. Implementation Sequence Logic (20 points): Dependencies respected
+5. Technology Appropriateness (15 points): Stack suitable for requirements
 
-### Parallel Research Pattern
-```text
-# Main Agent coordinates research path collection
-For each item in research_requirements:
-
-IF item starts with "Read:":
-  → Extract path and add to documentation_paths list
-  
-IF item starts with "Synthesize:":
-  → Invoke research-synthesizer agent with extracted prompt
-  → Add research-synthesizer output path to documentation_paths list
-
-Collect all documentation paths (both existing docs and research-synthesizer outputs)
-
-Pass documentation_paths list to build-planner agent
-```
-
-### Research Requirements Processing
-Research requirements processed by parsing specification sections and coordinating parallel execution of synthesis tasks while collecting documentation paths for build-planner consumption.
+**Code Assessment (95% threshold)**:
+1. Tests Passing (30 points): All tests pass
+2. Type Checking Clean (15 points): MyPy zero errors
+3. Linting Clean (10 points): Ruff zero issues
+4. Test Coverage (15 points): ≥80% coverage
+5. BuildPlan Alignment (15 points): File structure and features match
+6. TechnicalSpec Requirements (15 points): All objectives implemented
 
 ## Error Handling
 
-### Standardized Error Response Format
-All error scenarios return structured responses:
+### Graceful Degradation Patterns
 
-```json
-{{
-  "error_type": "spec_not_found|research_failure|environment_error|planning_failure|implementation_failure|quality_plateau",
-  "error_message": "Detailed error description",
-  "recovery_action": "Specific recovery steps taken",
-  "user_guidance": "Clear instructions for user",
-  "partial_output": "Any salvageable work completed"
-}}
+#### TechnicalSpec Not Available:
+```
+Display: "No technical specification found: [spec-name]"
+Suggest: "/specter-spec [spec-name] to create technical specification"
+Exit gracefully with guidance
 ```
 
-### Error Scenario Implementations
-
-#### 1. Specification Not Found
+#### Research Synthesis Failures:
 ```
-IF specification retrieval fails:
-  ERROR_RESPONSE = {{
-    "error_type": "spec_not_found",
-    "error_message": "Cannot retrieve specification with identifier: ${{SPECIFICATION_IDENTIFIER}}",
-    "recovery_action": "Prompting user for correct specification identifier or path",
-    "user_guidance": "Please provide valid specification ID or path",
-    "partial_output": "Environment detection results if available"
-  }}
-  → Request specification location or alternative identifier
+IF some research-synthesizer agents fail:
+  Continue with available documentation
+  Note missing research areas in DOCUMENTATION_PATHS
+  Flag gaps in BuildPlan for user awareness
+  Proceed with available research
 ```
 
-#### 2. Research Execution Failure
+#### Planning Loop Failures:
 ```
-IF research-synthesizer tasks fail:
-  ERROR_RESPONSE = {{
-    "error_type": "research_failure",
-    "error_message": "Research synthesis failed for [X] of [Y] topics",
-    "recovery_action": "Continuing with available research and existing documentation",
-    "user_guidance": "Some research failed. Proceeding with available documentation.",
-    "partial_output": "Successfully completed research paths"
-  }}
-  → Continue with available documentation, note missing research in plan
-```
+IF build-planner fails:
+  Retry once with simplified context
+  Create minimal BuildPlan from TechnicalSpec
+  Note limitations and suggest manual review
 
-#### 3. Environment Detection Failure
-```
-IF detect-packages.sh fails or returns unclear results:
-  ERROR_RESPONSE = {{
-    "error_type": "environment_error",
-    "error_message": "Cannot detect project technology stack reliably",
-    "recovery_action": "Requesting manual technology specification from user",
-    "user_guidance": "Please specify: language, framework, testing tools",
-    "partial_output": "Partial environment detection results"
-  }}
-  → Request manual specification of technology stack
+IF build-critic fails:
+  Continue without quality assessment
+  Use single-pass BuildPlan
+  Warn user that quality not validated
+  Suggest manual review before coding
 ```
 
-#### 4. Planning Quality Failure
+#### Coding Loop Failures:
 ```
-IF planning loop fails to reach quality threshold:
-  ERROR_RESPONSE = {{
-    "error_type": "planning_failure",
-    "error_message": "Implementation plan quality below threshold after maximum iterations",
-    "recovery_action": "Presenting best available plan with quality warnings",
-    "user_guidance": "Plan Quality: ${{PLAN_QUALITY_SCORE}}%. Key issues: [list]. Review recommended.",
-    "partial_output": "Implementation plan at ${{PLAN_QUALITY_SCORE}}% completeness"
-  }}
-  → Present plan with warnings, allow user to proceed or refine
-```
+IF build-coder fails:
+  Preserve git commits for rollback
+  Report failure with TodoList state
+  Provide diagnostic information
+  Suggest manual intervention
 
-#### 5. Implementation Quality Failure
-```
-IF coding loop fails to reach quality threshold or tests fail:
-  ERROR_RESPONSE = {{
-    "error_type": "implementation_failure",
-    "error_message": "Code implementation quality below threshold or test failures persist",
-    "recovery_action": "Presenting implementation with detailed failure analysis",
-    "user_guidance": "Code Quality: ${{CODE_QUALITY_SCORE}}%. Test Status: ${{TEST_RESULTS}}. Manual review required.",
-    "partial_output": "Implementation code with test results"
-  }}
-  → Present code with test reports and quality analysis
+IF build-reviewer fails:
+  Run static analysis manually (Bash: pytest, mypy, ruff)
+  Report test results without quality score
+  Continue with manual quality assessment
+  Note automated review unavailable
 ```
 
-### Proactive Error Prevention
-- Validate specification format and completeness before processing
-- Test environment detection scripts before full workflow
-- Check MCP tool availability before loop initialization
-- Monitor research synthesis progress with timeouts
-- Validate intermediate outputs before proceeding to next phase
-
-## Expected Output Specifications
-
-### Build Plan Output Structure
-```markdown
-# Implementation Plan: [Project Name]
-
-## Overview
-[Implementation approach summary]
-
-## Phase 1: Setup and Configuration
-- [ ] Task 1: [Description]
-- [ ] Task 2: [Description]
-
-## Phase 2: Core Implementation
-- [ ] Task 3: [Description]
-- [ ] Task 4: [Description]
-
-## Phase 3: Testing and Validation
-- [ ] Task 5: [Description]
-- [ ] Task 6: [Description]
-
-## Technology Decisions
-[Specific libraries and patterns]
-
-## Risk Mitigation
-[Identified risks and solutions]
+#### MCP Loop Failures:
+```
+IF loop initialization fails:
+  Continue with single-pass workflow
+  Skip refinement cycles
+  Note quality loops unavailable
+  Suggest manual review at each phase
 ```
 
-### Implementation Output Components
-- **Source Code**: Implemented features with comprehensive tests
-- **Test Results**: Passing test suites with coverage metrics
-- **Documentation**: Code comments and implementation notes
-- **Specification Updates**: Marked complete with implementation details
+## Coordination Pattern
 
-## Context Preservation
+The command maintains orchestration focus by:
+- **Validating TechnicalSpec completion** before proceeding
+- **Coordinating agent invocations** without defining their behavior
+- **Maintaining dual loop IDs** (planning_loop_id + coding_loop_id)
+- **Handling MCP Server responses** without evaluating quality scores
+- **Managing user feedback** during stagnation scenarios
+- **Providing error recovery** without detailed implementation guidance
 
-Maintain conversation flow while processing complex implementation workflow:
-- Complete conversation history passed to each agent invocation
-- Technical assessments and loop decisions hidden from user interaction
-- Natural dialogue flow preserved despite multi-agent coordination
-- Context summarization to manage size constraints across refinement cycles
+All specialized work delegated to appropriate agents:
+- **build-planner**: BuildPlan generation with research integration (MCP access)
+- **build-critic**: BuildPlan quality assessment (80% threshold)
+- **build-coder**: TDD code implementation with platform integration (MCP access + platform tools)
+- **build-reviewer**: Code quality assessment (95% threshold)
+- **research-synthesizer**: Parallel research brief generation
+- **MCP Server**: Decision logic, threshold management, state storage
 
-## Implementation Integration Notes
+## Workflow Enhancements
 
-### Specification Tools
-- **Retrieval Tool**: Platform-specific specification retrieval
-- **Update Tool**: Platform-specific specification update
-- **Content Structure**: Platform-agnostic markdown maintained
-- **Implementation Status**: Tracked in specification metadata
+### Dual Loop Architecture
+- Separate planning loop (BuildPlan refinement) and coding loop (code refinement)
+- planning_loop_id used for BuildPlan storage/retrieval by all agents
+- coding_loop_id used for code feedback storage/retrieval
+- Agents receive both IDs and use appropriately
 
-### Loop State Management
-- **Planning Loop**: Separate loop ID for build plan refinement
-- **Coding Loop**: Separate loop ID for code implementation refinement
-- **State Isolation**: No shared state between planning and coding loops
-- **Progress Tracking**: Clear messaging about active loop phase
+### Coding Standards Integration
+- build-coder reads .specter/coding-standards.md on initialization
+- User-customizable coding standards applied to all generated code
+- Fallback to BuildPlan Code Standards if file doesn't exist
 
-### TDD Enforcement Strategy
-- build-coder agent writes tests first before implementation
-- Test execution validation required before considering implementation complete
-- Green tests required for quality gate passage
-- Test coverage metrics tracked and reported
+### TDD Enforcement
+- Strict test-first discipline enforced by build-coder agent
+- Tests must fail before implementation proceeds
+- Tests must pass before considering feature complete
+- Commit after each iteration for rollback capability
 
-## Success Metrics
+### User Feedback During Stagnation
+- User input requested when quality plateaus (<5 points over 2 iterations)
+- User feedback stored via mcp__specter__store_user_feedback
+- Agents retrieve user feedback autonomously via mcp__specter__get_user_feedback
+- User feedback takes priority over critic suggestions
 
-### Quantitative Targets
-- **Plan Quality Score**: Target ≥80%
-- **Code Quality Score**: Target ≥95%
-- **Test Coverage**: Target >80%
-- **Build Success Rate**: Target 100%
-- **Research Success Rate**: Target >90%
-
-### Qualitative Indicators
-- **Implementation Completeness**: All specification requirements met
-- **Code Maintainability**: Following established best practices
-- **Documentation Quality**: Clear and comprehensive implementation notes
-- **Performance**: Meeting specification benchmarks and requirements
-
-The implementation is ready for deployment. All quality gates passed and specification updated with completion status using {tools.comment_spec_tool}.
+Ready for production deployment with validated quality scores and comprehensive test coverage.
 """

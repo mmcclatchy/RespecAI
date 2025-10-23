@@ -191,3 +191,7 @@ class CreateSpecAgentTools(BaseModel):
     create_spec_tool: str = Field(..., description='Platform-specific tool for creating external specs')
     get_spec_tool: str = Field(..., description='Platform-specific tool for retrieving specs')
     update_spec_tool: str = Field(..., description='Platform-specific tool for updating specs')
+
+
+class BuildCoderAgentTools(BaseModel):
+    update_task_status: str = Field(..., description='Platform-specific tool for updating task/issue status')

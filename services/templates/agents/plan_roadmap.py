@@ -1,10 +1,7 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from services.platform.models import PlanRoadmapAgentTools
+from services.platform.models import PlanRoadmapAgentTools
 
 
-def generate_plan_roadmap_template(tools: 'PlanRoadmapAgentTools') -> str:
+def generate_plan_roadmap_template(tools: PlanRoadmapAgentTools) -> str:
     """Generate roadmap agent template for phase breakdown and sparse spec creation.
 
     Workflow: Transform strategic plans into sparse TechnicalSpecs (iteration=0, one per phase)
