@@ -104,10 +104,10 @@ class TestProductionMCPServer:
     def test_configuration_loading_from_environment_variables(self) -> None:
         # Test with custom environment variables
         test_env = {
-            'FSDD_LOOP_PLAN_THRESHOLD': '90',
-            'FSDD_LOOP_SPEC_THRESHOLD': '88',
-            'FSDD_MCP_SERVER_NAME': 'Test Production Server',
-            'FSDD_MCP_DEBUG': 'true',
+            'LOOP_PLAN_THRESHOLD': '90',
+            'LOOP_SPEC_THRESHOLD': '88',
+            'MCP_SERVER_NAME': 'Test Production Server',
+            'MCP_DEBUG': 'true',
         }
 
         with patch.dict(os.environ, test_env, clear=False):

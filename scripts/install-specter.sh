@@ -6,7 +6,7 @@ set -e
 # Supports both local execution and remote curl-based installation
 
 # GitHub repository details
-GITHUB_RAW_URL="https://raw.githubusercontent.com/mmcclatchy/spec-driven-development/main"
+GITHUB_RAW_URL="https://raw.githubusercontent.com/mmcclatchy/specter/main"
 SETUP_COMMAND_PATH=".claude/commands/specter-setup.md"
 
 # Color codes for output
@@ -48,9 +48,9 @@ show_usage() {
     echo "Specter Installation Script"
     echo ""
     echo "Usage:"
-    echo "  Remote install:  curl -fsSL https://raw.githubusercontent.com/mmcclatchy/spec-driven-development/main/scripts/install-specter.sh | bash"
-    echo "  With platform:   curl -fsSL https://raw.githubusercontent.com/mmcclatchy/spec-driven-development/main/scripts/install-specter.sh | bash -s -- linear"
-    echo "  With options:    curl -fsSL https://raw.githubusercontent.com/mmcclatchy/spec-driven-development/main/scripts/install-specter.sh | bash -s -- --platform github --path ~/project"
+    echo "  Remote install:  curl -fsSL https://raw.githubusercontent.com/mmcclatchy/specter/main/scripts/install-specter.sh | bash"
+    echo "  With platform:   curl -fsSL https://raw.githubusercontent.com/mmcclatchy/specter/main/scripts/install-specter.sh | bash -s -- linear"
+    echo "  With options:    curl -fsSL https://raw.githubusercontent.com/mmcclatchy/specter/main/scripts/install-specter.sh | bash -s -- --platform github --path ~/project"
     echo ""
     echo "  Local install:   ./scripts/install-specter.sh"
     echo "  With platform:   ./scripts/install-specter.sh linear"

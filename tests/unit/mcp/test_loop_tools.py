@@ -70,16 +70,16 @@ class TestLoopToolsMCP:
         with pytest.raises(LoopValidationError):
             loop_tools.decide_loop_next_action(loop_id, 101)
 
-    def test_decide_loop_next_action_max_iterations(self) -> None:
-        # Initialize a plan loop with low max_iterations for testing
+    def test_decide_loop_next_action_checkpoint_frequency(self) -> None:
+        # Initialize a plan loop to test checkpoint frequency
         init_result = loop_tools.initialize_refinement_loop('plan')
         loop_id = init_result.id
 
-        # Add scores until we hit max iterations (5 for plan loops)
+        # Add scores until we hit checkpoint frequency (5 for plan loops)
         for score in [60, 61, 62, 63, 64]:
             result = loop_tools.decide_loop_next_action(loop_id, score)
 
-        # Should request user input due to max iterations
+        # Should request user input at checkpoint frequency
         assert result.status == LoopStatus.USER_INPUT
 
     def test_initialize_refinement_loop_integration(self) -> None:

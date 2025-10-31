@@ -16,10 +16,10 @@ Specter is a **meta MCP server** that generates platform-specific workflow tools
 │                 (receives generated tools)                      │
 │   ┌─────────────────────────────────────────────────────────┐   │
 │   │  .claude/commands/     │  .claude/agents/               │   │
-│   │  • specter-plan.md     │  • plan-analyst.md            │   │
-│   │  • specter-spec.md     │  • spec-architect.md          │   │
-│   │  • specter-build.md    │  • build-planner.md           │   │
-│   │  • specter-roadmap.md  │  • build-coder.md             │   │
+│   │  • specter-plan.md     │  • plan-analyst.md             │   │
+│   │  • specter-spec.md     │  • spec-architect.md           │   │
+│   │  • specter-build.md    │  • build-planner.md            │   │
+│   │  • specter-roadmap.md  │  • build-coder.md              │   │
 │   └─────────────────────────────────────────────────────────┘   │
 └─────────────────────┬───────────────────────────────────────────┘
                       ▲ Template Deployment
@@ -347,7 +347,7 @@ class MCPModel(BaseModel, ABC):
 
 #### Remote Installation (curl-based)
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mmcclatchy/spec-driven-development/main/scripts/install-specter.sh | bash -s -- linear
+curl -fsSL https://raw.githubusercontent.com/mmcclatchy/specter/main/scripts/install-specter.sh | bash -s -- linear
 ```
 
 #### Local Installation (repository-based)

@@ -106,14 +106,14 @@ class TestLoopToolsIntegration:
             assert isinstance(result, MCPResponse)
             assert result.id == loop.id
 
-    def test_max_iterations_boundary_conditions(self) -> None:
+    def test_checkpoint_frequency_boundary_conditions(self) -> None:
         loop_id = loop_tools.initialize_refinement_loop('plan').id
 
-        # Add scores up to max iterations limit
-        for i in range(5):  # Plan loops have max_iterations = 5
+        # Add scores up to checkpoint frequency
+        for i in range(5):  # Plan loops have checkpoint_frequency = 5
             result = loop_tools.decide_loop_next_action(loop_id, 60 + i)
 
-        # Should trigger user input due to max iterations
+        # Should trigger user input at checkpoint frequency
         assert result.status == LoopStatus.USER_INPUT
 
     def test_cross_loop_independence(self) -> None:

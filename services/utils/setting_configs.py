@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class LoopConfig(BaseSettings):
     model_config = SettingsConfigDict(
         extra='forbid',
-        env_prefix='FSDD_LOOP_',
+        env_prefix='LOOP_',
     )
 
     plan_threshold: int = Field(default=85, ge=1, le=100)
@@ -22,18 +22,18 @@ class LoopConfig(BaseSettings):
     build_plan_improvement_threshold: int = Field(default=5, ge=1, le=100)
     build_code_improvement_threshold: int = Field(default=5, ge=1, le=100)
 
-    plan_max_iterations: int = Field(default=5, ge=1, le=20)
-    analyst_max_iterations: int = Field(default=3, ge=1, le=20)
-    roadmap_max_iterations: int = Field(default=5, ge=1, le=20)
-    spec_max_iterations: int = Field(default=5, ge=1, le=20)
-    build_plan_max_iterations: int = Field(default=5, ge=1, le=20)
-    build_code_max_iterations: int = Field(default=5, ge=1, le=20)
+    plan_checkpoint_frequency: int = Field(default=5, ge=1, le=20)
+    analyst_checkpoint_frequency: int = Field(default=3, ge=1, le=20)
+    roadmap_checkpoint_frequency: int = Field(default=5, ge=1, le=20)
+    spec_checkpoint_frequency: int = Field(default=5, ge=1, le=20)
+    build_plan_checkpoint_frequency: int = Field(default=5, ge=1, le=20)
+    build_code_checkpoint_frequency: int = Field(default=5, ge=1, le=20)
 
 
 class MCPSettings(BaseSettings):
     model_config = SettingsConfigDict(
         extra='forbid',
-        env_prefix='FSDD_MCP_',
+        env_prefix='MCP_',
     )
 
     server_name: str = 'specter'

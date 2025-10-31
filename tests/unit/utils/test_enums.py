@@ -107,12 +107,12 @@ class TestLoopType:
             (LoopType.ANALYST, 'analyst'),
         ],
     )
-    def test_loop_type_max_iterations_property(self, loop_type: LoopType, config_suffix: str) -> None:
-        expected_max_iterations = getattr(loop_config, f'{config_suffix}_max_iterations')
+    def test_loop_type_checkpoint_frequency_property(self, loop_type: LoopType, config_suffix: str) -> None:
+        expected_checkpoint_frequency = getattr(loop_config, f'{config_suffix}_checkpoint_frequency')
 
-        assert loop_type.max_iterations == expected_max_iterations
-        assert isinstance(loop_type.max_iterations, int)
-        assert 1 <= loop_type.max_iterations <= 20
+        assert loop_type.checkpoint_frequency == expected_checkpoint_frequency
+        assert isinstance(loop_type.checkpoint_frequency, int)
+        assert 1 <= loop_type.checkpoint_frequency <= 20
 
     def test_loop_type_property_integration(self) -> None:
         # Test build_code has highest threshold (95%)
@@ -121,10 +121,10 @@ class TestLoopType:
         # Test analyst has highest improvement threshold (10%)
         assert LoopType.ANALYST.improvement_threshold == 10
 
-        # Test all types have reasonable max iterations
+        # Test all types have reasonable checkpoint frequencies
         for loop_type in LoopType:
-            assert loop_type.max_iterations >= 3
-            assert loop_type.max_iterations <= 5
+            assert loop_type.checkpoint_frequency >= 3
+            assert loop_type.checkpoint_frequency <= 5
 
     def test_loop_type_enum_creation_from_string(self) -> None:
         assert LoopType('plan') == LoopType.PLAN

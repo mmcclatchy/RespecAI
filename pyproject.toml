@@ -1,5 +1,5 @@
 [project]
-name = "spec-driven-development"
+name = "specter"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -37,7 +37,7 @@ package = true
 packages = ["services"]
 
 [project.scripts]
-spec-driven-workflow-server = "services.mcp_server:main"
+spec-driven-workflow-server = "services.mcp.server:run_local_server"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

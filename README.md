@@ -15,32 +15,96 @@ Specter is a **meta MCP server** that generates platform-specific workflow autom
 
 ## Quick Start
 
-### 1. Installation
+Specter installation has two parts:
+1. **One-time MCP server setup** (configure Specter globally)
+2. **Per-project setup** (generate workflow files for each project)
 
-**Remote installation (recommended):**
+### 1. MCP Server Setup (One-Time)
+
+Configure Specter as an MCP server in Claude Code:
+
+**Step 1: Clone Specter repository**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mmcclatchy/spec-driven-development/main/scripts/install-specter.sh | bash -s -- linear
+# Clone to a permanent location
+cd ~/coding/projects  # or your preferred location
+git clone git@github.com:mmcclatchy/specter.git
+cd specter
+uv sync  # Install dependencies
 ```
+
+**Step 2: Add to Claude Code configuration**
+
+Edit `~/.claude/config.json` and add:
+
+```json
+{
+  "mcpServers": {
+    "specter": {
+      "command": "uv",
+      "args": ["run", "spec-driven-workflow-server"],
+      "cwd": "/absolute/path/to/specter"
+    }
+  }
+}
+```
+
+> **Important**: Replace `/absolute/path/to/specter` with your actual path from Step 1. Use absolute paths, not `~` or relative paths.
+
+**Step 3: Verify setup**
+
+```bash
+claude
+```
+
+Then in Claude Code:
+```text
+/mcp list
+```
+
+Expected output should include "specter" with 32 tools available.
+
+### 2. Project Setup (Per-Project)
+
+Once the MCP server is configured, set up any project:
 
 **Local installation:**
 ```bash
-./scripts/install-specter.sh --platform linear --path ~/my-project
+cd /path/to/your/project
+~/coding/projects/specter/scripts/install-specter.sh
+claude
 ```
 
-**Bootstrap via Claude Code:**
+Then in Claude Code:
 ```text
-Install the Specter bootstrap files for this project
+/specter-setup
+/specter-plan  # Start your first workflow
 ```
 
-### 2. Project Setup
+**Remote installation (public repos only):**
 
+> **⚠️ Important**: Remote installation only works for **public repositories**. For private repos, use local installation above.
+
+```bash
+cd /path/to/your/project
+curl -fsSL https://raw.githubusercontent.com/mmcclatchy/specter/main/scripts/install-specter.sh | bash
+claude
+```
+
+Then in Claude Code:
+```text
+/specter-setup
+/specter-plan  # Start your first workflow
+```
+
+**Bootstrap via Claude Code (alternative):**
 ```bash
 cd /path/to/your/project
 claude
 ```
 
 ```text
-/specter-setup linear
+Install the Specter bootstrap files for this project
+/specter-setup
 ```
 
 ### 3. Start Using
@@ -51,6 +115,8 @@ claude
 /specter-spec          # Design specifications
 /specter-build         # Implement features
 ```
+
+**For complete installation instructions**, see [User Guide](docs/USER_GUIDE.md)
 
 ## Platform Options
 
@@ -101,7 +167,7 @@ claude
 
 ### For Local Installation
 - **uv** (Python version and package manager)
-- **Python 3.12+**
+- **Python 3.13+**
 - **Unix-like OS** (Linux, macOS, Windows Subsystem for Linux)
 
 ### For Containerized Deployments
@@ -161,7 +227,7 @@ This is a production-ready system with enterprise-grade architecture. Contributi
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/mmcclatchy/spec-driven-development/issues)
+- **Issues**: [GitHub Issues](https://github.com/mmcclatchy/specter/issues)
 - **Documentation**: See [docs/](docs/) directory
 - **User Guide**: [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
 
@@ -176,9 +242,21 @@ This is a production-ready system with enterprise-grade architecture. Contributi
 - ✅ Template generation system
 - ✅ Installation and setup workflows
 - ✅ Unit and integration tests
+- ✅ Global MCP server architecture (single instance for all projects)
 
 ### In Progress
 - 🚧 Agent template completion (some agents not yet implemented)
 - 🚧 End-to-end workflow testing
 - 🚧 Platform integration validation
 - 🚧 User acceptance testing
+- 🚧 **Multi-project isolation** (v1.1) - File-based state persistence and complete project isolation
+
+### Multi-Project Support
+
+**Current Status**: Works with limitations (see [Multi-Project Support in User Guide](docs/USER_GUIDE.md#multi-project-support))
+
+- ✅ Multiple projects can use same MCP server
+- ✅ Per-project configuration and commands
+- ⚠️ State isolation in development (v1.1)
+
+**Planned (v1.1)**: Complete multi-project isolation with file-based state persistence. See [MULTI_PROJECT_DESIGN.md](docs/MULTI_PROJECT_DESIGN.md) for architecture details.

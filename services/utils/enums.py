@@ -20,8 +20,8 @@ class LoopType(Enum):
         return getattr(loop_config, f'{self.value}_improvement_threshold')
 
     @property
-    def max_iterations(self) -> int:
-        return getattr(loop_config, f'{self.value}_max_iterations')
+    def checkpoint_frequency(self) -> int:
+        return getattr(loop_config, f'{self.value}_checkpoint_frequency')
 
 
 class LoopStatus(Enum):

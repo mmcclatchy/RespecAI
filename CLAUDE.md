@@ -1,4 +1,4 @@
-# Best Practices Graph - Project Standards
+# Specter MCP Server - Project Standards
 
 ## Project Rules (Mandatory)
 

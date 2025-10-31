@@ -59,7 +59,9 @@ class LoopState(BaseModel):
             self.status = LoopStatus.COMPLETED
             return self.mcp_response
 
-        if self.iteration >= self.loop_type.max_iterations or self._detect_stagnation():
+        if (
+            self.iteration > 0 and self.iteration % self.loop_type.checkpoint_frequency == 0
+        ) or self._detect_stagnation():
             self.status = LoopStatus.USER_INPUT
             return self.mcp_response
 
