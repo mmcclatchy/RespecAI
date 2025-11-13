@@ -10,7 +10,7 @@ from services.utils.loop_state import LoopState, MCPResponse
 class StateManager(ABC):
     # Loop Management
     @abstractmethod
-    def add_loop(self, loop: LoopState) -> None: ...
+    def add_loop(self, loop: LoopState, project_path: str) -> None: ...
 
     @abstractmethod
     def get_loop(self, loop_id: str) -> LoopState: ...
@@ -22,7 +22,7 @@ class StateManager(ABC):
     def decide_loop_next_action(self, loop_id: str, current_score: int) -> MCPResponse: ...
 
     @abstractmethod
-    def list_active_loops(self) -> list[MCPResponse]: ...
+    def list_active_loops(self, project_path: str) -> list[MCPResponse]: ...
 
     @abstractmethod
     def get_objective_feedback(self, loop_id: str) -> MCPResponse: ...
@@ -93,9 +93,10 @@ class InMemoryStateManager(StateManager):
         # Temporary loop-to-spec mapping (for active refinement sessions)
         self._loop_to_spec: dict[str, tuple[str, str]] = {}  # loop_id -> (project_id, spec_name)
 
-    def add_loop(self, loop: LoopState) -> None:
+    def add_loop(self, loop: LoopState, project_path: str) -> None:
         if loop.id in self._active_loops:
             raise LoopAlreadyExistsError(f'Loop already exists: {loop.id}')
+        # TODO: Phase 5 - Store project_path association for proper multi-project isolation
         self._active_loops[loop.id] = loop
         dropped_loop_id = self._loop_history.append(loop.id)
         if dropped_loop_id:
@@ -115,7 +116,8 @@ class InMemoryStateManager(StateManager):
         loop_state.add_score(current_score)
         return loop_state.decide_next_loop_action()
 
-    def list_active_loops(self) -> list[MCPResponse]:
+    def list_active_loops(self, project_path: str) -> list[MCPResponse]:
+        # TODO: Phase 5 - Filter by project_path for proper multi-project isolation
         return [loop.mcp_response for loop in self._active_loops.values()]
 
     def get_objective_feedback(self, loop_id: str) -> MCPResponse:

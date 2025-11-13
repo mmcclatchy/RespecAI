@@ -8,6 +8,11 @@ from services.utils.loop_state import HealthStatus
 from services.utils.setting_configs import mcp_settings
 
 
+@pytest.fixture
+def project_path() -> str:
+    return '/tmp/test-project'
+
+
 class TestFastMCPServerIntegration:
     def test_fastmcp_server_initialization(self) -> None:
         server = create_mcp_server()
@@ -77,9 +82,9 @@ class TestFastMCPServerIntegration:
                 {'loop_id': 'nonexistent-id', 'current_score': 80},
             )
 
-    def test_tool_parameter_validation_through_fastmcp(self) -> None:
+    def test_tool_parameter_validation_through_fastmcp(self, project_path: str) -> None:
         # Test with valid parameters using new API
-        init_result = loop_tools.initialize_refinement_loop('plan')
+        init_result = loop_tools.initialize_refinement_loop(project_path, 'plan')
         result = loop_tools.decide_loop_next_action(init_result.id, 90)
 
         assert result.status == LoopStatus.COMPLETED

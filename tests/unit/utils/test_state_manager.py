@@ -71,6 +71,10 @@ class TestInMemoryStateManager:
         return InMemoryStateManager(max_history_size=3)
 
     @pytest.fixture
+    def project_path(self) -> str:
+        return '/tmp/test-project'
+
+    @pytest.fixture
     def sample_roadmap(self) -> Roadmap:
         return Roadmap(
             project_name='Test Roadmap',
@@ -425,28 +429,32 @@ class TestSpecOperations(TestInMemoryStateManager):
 
 
 class TestLoopOperations(TestInMemoryStateManager):
-    def test_add_loop_stores_loop_state(self, state_manager: InMemoryStateManager, sample_loop: LoopState) -> None:
-        state_manager.add_loop(sample_loop)
+    def test_add_loop_stores_loop_state(
+        self, state_manager: InMemoryStateManager, project_path: str, sample_loop: LoopState
+    ) -> None:
+        state_manager.add_loop(sample_loop, project_path)
 
         retrieved_loop = state_manager.get_loop(sample_loop.id)
         assert retrieved_loop == sample_loop
 
     def test_add_loop_raises_error_for_duplicate_id(
-        self, state_manager: InMemoryStateManager, sample_loop: LoopState
+        self, state_manager: InMemoryStateManager, project_path: str, sample_loop: LoopState
     ) -> None:
-        state_manager.add_loop(sample_loop)
+        state_manager.add_loop(sample_loop, project_path)
 
         duplicate_loop = LoopState(loop_type=LoopType.PLAN)
         duplicate_loop.id = sample_loop.id  # Force same ID
 
         with pytest.raises(LoopAlreadyExistsError):
-            state_manager.add_loop(duplicate_loop)
+            state_manager.add_loop(duplicate_loop, project_path)
 
     def test_get_loop_raises_error_when_not_found(self, state_manager: InMemoryStateManager) -> None:
         with pytest.raises(LoopNotFoundError):
             state_manager.get_loop('non-existent-loop-id')
 
-    def test_loop_history_management_respects_max_size(self, state_manager: InMemoryStateManager) -> None:
+    def test_loop_history_management_respects_max_size(
+        self, state_manager: InMemoryStateManager, project_path: str
+    ) -> None:
         # State manager initialized with max_history_size=3
         loops = [
             LoopState(loop_type=LoopType.PLAN),
@@ -456,7 +464,7 @@ class TestLoopOperations(TestInMemoryStateManager):
         ]
 
         for loop in loops:
-            state_manager.add_loop(loop)
+            state_manager.add_loop(loop, project_path)
 
         # First loop should have been dropped from active loops
         with pytest.raises(LoopNotFoundError):
@@ -559,10 +567,10 @@ class TestCrossOperationIntegration(TestInMemoryStateManager):
         assert 'P2 Spec' not in p1_specs
 
     def test_loops_and_roadmaps_coexist_independently(
-        self, state_manager: InMemoryStateManager, sample_roadmap: Roadmap, sample_loop: LoopState
+        self, state_manager: InMemoryStateManager, project_path: str, sample_roadmap: Roadmap, sample_loop: LoopState
     ) -> None:
         # Add both loop and roadmap data
-        state_manager.add_loop(sample_loop)
+        state_manager.add_loop(sample_loop, project_path)
         state_manager.store_roadmap('test-project', sample_roadmap)
 
         # Both should be retrievable independently
@@ -572,7 +580,7 @@ class TestCrossOperationIntegration(TestInMemoryStateManager):
         assert retrieved_loop == sample_loop
         assert retrieved_roadmap == sample_roadmap
 
-    def test_state_manager_initialization_parameters(self) -> None:
+    def test_state_manager_initialization_parameters(self, project_path: str) -> None:
         # Test with custom max_history_size
         custom_state_manager = InMemoryStateManager(max_history_size=5)
 
@@ -580,7 +588,7 @@ class TestCrossOperationIntegration(TestInMemoryStateManager):
         loops = [LoopState(loop_type=LoopType.PLAN) for _ in range(6)]
 
         for loop in loops:
-            custom_state_manager.add_loop(loop)
+            custom_state_manager.add_loop(loop, project_path)
 
         # First loop should be dropped (6 > 5)
         with pytest.raises(LoopNotFoundError):

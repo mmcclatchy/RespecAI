@@ -7,9 +7,14 @@ from services.utils.enums import LoopStatus
 from services.utils.loop_state import MCPResponse
 
 
+@pytest.fixture
+def project_path() -> str:
+    return '/tmp/test-project'
+
+
 class TestLoopPerformance:
-    def test_decision_engine_performance_with_large_iteration_counts(self) -> None:
-        loop_id = loop_tools.initialize_refinement_loop('plan').id
+    def test_decision_engine_performance_with_large_iteration_counts(self, project_path: str) -> None:
+        loop_id = loop_tools.initialize_refinement_loop(project_path, 'plan').id
 
         start_time = time.perf_counter()
 
@@ -30,14 +35,14 @@ class TestLoopPerformance:
             f'Test completed too quickly ({execution_time:.6f}s), may not be measuring correctly'
         )
 
-    def test_configuration_loading_performance(self) -> None:
+    def test_configuration_loading_performance(self, project_path: str) -> None:
         start_time = time.perf_counter()
 
         # Create multiple loops to test configuration access
         loops = []
         for _ in range(20):
             for loop_type in ['plan', 'spec', 'build_plan', 'build_code']:
-                loop = loop_tools.initialize_refinement_loop(loop_type)
+                loop = loop_tools.initialize_refinement_loop(project_path, loop_type)
                 loops.append(loop)
 
         end_time = time.perf_counter()
@@ -47,11 +52,11 @@ class TestLoopPerformance:
         assert execution_time < 0.5, f'Configuration loading test took {execution_time:.3f}s, expected < 0.5s'
         assert len(loops) == 80
 
-    def test_memory_usage_patterns_during_long_loops(self) -> None:
-        loop_id = loop_tools.initialize_refinement_loop('spec').id
+    def test_memory_usage_patterns_during_long_loops(self, project_path: str) -> None:
+        loop_id = loop_tools.initialize_refinement_loop(project_path, 'spec').id
 
         # Track loop operations without completion
-        initial_active_loops = len(loop_tools.list_active_loops())
+        initial_active_loops = len(loop_tools.list_active_loops(project_path))
 
         # Run 100 score decisions on same loop
         for i in range(100):
@@ -60,7 +65,7 @@ class TestLoopPerformance:
             assert result.status in [LoopStatus.REFINE, LoopStatus.USER_INPUT]
 
         # Verify memory doesn't grow unbounded
-        final_active_loops = len(loop_tools.list_active_loops())
+        final_active_loops = len(loop_tools.list_active_loops(project_path))
 
         # Should not create additional loops
         assert final_active_loops == initial_active_loops
@@ -69,11 +74,11 @@ class TestLoopPerformance:
         status = loop_tools.get_loop_status(loop_id)
         assert status.id == loop_id
 
-    def test_concurrent_access_performance(self) -> None:
+    def test_concurrent_access_performance(self, project_path: str) -> None:
         # Create multiple loops for concurrent access
         loops = []
         for i in range(10):
-            loop = loop_tools.initialize_refinement_loop('plan')
+            loop = loop_tools.initialize_refinement_loop(project_path, 'plan')
             loops.append(loop)
 
         start_time = time.perf_counter()
@@ -91,8 +96,8 @@ class TestLoopPerformance:
         # Performance requirement: 50 operations across 10 loops in under 0.5 seconds
         assert execution_time < 0.5, f'Concurrent access test took {execution_time:.3f}s, expected < 0.5s'
 
-    def test_stagnation_detection_performance(self) -> None:
-        loop_id = loop_tools.initialize_refinement_loop('build_plan').id
+    def test_stagnation_detection_performance(self, project_path: str) -> None:
+        loop_id = loop_tools.initialize_refinement_loop(project_path, 'build_plan').id
 
         start_time = time.perf_counter()
 
@@ -110,8 +115,8 @@ class TestLoopPerformance:
         # Performance requirement: stagnation detection should be fast
         assert execution_time < 0.1, f'Stagnation detection took {execution_time:.3f}s, expected < 0.1s'
 
-    def test_score_history_memory_efficiency(self) -> None:
-        loop_id = loop_tools.initialize_refinement_loop('spec').id
+    def test_score_history_memory_efficiency(self, project_path: str) -> None:
+        loop_id = loop_tools.initialize_refinement_loop(project_path, 'spec').id
 
         # Add many scores to test memory usage
         for i in range(200):
@@ -129,19 +134,19 @@ class TestLoopPerformance:
         status = loop_tools.get_loop_status(loop_id)
         assert status.id == loop_id
 
-    def test_loop_management_scalability(self) -> None:
+    def test_loop_management_scalability(self, project_path: str) -> None:
         start_time = time.perf_counter()
 
         # Create many loops
         created_loops = []
         for i in range(50):
             loop_type = ['plan', 'spec', 'build_plan', 'build_code'][i % 4]
-            loop = loop_tools.initialize_refinement_loop(loop_type)
+            loop = loop_tools.initialize_refinement_loop(project_path, loop_type)
             created_loops.append(loop)
 
         # Test list_active_loops performance
         list_start = time.perf_counter()
-        active_loops = loop_tools.list_active_loops()
+        active_loops = loop_tools.list_active_loops(project_path)
         list_end = time.perf_counter()
 
         # Test individual loop status retrieval
@@ -165,8 +170,8 @@ class TestLoopPerformance:
             len(active_loops) <= 10
         )  # Limited by default history size, but should handle large number of creations efficiently
 
-    def test_repeated_operations_performance_consistency(self) -> None:
-        loop_id = loop_tools.initialize_refinement_loop('plan').id
+    def test_repeated_operations_performance_consistency(self, project_path: str) -> None:
+        loop_id = loop_tools.initialize_refinement_loop(project_path, 'plan').id
 
         times: list[float] = []
 

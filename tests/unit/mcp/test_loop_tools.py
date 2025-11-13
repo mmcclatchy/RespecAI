@@ -9,10 +9,15 @@ from services.utils.loop_state import LoopState, MCPResponse
 from services.utils.state_manager import InMemoryStateManager
 
 
+@pytest.fixture
+def project_path() -> str:
+    return '/tmp/test-project'
+
+
 class TestLoopToolsMCP:
-    def test_decide_loop_next_action_complete_decision(self) -> None:
+    def test_decide_loop_next_action_complete_decision(self, project_path: str) -> None:
         # Initialize a build_code loop (threshold 95%)
-        init_result = loop_tools.initialize_refinement_loop('build_code')
+        init_result = loop_tools.initialize_refinement_loop(project_path, 'build_code')
         loop_id = init_result.id
 
         # High score should complete
@@ -21,9 +26,9 @@ class TestLoopToolsMCP:
         assert isinstance(result, MCPResponse)
         assert result.status == LoopStatus.COMPLETED
 
-    def test_decide_loop_next_action_refine_decision(self) -> None:
+    def test_decide_loop_next_action_refine_decision(self, project_path: str) -> None:
         # Initialize a spec loop (threshold 85%)
-        init_result = loop_tools.initialize_refinement_loop('spec')
+        init_result = loop_tools.initialize_refinement_loop(project_path, 'spec')
         loop_id = init_result.id
 
         # Score below threshold should refine
@@ -32,9 +37,9 @@ class TestLoopToolsMCP:
         assert isinstance(result, MCPResponse)
         assert result.status == LoopStatus.REFINE
 
-    def test_decide_loop_next_action_user_input_decision(self) -> None:
+    def test_decide_loop_next_action_user_input_decision(self, project_path: str) -> None:
         # Initialize a plan loop
-        init_result = loop_tools.initialize_refinement_loop('plan')
+        init_result = loop_tools.initialize_refinement_loop(project_path, 'plan')
         loop_id = init_result.id
 
         # Add multiple low improvement scores to trigger stagnation
@@ -52,8 +57,8 @@ class TestLoopToolsMCP:
         with pytest.raises(LoopStateError):
             loop_tools.decide_loop_next_action('nonexistent-loop-id', 80)
 
-    def test_decide_loop_next_action_score_validation(self) -> None:
-        init_result = loop_tools.initialize_refinement_loop('plan')
+    def test_decide_loop_next_action_score_validation(self, project_path: str) -> None:
+        init_result = loop_tools.initialize_refinement_loop(project_path, 'plan')
         loop_id = init_result.id
 
         # Test valid score ranges
@@ -70,9 +75,9 @@ class TestLoopToolsMCP:
         with pytest.raises(LoopValidationError):
             loop_tools.decide_loop_next_action(loop_id, 101)
 
-    def test_decide_loop_next_action_checkpoint_frequency(self) -> None:
+    def test_decide_loop_next_action_checkpoint_frequency(self, project_path: str) -> None:
         # Initialize a plan loop to test checkpoint frequency
-        init_result = loop_tools.initialize_refinement_loop('plan')
+        init_result = loop_tools.initialize_refinement_loop(project_path, 'plan')
         loop_id = init_result.id
 
         # Add scores until we hit checkpoint frequency (5 for plan loops)
@@ -82,15 +87,15 @@ class TestLoopToolsMCP:
         # Should request user input at checkpoint frequency
         assert result.status == LoopStatus.USER_INPUT
 
-    def test_initialize_refinement_loop_integration(self) -> None:
-        result = loop_tools.initialize_refinement_loop('build_plan')
+    def test_initialize_refinement_loop_integration(self, project_path: str) -> None:
+        result = loop_tools.initialize_refinement_loop(project_path, 'build_plan')
 
         assert isinstance(result, MCPResponse)
         assert result.status == LoopStatus.INITIALIZED
         assert len(result.id) > 0
 
-    def test_get_loop_status_integration(self) -> None:
-        init_result = loop_tools.initialize_refinement_loop('spec')
+    def test_get_loop_status_integration(self, project_path: str) -> None:
+        init_result = loop_tools.initialize_refinement_loop(project_path, 'spec')
         loop_id = init_result.id
 
         status = loop_tools.get_loop_status(loop_id)
@@ -99,12 +104,12 @@ class TestLoopToolsMCP:
         assert status.id == loop_id
         assert status.status == LoopStatus.INITIALIZED
 
-    def test_list_active_loops_integration(self) -> None:
+    def test_list_active_loops_integration(self, project_path: str) -> None:
         # Create multiple loops
-        loop1 = loop_tools.initialize_refinement_loop('plan')
-        loop2 = loop_tools.initialize_refinement_loop('spec')
+        loop1 = loop_tools.initialize_refinement_loop(project_path, 'plan')
+        loop2 = loop_tools.initialize_refinement_loop(project_path, 'spec')
 
-        active_loops = loop_tools.list_active_loops()
+        active_loops = loop_tools.list_active_loops(project_path)
 
         assert isinstance(active_loops, list)
         assert len(active_loops) >= 2
@@ -124,14 +129,14 @@ class TestLoopFeedbackIntegration:
         return LoopTools(state_manager)
 
     @pytest.fixture
-    def sample_loop(self, state_manager: InMemoryStateManager) -> LoopState:
+    def sample_loop(self, state_manager: InMemoryStateManager, project_path: str) -> LoopState:
         loop_state = LoopState(loop_type=LoopType.SPEC)
-        state_manager.add_loop(loop_state)
+        state_manager.add_loop(loop_state, project_path)
         return loop_state
 
-    def test_get_loop_feedback_summary_no_feedback(self, loop_tools_instance: LoopTools) -> None:
+    def test_get_loop_feedback_summary_no_feedback(self, loop_tools_instance: LoopTools, project_path: str) -> None:
         # Initialize a loop
-        init_result = loop_tools_instance.initialize_refinement_loop('spec')
+        init_result = loop_tools_instance.initialize_refinement_loop(project_path, 'spec')
         loop_id = init_result.id
 
         # Get feedback summary for loop with no feedback
@@ -143,10 +148,10 @@ class TestLoopFeedbackIntegration:
         assert 'ready for first assessment' in result.message
 
     def test_get_loop_feedback_summary_with_feedback(
-        self, loop_tools_instance: LoopTools, state_manager: InMemoryStateManager
+        self, loop_tools_instance: LoopTools, state_manager: InMemoryStateManager, project_path: str
     ) -> None:
         # Initialize a loop
-        init_result = loop_tools_instance.initialize_refinement_loop('spec')
+        init_result = loop_tools_instance.initialize_refinement_loop(project_path, 'spec')
         loop_id = init_result.id
 
         # Add some feedback to the loop
@@ -187,9 +192,11 @@ class TestLoopFeedbackIntegration:
         assert 'Initial assessment' in result.message
         assert 'Improved specification' in result.message
 
-    def test_get_loop_improvement_analysis_insufficient_feedback(self, loop_tools_instance: LoopTools) -> None:
+    def test_get_loop_improvement_analysis_insufficient_feedback(
+        self, loop_tools_instance: LoopTools, project_path: str
+    ) -> None:
         # Initialize a loop
-        init_result = loop_tools_instance.initialize_refinement_loop('spec')
+        init_result = loop_tools_instance.initialize_refinement_loop(project_path, 'spec')
         loop_id = init_result.id
 
         # Try to get improvement analysis with no feedback
@@ -201,10 +208,10 @@ class TestLoopFeedbackIntegration:
         assert 'need at least 2 assessments' in result.message
 
     def test_get_loop_improvement_analysis_with_history(
-        self, loop_tools_instance: LoopTools, state_manager: InMemoryStateManager
+        self, loop_tools_instance: LoopTools, state_manager: InMemoryStateManager, project_path: str
     ) -> None:
         # Initialize a loop
-        init_result = loop_tools_instance.initialize_refinement_loop('spec')
+        init_result = loop_tools_instance.initialize_refinement_loop(project_path, 'spec')
         loop_id = init_result.id
 
         # Add feedback with improvement
@@ -257,10 +264,10 @@ class TestLoopFeedbackIntegration:
         assert 'No recurring issues' in result.message  # No issues appear twice
 
     def test_get_loop_improvement_analysis_with_recurring_issues(
-        self, loop_tools_instance: LoopTools, state_manager: InMemoryStateManager
+        self, loop_tools_instance: LoopTools, state_manager: InMemoryStateManager, project_path: str
     ) -> None:
         # Initialize a loop
-        init_result = loop_tools_instance.initialize_refinement_loop('spec')
+        init_result = loop_tools_instance.initialize_refinement_loop(project_path, 'spec')
         loop_id = init_result.id
 
         # Add feedback with recurring issues

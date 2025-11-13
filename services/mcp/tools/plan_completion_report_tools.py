@@ -15,8 +15,13 @@ class PlanCompletionReportTools:
         self.state = state
         self._completion_reports: dict[str, PlanCompletionReport] = {}
 
-    def create_completion_report(self, completion_report: PlanCompletionReport, loop_id: str) -> MCPResponse:
+    def create_completion_report(
+        self, project_path: str, completion_report: PlanCompletionReport, loop_id: str
+    ) -> MCPResponse:
         try:
+            if not project_path or not project_path.strip():
+                raise ValueError('Project path cannot be empty')
+
             if completion_report is None:
                 raise ValueError('PlanCompletionReport cannot be None')
 
@@ -45,8 +50,13 @@ class PlanCompletionReportTools:
         except Exception as e:
             raise ToolError(f'Unexpected error creating completion report: {str(e)}')
 
-    def store_completion_report(self, completion_report: PlanCompletionReport, loop_id: str) -> MCPResponse:
+    def store_completion_report(
+        self, project_path: str, completion_report: PlanCompletionReport, loop_id: str
+    ) -> MCPResponse:
         try:
+            if not project_path or not project_path.strip():
+                raise ValueError('Project path cannot be empty')
+
             if completion_report is None:
                 raise ValueError('PlanCompletionReport cannot be None')
 
@@ -69,8 +79,11 @@ class PlanCompletionReportTools:
         except Exception as e:
             raise ToolError(f'Unexpected error storing completion report: {str(e)}')
 
-    def get_completion_report_data(self, loop_id: str) -> PlanCompletionReport:
+    def get_completion_report_data(self, project_path: str, loop_id: str) -> PlanCompletionReport:
         try:
+            if not project_path or not project_path.strip():
+                raise ValueError('Project path cannot be empty')
+
             if not loop_id or not loop_id.strip():
                 raise ValueError('Loop ID cannot be empty')
 
@@ -90,10 +103,13 @@ class PlanCompletionReportTools:
         except Exception as e:
             raise ToolError(f'Unexpected error retrieving completion report: {str(e)}')
 
-    def get_completion_report_markdown(self, loop_id: str) -> MCPResponse:
+    def get_completion_report_markdown(self, project_path: str, loop_id: str) -> MCPResponse:
         try:
+            if not project_path or not project_path.strip():
+                raise ValueError('Project path cannot be empty')
+
             loop_state = self.state.get_loop(loop_id)
-            completion_report = self.get_completion_report_data(loop_id)
+            completion_report = self.get_completion_report_data(project_path, loop_id)
 
             markdown = completion_report.build_markdown()
             return MCPResponse(id=loop_id, status=loop_state.status, message=markdown)
@@ -102,8 +118,13 @@ class PlanCompletionReportTools:
         except Exception as e:
             raise ToolError(f'Unexpected error generating completion report markdown: {str(e)}')
 
-    def update_completion_report(self, completion_report: PlanCompletionReport, loop_id: str) -> MCPResponse:
+    def update_completion_report(
+        self, project_path: str, completion_report: PlanCompletionReport, loop_id: str
+    ) -> MCPResponse:
         try:
+            if not project_path or not project_path.strip():
+                raise ValueError('Project path cannot be empty')
+
             if completion_report is None:
                 raise ValueError('PlanCompletionReport cannot be None')
 
@@ -132,8 +153,11 @@ class PlanCompletionReportTools:
         except Exception as e:
             raise ToolError(f'Unexpected error updating completion report: {str(e)}')
 
-    def list_completion_reports(self, count: int = 10) -> MCPResponse:
+    def list_completion_reports(self, project_path: str, count: int = 10) -> MCPResponse:
         try:
+            if not project_path or not project_path.strip():
+                raise ValueError('Project path cannot be empty')
+
             if count <= 0:
                 raise ValueError('Count must be a positive integer')
 
@@ -158,8 +182,11 @@ class PlanCompletionReportTools:
         except Exception as e:
             raise ToolError(f'Unexpected error listing completion reports: {str(e)}')
 
-    def delete_completion_report(self, loop_id: str) -> MCPResponse:
+    def delete_completion_report(self, project_path: str, loop_id: str) -> MCPResponse:
         try:
+            if not project_path or not project_path.strip():
+                raise ValueError('Project path cannot be empty')
+
             if not loop_id or not loop_id.strip():
                 raise ValueError('Loop ID cannot be empty')
 
@@ -187,20 +214,23 @@ def register_plan_completion_report_tools(mcp: FastMCP) -> None:
     completion_report_tools = PlanCompletionReportTools(state_manager)
 
     @mcp.tool()
-    async def create_plan_completion_report(completion_report_markdown: str, loop_id: str, ctx: Context) -> MCPResponse:
+    async def create_plan_completion_report(
+        project_path: str, completion_report_markdown: str, loop_id: str, ctx: Context
+    ) -> MCPResponse:
         """Create a new plan completion report for an existing loop.
 
         Parses markdown content into a PlanCompletionReport model and creates it for
         the specified loop.
 
         Parameters:
+        - project_path: Absolute path to project directory
         - completion_report_markdown: Complete completion report in markdown format
         - loop_id: Existing loop ID to associate with the completion report
 
         Returns:
         - MCPResponse: Contains loop_id, status, and confirmation message
         """
-        await ctx.info(f'Creating new completion report for loop {loop_id}')
+        await ctx.info(f'Creating new completion report for loop {loop_id} at {project_path}')
 
         try:
             # Validate inputs
@@ -212,7 +242,7 @@ def register_plan_completion_report_tools(mcp: FastMCP) -> None:
 
             # Parse markdown into PlanCompletionReport model
             completion_report = PlanCompletionReport.parse_markdown(completion_report_markdown)
-            result = completion_report_tools.create_completion_report(completion_report, loop_id)
+            result = completion_report_tools.create_completion_report(project_path, completion_report, loop_id)
 
             await ctx.info(f'Created completion report for loop ID: {result.id}')
             return result
@@ -221,13 +251,16 @@ def register_plan_completion_report_tools(mcp: FastMCP) -> None:
             raise ToolError(f'Failed to create completion report: {str(e)}')
 
     @mcp.tool()
-    async def store_plan_completion_report(loop_id: str, completion_report_markdown: str, ctx: Context) -> MCPResponse:
+    async def store_plan_completion_report(
+        project_path: str, loop_id: str, completion_report_markdown: str, ctx: Context
+    ) -> MCPResponse:
         """Store structured completion report data from markdown.
 
         Parses markdown content into a PlanCompletionReport model and stores it with
         the specified loop.
 
         Parameters:
+        - project_path: Absolute path to project directory
         - loop_id: Loop ID to store the completion report for
         - completion_report_markdown: Complete completion report in markdown format
 
@@ -235,7 +268,7 @@ def register_plan_completion_report_tools(mcp: FastMCP) -> None:
         - MCPResponse: Contains loop_id, status, and confirmation message
         """
 
-        await ctx.info(f'Parsing and storing completion report markdown with loop_id: {loop_id}')
+        await ctx.info(f'Parsing and storing completion report markdown with loop_id: {loop_id} at {project_path}')
 
         try:
             # Validate inputs
@@ -247,7 +280,7 @@ def register_plan_completion_report_tools(mcp: FastMCP) -> None:
 
             # Parse markdown into PlanCompletionReport model
             completion_report = PlanCompletionReport.parse_markdown(completion_report_markdown)
-            result = completion_report_tools.store_completion_report(completion_report, loop_id)
+            result = completion_report_tools.store_completion_report(project_path, completion_report, loop_id)
 
             await ctx.info(f'Stored completion report with ID: {result.id}')
             return result
@@ -256,23 +289,24 @@ def register_plan_completion_report_tools(mcp: FastMCP) -> None:
             raise ToolError(f'Failed to store completion report: {str(e)}')
 
     @mcp.tool()
-    async def get_plan_completion_report_markdown(loop_id: str, ctx: Context) -> MCPResponse:
+    async def get_plan_completion_report_markdown(project_path: str, loop_id: str, ctx: Context) -> MCPResponse:
         """Generate markdown for plan completion report.
 
         Retrieves stored completion report and formats as markdown.
 
         Parameters:
+        - project_path: Absolute path to project directory
         - loop_id: Unique identifier of the loop
 
         Returns:
         - MCPResponse: Contains loop_id, status, and formatted markdown content
         """
-        await ctx.info(f'Generating markdown for completion report {loop_id}')
+        await ctx.info(f'Generating markdown for completion report {loop_id} at {project_path}')
         try:
             if not loop_id or not loop_id.strip():
                 raise ValueError('Loop ID cannot be empty')
 
-            result = completion_report_tools.get_completion_report_markdown(loop_id)
+            result = completion_report_tools.get_completion_report_markdown(project_path, loop_id)
             await ctx.info(f'Generated markdown for completion report {loop_id}')
             return result
         except Exception as e:
@@ -280,19 +314,22 @@ def register_plan_completion_report_tools(mcp: FastMCP) -> None:
             raise ResourceError(f'Completion report not found for loop {loop_id}: {str(e)}')
 
     @mcp.tool()
-    async def update_plan_completion_report(loop_id: str, completion_report_markdown: str, ctx: Context) -> MCPResponse:
+    async def update_plan_completion_report(
+        project_path: str, loop_id: str, completion_report_markdown: str, ctx: Context
+    ) -> MCPResponse:
         """Update an existing plan completion report.
 
         Parses markdown content and updates the existing completion report for the specified loop.
 
         Parameters:
+        - project_path: Absolute path to project directory
         - loop_id: Loop ID of the completion report to update
         - completion_report_markdown: Updated completion report in markdown format
 
         Returns:
         - MCPResponse: Contains loop_id, status, and confirmation message
         """
-        await ctx.info(f'Updating completion report for loop {loop_id}')
+        await ctx.info(f'Updating completion report for loop {loop_id} at {project_path}')
 
         try:
             # Validate inputs
@@ -304,7 +341,7 @@ def register_plan_completion_report_tools(mcp: FastMCP) -> None:
 
             # Parse markdown into PlanCompletionReport model
             completion_report = PlanCompletionReport.parse_markdown(completion_report_markdown)
-            result = completion_report_tools.update_completion_report(completion_report, loop_id)
+            result = completion_report_tools.update_completion_report(project_path, completion_report, loop_id)
 
             await ctx.info(f'Updated completion report for loop ID: {result.id}')
             return result
@@ -313,23 +350,24 @@ def register_plan_completion_report_tools(mcp: FastMCP) -> None:
             raise ToolError(f'Failed to update completion report: {str(e)}')
 
     @mcp.tool()
-    async def list_plan_completion_reports(count: int, ctx: Context) -> MCPResponse:
+    async def list_plan_completion_reports(project_path: str, count: int, ctx: Context) -> MCPResponse:
         """List available plan completion reports.
 
         Returns summary of stored completion reports with basic metadata.
 
         Parameters:
+        - project_path: Absolute path to project directory
         - count: Maximum number of reports to return
 
         Returns:
         - MCPResponse: Contains list status and completion report summaries
         """
-        await ctx.info(f'Listing up to {count} completion reports')
+        await ctx.info(f'Listing up to {count} completion reports at {project_path}')
         try:
             if count <= 0:
                 raise ValueError('Count must be a positive integer')
 
-            result = completion_report_tools.list_completion_reports(count)
+            result = completion_report_tools.list_completion_reports(project_path, count)
             await ctx.info('Retrieved completion report list')
             return result
         except Exception as e:
@@ -337,23 +375,24 @@ def register_plan_completion_report_tools(mcp: FastMCP) -> None:
             raise ToolError(f'Failed to list completion reports: {str(e)}')
 
     @mcp.tool()
-    async def delete_plan_completion_report(loop_id: str, ctx: Context) -> MCPResponse:
+    async def delete_plan_completion_report(project_path: str, loop_id: str, ctx: Context) -> MCPResponse:
         """Delete a stored plan completion report.
 
         Removes completion report data associated with the given loop ID.
 
         Parameters:
+        - project_path: Absolute path to project directory
         - loop_id: Unique identifier of the loop
 
         Returns:
         - MCPResponse: Contains loop_id, status, and deletion confirmation
         """
-        await ctx.info(f'Deleting completion report {loop_id}')
+        await ctx.info(f'Deleting completion report {loop_id} at {project_path}')
         try:
             if not loop_id or not loop_id.strip():
                 raise ValueError('Loop ID cannot be empty')
 
-            result = completion_report_tools.delete_completion_report(loop_id)
+            result = completion_report_tools.delete_completion_report(project_path, loop_id)
             await ctx.info(f'Deleted completion report {loop_id}')
             return result
         except Exception as e:

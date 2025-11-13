@@ -14,6 +14,11 @@ from datetime import datetime
 from services.models.enums import RoadmapStatus
 
 
+@pytest.fixture
+def project_path() -> str:
+    return '/tmp/test-project'
+
+
 def create_test_roadmap_markdown(project_name: str) -> str:
     return f"""# Project Roadmap: {project_name}
 
@@ -105,12 +110,12 @@ Missing required sections and structure.
 
 class TestCreateRoadmap(TestRoadmapTools):
     def test_create_roadmap_returns_success_message(
-        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
+        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, project_path: str
     ) -> None:
         mock_state_manager.store_roadmap.return_value = 'test-project'
         roadmap_markdown = create_test_roadmap_markdown('Test Roadmap')
 
-        result = roadmap_tools.create_roadmap('test-project', roadmap_markdown)
+        result = roadmap_tools.create_roadmap(project_path, 'test-project', roadmap_markdown)
 
         assert isinstance(result, str)
         assert 'Test Roadmap' in result
@@ -118,12 +123,12 @@ class TestCreateRoadmap(TestRoadmapTools):
         assert 'Created roadmap' in result
 
     def test_create_roadmap_delegates_to_state_manager(
-        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
+        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, project_path: str
     ) -> None:
         mock_state_manager.store_roadmap.return_value = 'project-123'
         roadmap_markdown = create_test_roadmap_markdown('My Roadmap')
 
-        roadmap_tools.create_roadmap('project-123', roadmap_markdown)
+        roadmap_tools.create_roadmap(project_path, 'project-123', roadmap_markdown)
 
         mock_state_manager.store_roadmap.assert_called_once()
         call_args = mock_state_manager.store_roadmap.call_args
@@ -132,16 +137,16 @@ class TestCreateRoadmap(TestRoadmapTools):
         assert call_args[0][1].project_name == 'My Roadmap'
 
     def test_create_roadmap_raises_error_for_empty_project_id(
-        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
+        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, project_path: str
     ) -> None:
         with pytest.raises(ToolError, match='Project ID cannot be empty'):
-            roadmap_tools.create_roadmap('', 'Test Roadmap')
+            roadmap_tools.create_roadmap(project_path, '', 'Test Roadmap')
 
     def test_create_roadmap_raises_error_for_empty_roadmap_data(
-        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
+        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, project_path: str
     ) -> None:
         with pytest.raises(ToolError, match='Roadmap data cannot be empty'):
-            roadmap_tools.create_roadmap('test-project', '')
+            roadmap_tools.create_roadmap(project_path, 'test-project', '')
 
     @pytest.mark.parametrize(
         'project_id,roadmap_name',
@@ -152,12 +157,17 @@ class TestCreateRoadmap(TestRoadmapTools):
         ],
     )
     def test_create_roadmap_handles_various_inputs(
-        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, project_id: str, roadmap_name: str
+        self,
+        roadmap_tools: RoadmapTools,
+        mock_state_manager: Mock,
+        project_path: str,
+        project_id: str,
+        roadmap_name: str,
     ) -> None:
         mock_state_manager.store_roadmap.return_value = project_id
         roadmap_markdown = create_test_roadmap_markdown(roadmap_name)
 
-        result = roadmap_tools.create_roadmap(project_id, roadmap_markdown)
+        result = roadmap_tools.create_roadmap(project_path, project_id, roadmap_markdown)
 
         assert isinstance(result, str)
         assert roadmap_name in result
@@ -165,7 +175,7 @@ class TestCreateRoadmap(TestRoadmapTools):
 
 class TestGetRoadmap(TestRoadmapTools):
     def test_get_roadmap_returns_success_with_spec_count(
-        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
+        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, project_path: str
     ) -> None:
         mock_roadmap = Roadmap(
             project_name='Test Roadmap',
@@ -215,7 +225,7 @@ class TestGetRoadmap(TestRoadmapTools):
         )
         mock_state_manager.get_roadmap.return_value = mock_roadmap
 
-        result = roadmap_tools.get_roadmap('test-project')
+        result = roadmap_tools.get_roadmap(project_path, 'test-project')
 
         assert isinstance(result, str)
         assert 'Test Roadmap' in result
@@ -225,14 +235,16 @@ class TestGetRoadmap(TestRoadmapTools):
         assert '- **Spec 3**: spec3' in result
 
     def test_get_roadmap_raises_error_when_not_found(
-        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock
+        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, project_path: str
     ) -> None:
         mock_state_manager.get_roadmap.side_effect = Exception('Not found')
 
         with pytest.raises(ResourceError, match='Roadmap not found for project non-existent-project'):
-            roadmap_tools.get_roadmap('non-existent-project')
+            roadmap_tools.get_roadmap(project_path, 'non-existent-project')
 
-    def test_get_roadmap_handles_empty_roadmap(self, roadmap_tools: RoadmapTools, mock_state_manager: Mock) -> None:
+    def test_get_roadmap_handles_empty_roadmap(
+        self, roadmap_tools: RoadmapTools, mock_state_manager: Mock, project_path: str
+    ) -> None:
         mock_roadmap = Roadmap(
             project_name='Empty Roadmap',
             project_goal='Test goal',
@@ -259,7 +271,7 @@ class TestGetRoadmap(TestRoadmapTools):
         )
         mock_state_manager.get_roadmap.return_value = mock_roadmap
 
-        result = roadmap_tools.get_roadmap('empty-project')
+        result = roadmap_tools.get_roadmap(project_path, 'empty-project')
 
         assert isinstance(result, str)
         # For empty specs list, the Specifications section should be empty
